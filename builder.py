@@ -73,10 +73,15 @@ def build_image(config_entry):
         # template
         cmdline.append(str(PACKER_TEMPLATES_DIR / 'windows.json'))
         logging.debug("cmdline: %s", cmdline)
-        subprocess.check_call(cmdline, cwd=PACKER_TEMPLATES_DIR)
+        # ensure output-qemu dir is removed
+        if OUTPUT_QEMU_DIR.exists():
+            logging.warning("Removing previous unfinished build")
+            shutil.rmtree(OUTPUT_QEMU_DIR)
+        # open log file for packer
+        with open('packer-build.log', 'a') as packer_log_f:
+            subprocess.check_call(cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
     # get output file path
     image_path = Path(os.listdir(OUTPUT_QEMU_DIR)[0])
-    logging.debug('Build artifact: %s', image_path)
     try:
         yield image_path
     finally:
@@ -107,7 +112,7 @@ def main(args):
             logging.debug(entry)
             logging.info("Building %s", entry['name'])
             with build_image(entry) as image_path:
-                logging.info("Done !")
+                logging.info("Build completed: %s", image_path)
 
 
 args = docopt(__doc__)
