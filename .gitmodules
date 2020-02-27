@@ -1,0 +1,4 @@
+[submodule "packer-templates"]
+	path = packer-templates
+	url = https://github.com/Wenzel/packer-templates
+	branch = win10_pro
