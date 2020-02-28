@@ -85,8 +85,15 @@ def build_image(config_entry):
             pass
         else:
             logging.debug("Changing Product Key to %s", product_key)
-            key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey/ns:Key',
+            try:
+                key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey/ns:Key',
                                   namespaces=namespaces)[0]
+            except IndexError:
+                # Key not present, insert it
+                product_key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey',
+                                  namespaces=namespaces)[0]
+                key_el = ET.Element('Key')
+                product_key_el.append(key_el)
             key_el.text = product_key
         # dump new Autounattend.xml
         autounattend_path = Path(tmp_dir_autounattend) / 'Autounattend.xml'
