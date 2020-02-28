@@ -1,0 +1,40 @@
+---
+- name: 'win10-ts1-1507'
+  source: 'https://wzl.owncube.com/index.php/s/GTfgt6mkLfx7H7B/download'
+  sha1: '60cce9e9c6557335b4f7b18d02cfe2b438a8b3e2'
+
+# TODO:
+# image name: Windows 10 Pro Technical Preview
+# need a different key also
+#- name: 'win10-ts2-1511.10586.0'
+#  source: 'https://wzl.owncube.com/index.php/s/Ek39WwBYkkJKnz7/download'
+#  sha1: '875ec108288b9f581e5d8099cf0edb79f0f3e483'
+
+- name: 'win10-ts2-1511.10586.104'
+  source: 'https://wzl.owncube.com/index.php/s/TdDj4SZDxymX8oi/download'
+  sha1: 'b57921ddf4672c101f312aa66dd481350035d7e9'
+  key: 'W269N-WFGWX-YVC9B-4J6C9-T83GX'
+
+- name: 'win10-ts2-1511.10586.164'
+  source: 'https://wzl.owncube.com/index.php/s/4NPnNrc6NqgK8XA/download'
+  sha1: '1b247b5b348e78c9bc3afd3c1cbe10cee3d1b9d5'
+  key: 'W269N-WFGWX-YVC9B-4J6C9-T83GX'
+
+- name: 'win10-rs1-1607.14393.0'
+  source: 'https://wzl.owncube.com/index.php/s/ko946NApxQtwwXp/download'
+  sha1: '99fd8082a609997ae97a514dca22becf20420891'
+
+- name: 'win10-rs2-1703.15063.0'
+  source: 'https://wzl.owncube.com/index.php/s/SCokHNCd8eJDDYQ/download'
+  sha1: 'ce8005a659e8df7fe9b080352cb1c313c3e9adce'
+
+- name: 'win10-rs3-1709.16299.15'
+  source: 'https://wzl.owncube.com/index.php/s/QtP7LiN3BgYEyT9/download'
+  sha1: '1ad928cfef439f6aa4044ddc3a96b0b6830bdd0f'
+
+- name: 'win10-rs4-1803.17134.1'
+  source: 'https://wzl.owncube.com/index.php/s/9256wxEdASQMxZ8/download'
+  sha1: '08fbb24627fa768f869c09f44c5d6c1e53a57a6f'
+
+# TODO
+#- name: 'win10-rs5-1809.17763.1'
