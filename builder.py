@@ -79,11 +79,10 @@ def build_image(config_entry):
         ET.register_namespace('cpi', 'urn:schemas-microsoft-com:cpi')
         tree = ET.ElementTree(ET.fromstring(autounattend))
         namespaces = {'ns': 'urn:schemas-microsoft-com:unattend'}
-        try:
-            product_key = config_entry['key']
-        except KeyError:
-            pass
-        else:
+
+        # replace product key if needed
+        product_key = config_entry.get('key')
+        if product_key:
             logging.debug("Changing Product Key to %s", product_key)
             try:
                 key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey/ns:Key',
@@ -95,6 +94,14 @@ def build_image(config_entry):
                 key_el = ET.Element('Key')
                 product_key_el.append(key_el)
             key_el.text = product_key
+
+        # replace image name if needed
+        image_name = config_entry.get('image_name')
+        if image_name:
+            logging.debug("Selecting image %s", image_name)
+            image_value_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:ImageInstall/ns:OSImage/ns:InstallFrom/ns:MetaData/ns:Value',
+                                  namespaces=namespaces)[0]
+            image_value_el.text = image_name
         # dump new Autounattend.xml
         autounattend_path = Path(tmp_dir_autounattend) / 'Autounattend.xml'
         tree.write(str(autounattend_path), xml_declaration=True, encoding='utf-8')
