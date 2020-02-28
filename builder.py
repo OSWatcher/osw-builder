@@ -37,22 +37,27 @@ def build_image(config_entry):
     source_url = config_entry['source']
     # validate source
     parse_res = urlparse(source_url)
-    if not parse_res.scheme == 'file':
-        raise NotImplementedError()
-    # file exists ?
-    source_path = Path(parse_res.path)
-    if not source_path.exists():
-        raise RuntimeError("source file does not exists")
-    logging.debug("Source: %s", source_url)
-    logging.debug("Computing SHA1")
-    # compute sha1
-    sha1sum = hashlib.sha1()
-    with open(source_path, 'rb') as source_file:
-        buf = source_file.read(BLOCKSIZE)
-        while len(buf) > 0:
-            sha1sum.update(buf)
+    if parse_res.scheme == 'file':
+        # file exists ?
+        source_path = Path(parse_res.path)
+        if not source_path.exists():
+            raise RuntimeError("source file does not exists")
+        logging.debug("Source: %s", source_url)
+        logging.debug("Computing SHA1")
+        # compute sha1
+        sha1sum = hashlib.sha1()
+        with open(source_path, 'rb') as source_file:
             buf = source_file.read(BLOCKSIZE)
-    sha1digest = sha1sum.hexdigest()
+            while len(buf) > 0:
+                sha1sum.update(buf)
+                buf = source_file.read(BLOCKSIZE)
+        sha1digest = sha1sum.hexdigest()
+    else:
+        # url, we need the SHA1 to be specified
+        try:
+            sha1digest = config_entry['sha1']
+        except KeyError:
+            raise RuntimeError('Invalid configuration: need to specify a SHA1 for URL sources')
     logging.debug("SHA1: %s", sha1digest)
     # read win10 varfile
     with open(PACKER_TEMPLATES_DIR / 'win10.json') as win10json_f:
