@@ -142,7 +142,7 @@ def main(args):
     with open(images_config_path) as config_f:
         config = yaml.safe_load(config_f)
 
-        for entry in config:
+        for entry in config['images']:
             logging.debug(entry)
             logging.info("Building %s", entry['name'])
             with build_image(entry) as image_path:
