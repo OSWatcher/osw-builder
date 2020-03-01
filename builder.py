@@ -18,6 +18,7 @@ import json
 import subprocess
 import hashlib
 import shutil
+import libvirt
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from urllib.parse import urlparse
@@ -30,7 +31,7 @@ from docopt import docopt
 PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / 'packer-templates'
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / 'output-qemu'
 BLOCKSIZE = 65536
-
+DOMAIN_MEMORY = 4096
 
 @contextmanager
 def build_image(config_entry):
@@ -129,12 +130,113 @@ def build_image(config_entry):
             with open('packer-build.log', 'a') as packer_log_f:
                 subprocess.check_call(cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
         # get output file path
-        image_path = Path(os.listdir(OUTPUT_QEMU_DIR)[0])
+        image_path = OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
         try:
             yield image_path
         finally:
             logging.info('Build: cleaning up')
             shutil.rmtree(OUTPUT_QEMU_DIR)
+
+
+class DomXML:
+
+    def __init__(self, xml_desc):
+        self.tree = ET.fromstring(xml_desc)
+
+    # helpers
+    def findfirst(self, xpath):
+        return self.tree.findall(xpath)[0]
+
+    @property
+    def name(self):
+        return self.findfirst('./name').text
+
+    @name.setter
+    def name(self, value):
+        self.findfirst('./name').text = value
+
+    @property
+    def memory(self):
+        return self.findfirst('memory').text
+
+    @memory.setter
+    def memory(self, value):
+        self.findfirst('./memory').text = value
+
+    @property
+    def disk(self):
+        return self.findfirst('./devices/disk[@device="disk"]/source').get('file')
+
+    @disk.setter
+    def disk(self, value):
+        self.findfirst('./devices/disk[@device="disk"]/source').set('file', value)
+
+    def tostring(self):
+        """Generate new XML string from tree object"""
+        return ET.tostring(self.tree, encoding='unicode')
+
+
+class LibvirtDom:
+
+    def __init__(self, con, config_entry):
+
+        self.con = con
+        self.dom_name = config_entry['name']
+        self.config_entry = config_entry
+        self.dom = None
+        self.image_builder = None
+        self.domain_disk = None
+
+    def __enter__(self):
+        """Build a Libvirt domain and returns it"""
+        # check whether the domain already exists
+        try:
+            logging.info("Checking for domain %s", self.dom_name)
+            self.dom = self.con.lookupByName(self.dom_name)
+            logging.debug("Domain exists")
+        except libvirt.libvirtError:
+            logging.info("Building domain")
+            # build and define domain
+            self.image_builder = build_image(self.config_entry)
+            image_path = self.image_builder.__enter__()
+            # build pool
+            pool = self.con.storagePoolLookupByName('default')
+            # get pool path from Pool object
+            pool_xml = pool.XMLDesc()
+            pool_tree = ET.fromstring(pool_xml)
+            pool_path = pool_tree.findall('./target/path')[0].text
+            logging.debug('path: %s', pool_path)
+            # make sure storage is active
+            if not pool.isActive():
+                pool.create()
+            # move image to storage pool
+            dst = (Path(pool_path) / self.dom_name).with_suffix('.qcow2')
+            logging.debug('Moving image to %s', dst)
+            shutil.move(image_path, dst)
+            self.domain_disk = dst
+            # template default domain XML
+            with open('domain.xml') as template_f:
+                template_xml = template_f.read()
+                template = DomXML(template_xml)
+                template.name = self.dom_name
+                template.memory = str(DOMAIN_MEMORY)
+                template.disk = str(dst)
+                domain_xml = template.tostring()
+                # define domain
+                logging.info("Defining domain")
+                self.con.defineXML(domain_xml)
+                self.dom = self.con.lookupByName(self.dom_name)
+        return self.dom
+
+    def __exit__(self, type, value, traceback):
+        # cleanup domain and image
+        logging.info("Undefining domain")
+        self.dom.undefine()
+        logging.info("Removing disk")
+        if self.domain_disk:
+            self.domain_disk.unlink()
+        if self.image_builder:
+            self.image_builder.__exit__(type, value, traceback)
 
 
 def init_logger(debug=False):
@@ -146,11 +248,13 @@ def init_logger(debug=False):
 
 
 def main(args):
-    # uri = args['--connection']
+    uri = args['--connection']
     debug = args['--debug']
     images_config_path = args['<images_config>']
 
     init_logger(debug)
+
+    libvirt_con = libvirt.open(uri)
 
     # load yaml config
     with open(images_config_path) as config_f:
@@ -159,8 +263,8 @@ def main(args):
         for entry in config['images']:
             logging.debug(entry)
             logging.info("Building %s", entry['name'])
-            with build_image(entry) as image_path:
-                logging.info("Build completed: %s", image_path)
+            with LibvirtDom(libvirt_con, entry) as domain:
+                logging.info("New domain: %s", domain)
 
 
 args = docopt(__doc__)
