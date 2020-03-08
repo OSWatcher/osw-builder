@@ -32,6 +32,7 @@ PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / 'packer-templates'
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / 'output-qemu'
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
+DEFAULT_REMOVE_DOMAIN_VALUE = True
 
 @contextmanager
 def build_image(config_entry):
@@ -178,11 +179,12 @@ class DomXML:
 
 class LibvirtDom:
 
-    def __init__(self, con, config_entry):
+    def __init__(self, con, config_entry, remove_domain):
 
         self.con = con
         self.dom_name = config_entry['name']
         self.config_entry = config_entry
+        self.remove_domain = remove_domain
         self.dom = None
         self.image_builder = None
         self.domain_disk = None
@@ -230,13 +232,14 @@ class LibvirtDom:
 
     def __exit__(self, type, value, traceback):
         # cleanup domain and image
-        logging.info("Undefining domain")
-        self.dom.undefine()
-        logging.info("Removing disk")
-        if self.domain_disk:
-            self.domain_disk.unlink()
-        if self.image_builder:
-            self.image_builder.__exit__(type, value, traceback)
+        if self.remove_domain:
+            logging.info("Undefining domain")
+            self.dom.undefine()
+            logging.info("Removing disk")
+            if self.domain_disk:
+                self.domain_disk.unlink()
+            if self.image_builder:
+                self.image_builder.__exit__(type, value, traceback)
 
 
 def init_logger(debug=False):
@@ -260,10 +263,12 @@ def main(args):
     with open(images_config_path) as config_f:
         config = yaml.safe_load(config_f)
 
+        remove_domain = config.get('remove_domain', DEFAULT_REMOVE_DOMAIN_VALUE)
+
         for entry in config['images']:
             logging.debug(entry)
             logging.info("Building %s", entry['name'])
-            with LibvirtDom(libvirt_con, entry) as domain:
+            with LibvirtDom(libvirt_con, entry, remove_domain) as domain:
                 logging.info("New domain: %s", domain)
 
 
