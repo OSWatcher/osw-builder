@@ -4,6 +4,8 @@ keys:
   1511_pro: &key_1511_pro 'W269N-WFGWX-YVC9B-4J6C9-T83GX'
 image_names:
   win10_pro: &win10_pro 'Windows 10 Pro'
+# whether we should remove the domain after once we ran our tools
+remove_domain: false
 images:
   - name: 'win10-ts1-1507'
     source: 'https://wzl.owncube.com/index.php/s/GTfgt6mkLfx7H7B/download'
