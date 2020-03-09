@@ -5,7 +5,10 @@ keys:
 image_names:
   win10_pro: &win10_pro 'Windows 10 Pro'
 # whether we should remove the domain after once we ran our tools
-remove_domain: false
+remove_domain: true
+# which command line tools we should run
+tools:
+  - 'oswatcher {domain_name} hooks.json'
 images:
   - name: 'win10-ts1-1507'
     source: 'https://wzl.owncube.com/index.php/s/GTfgt6mkLfx7H7B/download'
