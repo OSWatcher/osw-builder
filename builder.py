@@ -215,6 +215,9 @@ class LibvirtDom:
             dst = (Path(pool_path) / self.dom_name).with_suffix('.qcow2')
             logging.debug('Moving image to %s', dst)
             shutil.move(image_path, dst)
+            # important: refresh storage pool, otherwise future lookup operation on this qcow will fail
+            # ex: Storage volume not found: no storage vol with matching path '..../xxx.qcow2'
+            pool.refresh()
             self.domain_disk = dst
             # template default domain XML
             with open('domain.xml') as template_f:
@@ -264,12 +267,18 @@ def main(args):
         config = yaml.safe_load(config_f)
 
         remove_domain = config.get('remove_domain', DEFAULT_REMOVE_DOMAIN_VALUE)
+        tool_list = config.get('tools')
 
         for entry in config['images']:
             logging.debug(entry)
             logging.info("Building %s", entry['name'])
             with LibvirtDom(libvirt_con, entry, remove_domain) as domain:
-                logging.info("New domain: %s", domain)
+                logging.info("New domain: %s", domain.name())
+                for tool_cmd in tool_list:
+                    # format and replace domain name
+                    f_tool_cmd = tool_cmd.format(domain_name=domain.name())
+                    logging.info("Running tool: %s", f_tool_cmd)
+                    subprocess.check_call(f_tool_cmd, shell=True)
 
 
 args = docopt(__doc__)
