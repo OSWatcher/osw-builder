@@ -59,5 +59,38 @@ images:
     key: *key_pro
     image_name: *win10_pro
 
-  # TODO
-  #- name: 'win10-rs5-1809.17763.1'
+  - name: 'win10-rs5-1809.17763.1'
+    source: 'https://wzl.owncube.com/index.php/s/BcBa3mknfyzGGXX/download'
+    sha1: '500c9635645a91c09d3c3904fd12f0e1fd3f709e'
+    key: *key_pro
+    image_name: *win10_pro
+
+  - name: 'win10-rs5-1809.17763.107'
+    source: 'https://wzl.owncube.com/index.php/s/pw4oAcRzBykRjD8/download'
+    sha1: 'bee211937f3ed11606590b541b2f5b97237ac09d'
+    key: *key_pro
+    image_name: *win10_pro
+
+  - name: 'win10-rs5-1809.17763.379'
+    source: 'https://wzl.owncube.com/index.php/s/zjp8nEkcdaYHMcR/download'
+    sha1: 'e448fd3ceb724a924a2afce17d80739329c30c74'
+    key: *key_pro
+    image_name: *win10_pro
+
+  - name: 'win10-19H1-1903.18362.30'
+    source: 'https://oswimages.s3.eu-west-3.amazonaws.com/Windows/win10/Win10_1903_V1_English_x64.iso'
+    sha1: '344ca92459c23663d5f857c72a7c030f85f19be8'
+    key: *key_pro
+    image_name: *win10_pro
+
+  - name: 'win10-19H1-1903.18362.356'
+    source: 'https://oswimages.s3.eu-west-3.amazonaws.com/Windows/win10/Win10_1903_V2_English_x64.iso'
+    sha1: 'b7ca3ccdfe292e0466f2a62ffbeab18972a7c7f9'
+    key: *key_pro
+    image_name: *win10_pro
+
+  - name: 'win10-19H2-1909.18363.418'
+    source: 'https://oswimages.s3.eu-west-3.amazonaws.com/Windows/win10/Win10_1909_English_x64.iso'
+    sha1: '9dc9cd4d956c51fdaa9ecd0f86fdf0a1e35526d9'
+    key: *key_pro
+    image_name: *win10_pro
