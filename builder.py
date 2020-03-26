@@ -2,11 +2,14 @@
 
 """
 Usage: builder.py [options] <images_config>
+       builder.py [options] [(--only=<NAME> | --from=<NAME>)] <images_config>
 
 Options:
     -h --help                       Display this message
     -d --debug                      Enable debug output
     -c --connection=<URI>           Specify a libvirt URI [Default: qemu:///session]
+    -o --only=<NAME>                Build only image NAME
+    -f --from=<NAME>                Build images from NAME
 """
 
 
@@ -257,6 +260,8 @@ def main(args):
     uri = args['--connection']
     debug = args['--debug']
     images_config_path = args['<images_config>']
+    only = args['--only']
+    from_image = args['--from']
 
     init_logger(debug)
 
@@ -269,7 +274,18 @@ def main(args):
         remove_domain = config.get('remove_domain', DEFAULT_REMOVE_DOMAIN_VALUE)
         tool_list = config.get('tools')
 
-        for entry in config['images']:
+        # filter image list
+        filtered_image_list = config['images']
+        if only:
+            filtered_image_list = [entry for entry in config['images'] if entry['name'] == only]
+        elif from_image:
+            from_index_list = [index for index, entry in enumerate(config['images']) if entry['name'] == from_image]
+            if not from_index_list:
+                raise RuntimeError("Could not find from image name")
+            from_index = from_index_list[0]
+            filtered_image_list = config['images'][from_index:]
+
+        for entry in filtered_image_list:
             logging.debug(entry)
             logging.info("Building %s", entry['name'])
             with LibvirtDom(libvirt_con, entry, remove_domain) as domain:
