@@ -290,11 +290,12 @@ def main(args):
             logging.info("Building %s", entry['name'])
             with LibvirtDom(libvirt_con, entry, remove_domain) as domain:
                 logging.info("New domain: %s", domain.name())
-                for tool_cmd in tool_list:
-                    # format and replace domain name
-                    f_tool_cmd = tool_cmd.format(domain_name=domain.name())
-                    logging.info("Running tool: %s", f_tool_cmd)
-                    subprocess.check_call(f_tool_cmd, shell=True)
+                if tool_list:
+                    for tool_cmd in tool_list:
+                        # format and replace domain name
+                        f_tool_cmd = tool_cmd.format(domain_name=domain.name())
+                        logging.info("Running tool: %s", f_tool_cmd)
+                        subprocess.check_call(f_tool_cmd, shell=True)
 
 
 args = docopt(__doc__)
