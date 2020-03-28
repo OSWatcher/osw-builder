@@ -48,7 +48,7 @@ images:
     image_name: *win10_pro
 
   - name: 'win10-rs3-1709.16299.15'
-    source: 'https://oswimages.s3.eu-west-3.amazonaws.com/Windows/win10/Win10_1709_redstone3_English_x64.iso  '
+    source: 'https://oswimages.s3.eu-west-3.amazonaws.com/Windows/win10/Win10_1709_redstone3_English_x64.iso'
     sha1: '1ad928cfef439f6aa4044ddc3a96b0b6830bdd0f'
     key: *key_pro
     image_name: *win10_pro
