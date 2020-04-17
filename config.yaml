@@ -98,10 +98,23 @@ series:
         sha1: '9dc9cd4d956c51fdaa9ecd0f86fdf0a1e35526d9'
         key: *key_pro
         image_name: *win10_pro
-  - name: 'ubuntu-server'
+
+  - name: 'ubuntu-server-LTS'
     template: 'ubuntu.json'
     varfile: 'ubuntu_1604_x64.json'
     images:
+      - name: 'ubuntu-server-12.04'
+        source: 'http://old-releases.ubuntu.com/releases/12.04.0/ubuntu-12.04-server-amd64.iso'
+        sha1: 'f44b5f8fc9d56e8fd7599e9c1677a640dda85eda'
+
+      - name: 'ubuntu-server-14.04'
+        source: 'http://old-releases.ubuntu.com/releases/14.04.0/ubuntu-14.04-server-amd64.iso'
+        sha1: '4d94f6111b8fe47da94396180ce499d8c0bb44f3'
+
       - name: 'ubuntu-server-16.04'
         source: 'http://old-releases.ubuntu.com/releases/16.04.0/ubuntu-16.04-server-amd64.iso'
         sha1: '70db69379816b91eb01559212ae474a36ecec9ef'
+
+      - name: 'ubuntu-server-18.04'
+        source: 'http://old-releases.ubuntu.com/releases/18.04.0/ubuntu-18.04-server-amd64.iso'
+        sha1: '73ae6579ef7c51d944a0be5c4c48f748bfd689df'
