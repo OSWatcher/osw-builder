@@ -306,9 +306,9 @@ def main(args):
 
             template = serie['template']
             varfile = serie['varfile']
-            for entry in filtered_image_list:
+            for index, entry in enumerate(filtered_image_list):
                 logging.debug(entry)
-                logging.info("Building %s", entry['name'])
+                logging.info("[%s/%s] Building %s", index+1, len(filtered_image_list), entry['name'])
                 with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain) as domain:
                     logging.info("New domain: %s", domain.name())
                     if tool_list:
