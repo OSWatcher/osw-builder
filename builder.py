@@ -282,6 +282,7 @@ def main(args):
         tool_list = config.get('tools')
 
         for serie in config['series']:
+            logging.info('Serie %s', serie['name'])
             # apply filter
             #   get all images
             filtered_image_list = serie['images']
