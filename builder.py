@@ -36,9 +36,10 @@ OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / 'output-qemu'
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
+WINDOWS_TEMPLATE = 'windows.json'
 
 @contextmanager
-def build_image(config_entry):
+def build_image(template, varfile, config_entry):
     source_url = config_entry['source']
     # validate source
     parse_res = urlparse(source_url)
@@ -65,56 +66,61 @@ def build_image(config_entry):
             raise RuntimeError('Invalid configuration: need to specify a SHA1 for URL sources')
     logging.debug("SHA1: %s", sha1digest)
     # read win10 varfile
-    with open(PACKER_TEMPLATES_DIR / 'win10.json') as win10json_f:
-        win10config = json.load(win10json_f)
+    with open(PACKER_TEMPLATES_DIR / varfile) as varfile_f:
+        varfile_data = json.load(varfile_f)
     # replace source URL and SHA1
-    win10config['iso_url'] = source_url
-    win10config['iso_checksum'] = sha1digest
+    varfile_data['iso_url'] = source_url
+    varfile_data['iso_checksum'] = sha1digest
 
-    # read autounattend
-    with open(PACKER_TEMPLATES_DIR / win10config['autounattend']) as autounattend_f:
-        autounattend = autounattend_f.read()
+    # read autounattend only if Windows
+    if template == WINDOWS_TEMPLATE:
+        # read autounattend
+        with open(PACKER_TEMPLATES_DIR / varfile_data['autounattend']) as autounattend_f:
+            autounattend = autounattend_f.read()
+
     # write a new Autounattend and configure it if needed
     # we also create a temporary directory because the file must be named 'Autounattend.xml'
     with TemporaryDirectory() as tmp_dir_autounattend:
-        # register Autounattend XML prefixes
-        ET.register_namespace('', 'urn:schemas-microsoft-com:unattend')
-        ET.register_namespace('wcm', 'http://schemas.microsoft.com/WMIConfig/2002/State')
-        ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
-        ET.register_namespace('cpi', 'urn:schemas-microsoft-com:cpi')
-        tree = ET.ElementTree(ET.fromstring(autounattend))
-        namespaces = {'ns': 'urn:schemas-microsoft-com:unattend'}
+        # parse XML only if Windows
+        if template == WINDOWS_TEMPLATE:
+            # register Autounattend XML prefixes
+            ET.register_namespace('', 'urn:schemas-microsoft-com:unattend')
+            ET.register_namespace('wcm', 'http://schemas.microsoft.com/WMIConfig/2002/State')
+            ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+            ET.register_namespace('cpi', 'urn:schemas-microsoft-com:cpi')
+            tree = ET.ElementTree(ET.fromstring(autounattend))
+            namespaces = {'ns': 'urn:schemas-microsoft-com:unattend'}
 
-        # replace product key if needed
-        product_key = config_entry.get('key')
-        if product_key:
-            logging.debug("Changing Product Key to %s", product_key)
-            try:
-                key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey/ns:Key',
-                                  namespaces=namespaces)[0]
-            except IndexError:
-                # Key not present, insert it
-                product_key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey',
-                                  namespaces=namespaces)[0]
-                key_el = ET.Element('Key')
-                product_key_el.append(key_el)
-            key_el.text = product_key
+            # replace product key if needed
+            product_key = config_entry.get('key')
+            if product_key:
+                logging.debug("Changing Product Key to %s", product_key)
+                try:
+                    key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey/ns:Key',
+                                      namespaces=namespaces)[0]
+                except IndexError:
+                    # Key not present, insert it
+                    product_key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey',
+                                      namespaces=namespaces)[0]
+                    key_el = ET.Element('Key')
+                    product_key_el.append(key_el)
+                key_el.text = product_key
 
-        # replace image name if needed
-        image_name = config_entry.get('image_name')
-        if image_name:
-            logging.debug("Selecting image %s", image_name)
-            image_value_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:ImageInstall/ns:OSImage/ns:InstallFrom/ns:MetaData/ns:Value',
-                                  namespaces=namespaces)[0]
-            image_value_el.text = image_name
-        # dump new Autounattend.xml
-        autounattend_path = Path(tmp_dir_autounattend) / 'Autounattend.xml'
-        tree.write(str(autounattend_path), xml_declaration=True, encoding='utf-8')
-        # replace autounattend path in the config
-        win10config['autounattend'] = str(autounattend_path)
+            # replace image name if needed
+            image_name = config_entry.get('image_name')
+            if image_name:
+                logging.debug("Selecting image %s", image_name)
+                image_value_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:ImageInstall/ns:OSImage/ns:InstallFrom/ns:MetaData/ns:Value',
+                                      namespaces=namespaces)[0]
+                image_value_el.text = image_name
+            # dump new Autounattend.xml
+            autounattend_path = Path(tmp_dir_autounattend) / 'Autounattend.xml'
+            tree.write(str(autounattend_path), xml_declaration=True, encoding='utf-8')
+            # replace autounattend path in the config
+            varfile_data['autounattend'] = str(autounattend_path)
         # write temporary varfile and build
         with NamedTemporaryFile(mode='w') as tmp_f:
-            json.dump(win10config, tmp_f)
+            json.dump(varfile_data, tmp_f)
             # flush
             tmp_f.flush()
             # build with Packer
@@ -124,7 +130,7 @@ def build_image(config_entry):
             # varfile
             cmdline.extend(['-var-file', tmp_f.name])
             # template
-            cmdline.append(str(PACKER_TEMPLATES_DIR / 'windows.json'))
+            cmdline.append(str(PACKER_TEMPLATES_DIR / template))
             logging.debug("cmdline: %s", cmdline)
             # ensure output-qemu dir is removed
             if OUTPUT_QEMU_DIR.exists():
@@ -182,9 +188,10 @@ class DomXML:
 
 class LibvirtDom:
 
-    def __init__(self, con, config_entry, remove_domain):
-
+    def __init__(self, con, template, varfile, config_entry, remove_domain):
         self.con = con
+        self.template = template
+        self.varfile = varfile
         self.dom_name = config_entry['name']
         self.config_entry = config_entry
         self.remove_domain = remove_domain
@@ -202,7 +209,7 @@ class LibvirtDom:
         except libvirt.libvirtError:
             logging.info("Building domain")
             # build and define domain
-            self.image_builder = build_image(self.config_entry)
+            self.image_builder = build_image(self.template, self.varfile, self.config_entry)
             image_path = self.image_builder.__enter__()
             # build pool
             pool = self.con.storagePoolLookupByName('default')
@@ -274,28 +281,32 @@ def main(args):
         remove_domain = config.get('remove_domain', DEFAULT_REMOVE_DOMAIN_VALUE)
         tool_list = config.get('tools')
 
-        # filter image list
-        filtered_image_list = config['images']
-        if only:
-            filtered_image_list = [entry for entry in config['images'] if entry['name'] == only]
-        elif from_image:
-            from_index_list = [index for index, entry in enumerate(config['images']) if entry['name'] == from_image]
-            if not from_index_list:
-                raise RuntimeError("Could not find from image name")
-            from_index = from_index_list[0]
-            filtered_image_list = config['images'][from_index:]
+        for serie in config['series']:
+            # apply filter
+            #   get all images
+            filtered_image_list = serie['images']
+            if only:
+                filtered_image_list = [entry for entry in serie['images'] if entry['name'] == only]
+            elif from_image:
+                from_index_list = [index for index, entry in enumerate(serie['images']) if entry['name'] == from_image]
+                if not from_index_list:
+                    raise RuntimeError("Could not find from image name")
+                from_index = from_index_list[0]
+                filtered_image_list = serie['images'][from_index:]
 
-        for entry in filtered_image_list:
-            logging.debug(entry)
-            logging.info("Building %s", entry['name'])
-            with LibvirtDom(libvirt_con, entry, remove_domain) as domain:
-                logging.info("New domain: %s", domain.name())
-                if tool_list:
-                    for tool_cmd in tool_list:
-                        # format and replace domain name
-                        f_tool_cmd = tool_cmd.format(domain_name=domain.name())
-                        logging.info("Running tool: %s", f_tool_cmd)
-                        subprocess.check_call(f_tool_cmd, shell=True)
+            template = serie['template']
+            varfile = serie['varfile']
+            for entry in filtered_image_list:
+                logging.debug(entry)
+                logging.info("Building %s", entry['name'])
+                with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain) as domain:
+                    logging.info("New domain: %s", domain.name())
+                    if tool_list:
+                        for tool_cmd in tool_list:
+                            # format and replace domain name
+                            f_tool_cmd = tool_cmd.format(domain_name=domain.name())
+                            logging.info("Running tool: %s", f_tool_cmd)
+                            subprocess.check_call(f_tool_cmd, shell=True)
 
 
 args = docopt(__doc__)
