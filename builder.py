@@ -138,7 +138,10 @@ def build_image(template, varfile, config_entry):
                 shutil.rmtree(OUTPUT_QEMU_DIR)
             # open log file for packer
             with open('packer-build.log', 'a') as packer_log_f:
-                subprocess.check_call(cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
+                try:
+                    subprocess.check_call(cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
+                except subprocess.CalledProcessError as e:
+                    raise RuntimeError('Packer build failed ! Check packer-buikd.log')
         # get output file path
         image_path = OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
         try:
