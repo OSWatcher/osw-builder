@@ -2,7 +2,7 @@
 
 """
 Usage: builder.py [options] <images_config>
-       builder.py [options] [(--only-name=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] <images_config>
+       builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] <images_config>
 
 Options:
     -h --help                       Display this message
