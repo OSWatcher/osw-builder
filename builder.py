@@ -2,13 +2,14 @@
 
 """
 Usage: builder.py [options] <images_config>
-       builder.py [options] [(--only=<NAME> | --from=<NAME>)] <images_config>
+       builder.py [options] [(--only=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] <images_config>
 
 Options:
     -h --help                       Display this message
     -d --debug                      Enable debug output
     -c --connection=<URI>           Specify a libvirt URI [Default: qemu:///session]
-    -o --only=<NAME>                Build only image NAME
+    -o --only-image=<NAME>          Build only image NAME
+    -s --only-serie=<SERIE>         Build only serie SERIE
     -f --from=<NAME>                Build images from NAME
 """
 
@@ -270,10 +271,12 @@ def main(args):
     uri = args['--connection']
     debug = args['--debug']
     images_config_path = args['<images_config>']
-    only = args['--only']
+    only_image = args['--only-image']
     from_image = args['--from']
+    only_series = args['--only-serie']
 
     init_logger(debug)
+    logging.debug(args)
 
     libvirt_con = libvirt.open(uri)
 
@@ -284,13 +287,16 @@ def main(args):
         remove_domain = config.get('remove_domain', DEFAULT_REMOVE_DOMAIN_VALUE)
         tool_list = config.get('tools')
 
-        for serie in config['series']:
+        filtered_serie_list = config['series']
+        if only_series:
+            filtered_serie_list = [serie for serie in config['series'] if serie['name'] in only_series]
+        for serie in filtered_serie_list:
             logging.info('Serie %s', serie['name'])
             # apply filter
             #   get all images
             filtered_image_list = serie['images']
-            if only:
-                filtered_image_list = [entry for entry in serie['images'] if entry['name'] == only]
+            if only_image:
+                filtered_image_list = [entry for entry in serie['images'] if entry['name'] == only_image]
             elif from_image:
                 from_index_list = [index for index, entry in enumerate(serie['images']) if entry['name'] == from_image]
                 if not from_index_list:
