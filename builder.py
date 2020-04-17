@@ -2,7 +2,7 @@
 
 """
 Usage: builder.py [options] <images_config>
-       builder.py [options] [(--only=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] <images_config>
+       builder.py [options] [(--only-name=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] <images_config>
 
 Options:
     -h --help                       Display this message
@@ -38,6 +38,7 @@ BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
 WINDOWS_TEMPLATE = 'windows.json'
+
 
 @contextmanager
 def build_image(template, varfile, config_entry):
