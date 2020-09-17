@@ -11,6 +11,7 @@ Options:
     -o --only-image=<NAME>          Build only image NAME
     -s --only-serie=<SERIE>         Build only serie SERIE
     -f --from=<NAME>                Build images from NAME
+    -n --net                        Add network section in domain.xml
 """
 
 
@@ -186,6 +187,12 @@ class DomXML:
     def disk(self, value):
         self.findfirst('./devices/disk[@device="disk"]/source').set('file', value)
 
+    def add_network(self):
+        devices = self.findfirst('./devices')
+        interface = ET.Element('interface', {'type': 'network'})
+        interface.append(ET.Element('source', {'network': 'default'}))
+        devices.append(interface)
+
     def tostring(self):
         """Generate new XML string from tree object"""
         return ET.tostring(self.tree, encoding='unicode')
@@ -193,13 +200,14 @@ class DomXML:
 
 class LibvirtDom:
 
-    def __init__(self, con, template, varfile, config_entry, remove_domain):
+    def __init__(self, con, template, varfile, config_entry, remove_domain, net_on: bool):
         self.con = con
         self.template = template
         self.varfile = varfile
         self.dom_name = config_entry['name']
         self.config_entry = config_entry
         self.remove_domain = remove_domain
+        self.net_on = net_on
         self.dom = None
         self.image_builder = None
         self.domain_disk = None
@@ -241,6 +249,8 @@ class LibvirtDom:
                 template.name = self.dom_name
                 template.memory = str(DOMAIN_MEMORY)
                 template.disk = str(dst)
+                if self.net_on:
+                    template.add_network()
                 domain_xml = template.tostring()
                 # define domain
                 logging.info("Defining domain")
@@ -275,6 +285,7 @@ def main(args):
     only_image = args['--only-image']
     from_image = args['--from']
     only_series = args['--only-serie']
+    net_on = args['--net']
 
     init_logger(debug)
     logging.debug(args)
@@ -310,7 +321,7 @@ def main(args):
             for index, entry in enumerate(filtered_image_list):
                 logging.debug(entry)
                 logging.info("[%s/%s] Building %s", index+1, len(filtered_image_list), entry['name'])
-                with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain) as domain:
+                with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain, net_on) as domain:
                     logging.info("New domain: %s", domain.name())
                     if tool_list:
                         for tool_cmd in tool_list:
