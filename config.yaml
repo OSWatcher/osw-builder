@@ -8,7 +8,7 @@ image_names:
 remove_domain: true
 # which command line tools we should run
 tools:
-  - 'oswatcher {domain_name} hooks.json'
+  - './tools/capture.py {domain_name} hooks.json --connection={uri}'
 series:
   - name: 'windows-10'
     template: 'windows.json'
