@@ -315,7 +315,7 @@ def main(args):
                     if tool_list:
                         for tool_cmd in tool_list:
                             # format and replace domain name
-                            f_tool_cmd = tool_cmd.format(domain_name=domain.name())
+                            f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
                             logging.info("Running tool: %s", f_tool_cmd)
                             subprocess.check_call(f_tool_cmd, shell=True)
 
