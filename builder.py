@@ -18,6 +18,9 @@ Options:
 import sys
 import os
 import logging
+import copy
+from typing import List, Optional
+
 import yaml
 import json
 import subprocess
@@ -29,6 +32,8 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 from urllib.parse import urlparse
 from pathlib import Path
 import xml.etree.ElementTree as ET
+
+from autounattend import Autounattend
 
 
 from docopt import docopt
@@ -42,7 +47,7 @@ WINDOWS_TEMPLATE = 'windows.json'
 
 
 @contextmanager
-def build_image(template, varfile, config_entry):
+def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]]):
     source_url = config_entry['source']
     # validate source
     parse_res = urlparse(source_url)
@@ -75,52 +80,27 @@ def build_image(template, varfile, config_entry):
     varfile_data['iso_url'] = source_url
     varfile_data['iso_checksum'] = sha1digest
 
-    # read autounattend only if Windows
+    auto_path = None
     if template == WINDOWS_TEMPLATE:
-        # read autounattend
-        with open(PACKER_TEMPLATES_DIR / varfile_data['autounattend']) as autounattend_f:
-            autounattend = autounattend_f.read()
-
+        auto_path = PACKER_TEMPLATES_DIR / varfile_data['autounattend']
     # write a new Autounattend and configure it if needed
     # we also create a temporary directory because the file must be named 'Autounattend.xml'
-    with TemporaryDirectory() as tmp_dir_autounattend:
-        # parse XML only if Windows
+    with Autounattend(auto_path) as tmp_autounattend:
         if template == WINDOWS_TEMPLATE:
-            # register Autounattend XML prefixes
-            ET.register_namespace('', 'urn:schemas-microsoft-com:unattend')
-            ET.register_namespace('wcm', 'http://schemas.microsoft.com/WMIConfig/2002/State')
-            ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
-            ET.register_namespace('cpi', 'urn:schemas-microsoft-com:cpi')
-            tree = ET.ElementTree(ET.fromstring(autounattend))
-            namespaces = {'ns': 'urn:schemas-microsoft-com:unattend'}
-
             # replace product key if needed
             product_key = config_entry.get('key')
             if product_key:
                 logging.debug("Changing Product Key to %s", product_key)
-                try:
-                    key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey/ns:Key',
-                                      namespaces=namespaces)[0]
-                except IndexError:
-                    # Key not present, insert it
-                    product_key_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:UserData/ns:ProductKey',
-                                      namespaces=namespaces)[0]
-                    key_el = ET.Element('Key')
-                    product_key_el.append(key_el)
-                key_el.text = product_key
-
+                tmp_autounattend.product_key = product_key
             # replace image name if needed
             image_name = config_entry.get('image_name')
             if image_name:
                 logging.debug("Selecting image %s", image_name)
-                image_value_el = tree.findall('./ns:settings[@pass="windowsPE"]/ns:component/ns:ImageInstall/ns:OSImage/ns:InstallFrom/ns:MetaData/ns:Value',
-                                      namespaces=namespaces)[0]
-                image_value_el.text = image_name
+                tmp_autounattend.image_name = image_name
+            tmp_autounattend.write()
             # dump new Autounattend.xml
-            autounattend_path = Path(tmp_dir_autounattend) / 'Autounattend.xml'
-            tree.write(str(autounattend_path), xml_declaration=True, encoding='utf-8')
             # replace autounattend path in the config
-            varfile_data['autounattend'] = str(autounattend_path)
+            varfile_data['autounattend'] = str(tmp_autounattend.autounattend_tmp_path)
         # write temporary varfile and build
         with NamedTemporaryFile(mode='w') as tmp_f:
             json.dump(varfile_data, tmp_f)
@@ -200,13 +180,14 @@ class DomXML:
 
 class LibvirtDom:
 
-    def __init__(self, con, template, varfile, config_entry, remove_domain, net_on: bool):
+    def __init__(self, con, template, varfile, config_entry, remove_domain, net_on: bool, extra_firstlogin_cmds: Optional[List[str]]):
         self.con = con
         self.template = template
         self.varfile = varfile
         self.dom_name = config_entry['name']
         self.config_entry = config_entry
         self.remove_domain = remove_domain
+        self.extra_firstlogin_cmds = extra_firstlogin_cmds
         self.net_on = net_on
         self.dom = None
         self.image_builder = None
@@ -222,7 +203,7 @@ class LibvirtDom:
         except libvirt.libvirtError:
             logging.info("Building domain")
             # build and define domain
-            self.image_builder = build_image(self.template, self.varfile, self.config_entry)
+            self.image_builder = build_image(self.template, self.varfile, self.config_entry, self.extra_firstlogin_cmds)
             image_path = self.image_builder.__enter__()
             # build pool
             pool = self.con.storagePoolLookupByName('default')
@@ -318,10 +299,13 @@ def main(args):
 
             template = serie['template']
             varfile = serie['varfile']
+            extra_firstlogin_cmds = None
+            if serie['extra_firstlogin_cmds']:
+                extra_firstlogin_cmds = serie['extra_firstlogin_cmds']
             for index, entry in enumerate(filtered_image_list):
                 logging.debug(entry)
                 logging.info("[%s/%s] Building %s", index+1, len(filtered_image_list), entry['name'])
-                with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain, net_on) as domain:
+                with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain, net_on, extra_firstlogin_cmds) as domain:
                     logging.info("New domain: %s", domain.name())
                     if tool_list:
                         for tool_cmd in tool_list:
