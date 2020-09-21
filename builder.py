@@ -97,6 +97,9 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             if image_name:
                 logging.debug("Selecting image %s", image_name)
                 tmp_autounattend.image_name = image_name
+            if extra_firstlogin_cmds:
+                for cmd in reversed(extra_firstlogin_cmds):
+                    tmp_autounattend.prepend_cmd(cmd)
             tmp_autounattend.write()
             # dump new Autounattend.xml
             # replace autounattend path in the config
