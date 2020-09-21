@@ -104,3 +104,25 @@ class Autounattend(AbstractContextManager):
     def write(self):
         """Writes the new Autounattend.xml"""
         self.tree.write(self.tmp_autounattend_f, encoding="utf-8", xml_declaration=True)
+
+    def prepend_cmd(self, cmd: str):
+        first_logon_commands = self.tree.find('.//ns:FirstLogonCommands', namespaces=self.nsmap)
+        if first_logon_commands is None:
+            raise ElementNotFoundError(f"Cannot find FirstLogonCommands element")
+        # since we don't know how to create an Element with a namespace
+        # deepcopy the first one
+        # create SynchronousCommand element
+        orig_sync_cmd = first_logon_commands.find('./ns:SynchronousCommand', namespaces=self.nsmap)
+        sync_cmd = deepcopy(orig_sync_cmd)
+        cmd_line = sync_cmd.find('./ns:CommandLine', self.nsmap)
+        cmd_line.text = cmd
+        desc = sync_cmd.find('./ns:Description', self.nsmap)
+        desc.text = 'Command added by osw-builder config'
+        requires_user_input = sync_cmd.find('./ns:RequiresUserInput', namespaces=self.nsmap)
+        requires_user_input.text = 'true'
+        # insert element in first position
+        first_logon_commands.insert(0, sync_cmd)
+        # update order
+        for index, child in enumerate(first_logon_commands):
+            order = child.find('./ns:Order', self.nsmap)
+            order.text = str(index + 1)
