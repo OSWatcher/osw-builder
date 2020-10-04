@@ -172,6 +172,7 @@ class DomXML:
         devices = self.findfirst("./devices")
         interface = ET.Element("interface", {"type": "network"})
         interface.append(ET.Element("source", {"network": "default"}))
+        interface.append(ET.Element("model", {"type": "e1000e"}))
         devices.append(interface)
 
     def tostring(self):
