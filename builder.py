@@ -314,7 +314,7 @@ def main(args):
             template = serie["template"]
             varfile = serie["varfile"]
             extra_firstlogin_cmds = None
-            if serie["extra_firstlogin_cmds"]:
+            if serie.get("extra_firstlogin_cmds"):
                 extra_firstlogin_cmds = serie["extra_firstlogin_cmds"]
             for index, entry in enumerate(filtered_image_list):
                 logging.debug(entry)
