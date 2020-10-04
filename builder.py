@@ -46,9 +46,7 @@ WINDOWS_TEMPLATE = "windows.json"
 
 
 @contextmanager
-def build_image(
-    template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]]
-):
+def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]]):
     source_url = config_entry["source"]
     # validate source
     parse_res = urlparse(source_url)
@@ -72,9 +70,7 @@ def build_image(
         try:
             sha1digest = config_entry["sha1"]
         except KeyError:
-            raise RuntimeError(
-                "Invalid configuration: need to specify a SHA1 for URL sources"
-            )
+            raise RuntimeError("Invalid configuration: need to specify a SHA1 for URL sources")
     logging.debug("SHA1: %s", sha1digest)
     # read win10 varfile
     with open(PACKER_TEMPLATES_DIR / varfile) as varfile_f:
@@ -128,9 +124,7 @@ def build_image(
             # open log file for packer
             with open("packer-build.log", "a") as packer_log_f:
                 try:
-                    subprocess.check_call(
-                        cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR
-                    )
+                    subprocess.check_call(cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
                 except subprocess.CalledProcessError:
                     raise RuntimeError("Packer build failed ! Check packer-build.log")
         # get output file path
@@ -302,24 +296,16 @@ def main(args):
 
         filtered_serie_list = config["series"]
         if only_series:
-            filtered_serie_list = [
-                serie for serie in config["series"] if serie["name"] in only_series
-            ]
+            filtered_serie_list = [serie for serie in config["series"] if serie["name"] in only_series]
         for serie in filtered_serie_list:
             logging.info("Serie %s", serie["name"])
             # apply filter
             #   get all images
             filtered_image_list = serie["images"]
             if only_image:
-                filtered_image_list = [
-                    entry for entry in serie["images"] if entry["name"] == only_image
-                ]
+                filtered_image_list = [entry for entry in serie["images"] if entry["name"] == only_image]
             elif from_image:
-                from_index_list = [
-                    index
-                    for index, entry in enumerate(serie["images"])
-                    if entry["name"] == from_image
-                ]
+                from_index_list = [index for index, entry in enumerate(serie["images"]) if entry["name"] == from_image]
                 if not from_index_list:
                     raise RuntimeError("Could not find from image name")
                 from_index = from_index_list[0]
@@ -351,9 +337,7 @@ def main(args):
                     if tool_list:
                         for tool_cmd in tool_list:
                             # format and replace domain name
-                            f_tool_cmd = tool_cmd.format(
-                                domain_name=domain.name(), uri=uri
-                            )
+                            f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
                             logging.info("Running tool: %s", f_tool_cmd)
                             subprocess.check_call(f_tool_cmd, shell=True)
 
