@@ -1,4 +1,5 @@
 import nox
+from pathlib import Path
 
 excluded = [".nox", "packer-templates"]
 
@@ -27,4 +28,10 @@ def fmt(session):
 def run(session):
     args = session.posargs
     session.install("-r", "requirements.txt")
-    session.run("python", "builder.py", *args)
+    # install oswatcher
+    session.install("../oswatcher")
+    # install pywinupdate
+    session.install("../pywinupdate")
+    session.run("python", "builder.py", *args, env={
+        'PACKER_CACHE_DIR': Path.home() / '.packer_cache'
+    })
