@@ -14,7 +14,6 @@ class ElementNotFoundError(Exception):
 
 
 class Autounattend(AbstractContextManager):
-
     def __init__(self, autounattend_path: Union[None, str, Path]):
         if autounattend_path is None:
             return
@@ -28,16 +27,14 @@ class Autounattend(AbstractContextManager):
 
         # avoid 'ns0' prefixes in the final XML
         # Windows installer will crash
-        ET.register_namespace('', 'urn:schemas-microsoft-com:unattend')
-        ET.register_namespace('wcm', 'http://schemas.microsoft.com/WMIConfig/2002/State')
-        ET.register_namespace('xsi', 'http://www.w3.org/2001/XMLSchema-instance')
-        ET.register_namespace('cpi', 'urn:schemas-microsoft-com:cpi')
+        ET.register_namespace("", "urn:schemas-microsoft-com:unattend")
+        ET.register_namespace("wcm", "http://schemas.microsoft.com/WMIConfig/2002/State")
+        ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
+        ET.register_namespace("cpi", "urn:schemas-microsoft-com:cpi")
         # load XML
-        with open(self.autounattend_path, 'rb') as f:
+        with open(self.autounattend_path, "rb") as f:
             self.tree = ET.ElementTree(ET.fromstring(f.read()))
-        self.nsmap: Dict[str, str] = {
-            'ns': 'urn:schemas-microsoft-com:unattend'
-        }
+        self.nsmap: Dict[str, str] = {"ns": "urn:schemas-microsoft-com:unattend"}
         self.tmp_dir: Optional[TemporaryDirectory] = None
         self.tmp_autounattend: Optional[Any] = None
 
@@ -60,10 +57,10 @@ class Autounattend(AbstractContextManager):
     @property
     def product_key(self):
         """Retrieves the ProductKey"""
-        product_key = self.tree.find('.//ns:ProductKey', namespaces=self.nsmap)
+        product_key = self.tree.find(".//ns:ProductKey", namespaces=self.nsmap)
         if product_key is None:
             raise ElementNotFoundError("Cannot find ProductKey element")
-        key = product_key.find('./ns:Key', namespaces=self.nsmap)
+        key = product_key.find("./ns:Key", namespaces=self.nsmap)
         if key is None:
             raise ElementNotFoundError("Cannot find Key element")
         return key.text
@@ -71,20 +68,20 @@ class Autounattend(AbstractContextManager):
     @product_key.setter
     def product_key(self, value):
         """Sets the ProductKey value"""
-        product_key = self.tree.find('.//ns:ProductKey', namespaces=self.nsmap)
+        product_key = self.tree.find(".//ns:ProductKey", namespaces=self.nsmap)
         if product_key is None:
             raise ElementNotFoundError("Cannot find ProductKey element")
-        key = product_key.find('./ns:Key', namespaces=self.nsmap)
+        key = product_key.find("./ns:Key", namespaces=self.nsmap)
         if key is None:
             # insert
-            key = ET.Element('Key')
+            key = ET.Element("Key")
             product_key.append(key)
         key.text = value
 
     @property
     def image_name(self):
         """Retrieves the Matadata/Value"""
-        image_name = self.tree.find('.//ns:MetaData/ns:Value', namespaces=self.nsmap)
+        image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
         if image_name is None:
             raise ElementNotFoundError("Cannot find Value element")
         return image_name.text
@@ -92,9 +89,9 @@ class Autounattend(AbstractContextManager):
     @image_name.setter
     def image_name(self, value):
         """Sets the Metadata/Value value"""
-        image_name = self.tree.find('.//ns:MetaData/ns:Value', namespaces=self.nsmap)
+        image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
         if image_name is None:
-            raise ElementNotFoundError(f"Cannot find Value element")
+            raise ElementNotFoundError("Cannot find Value element")
         image_name.text = value
 
     def tostring(self, pretty_print=True):
@@ -106,23 +103,23 @@ class Autounattend(AbstractContextManager):
         self.tree.write(self.tmp_autounattend_f, encoding="utf-8", xml_declaration=True)
 
     def prepend_cmd(self, cmd: str):
-        first_logon_commands = self.tree.find('.//ns:FirstLogonCommands', namespaces=self.nsmap)
+        first_logon_commands = self.tree.find(".//ns:FirstLogonCommands", namespaces=self.nsmap)
         if first_logon_commands is None:
-            raise ElementNotFoundError(f"Cannot find FirstLogonCommands element")
+            raise ElementNotFoundError("Cannot find FirstLogonCommands element")
         # since we don't know how to create an Element with a namespace
         # deepcopy the first one
         # create SynchronousCommand element
-        orig_sync_cmd = first_logon_commands.find('./ns:SynchronousCommand', namespaces=self.nsmap)
+        orig_sync_cmd = first_logon_commands.find("./ns:SynchronousCommand", namespaces=self.nsmap)
         sync_cmd = deepcopy(orig_sync_cmd)
-        cmd_line = sync_cmd.find('./ns:CommandLine', self.nsmap)
+        cmd_line = sync_cmd.find("./ns:CommandLine", self.nsmap)
         cmd_line.text = cmd
-        desc = sync_cmd.find('./ns:Description', self.nsmap)
-        desc.text = 'Command added by osw-builder config'
-        requires_user_input = sync_cmd.find('./ns:RequiresUserInput', namespaces=self.nsmap)
-        requires_user_input.text = 'true'
+        desc = sync_cmd.find("./ns:Description", self.nsmap)
+        desc.text = "Command added by osw-builder config"
+        requires_user_input = sync_cmd.find("./ns:RequiresUserInput", namespaces=self.nsmap)
+        requires_user_input.text = "true"
         # insert element in first position
         first_logon_commands.insert(0, sync_cmd)
         # update order
         for index, child in enumerate(first_logon_commands):
-            order = child.find('./ns:Order', self.nsmap)
+            order = child.find("./ns:Order", self.nsmap)
             order.text = str(index + 1)

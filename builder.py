@@ -18,7 +18,6 @@ Options:
 import sys
 import os
 import logging
-import copy
 from typing import List, Optional
 
 import yaml
@@ -28,7 +27,7 @@ import hashlib
 import shutil
 import libvirt
 from contextlib import contextmanager
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -38,20 +37,22 @@ from autounattend import Autounattend
 
 from docopt import docopt
 
-PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / 'packer-templates'
-OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / 'output-qemu'
+PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / "packer-templates"
+OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
-WINDOWS_TEMPLATE = 'windows.json'
+WINDOWS_TEMPLATE = "windows.json"
 
 
 @contextmanager
-def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]]):
-    source_url = config_entry['source']
+def build_image(
+    template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]]
+):
+    source_url = config_entry["source"]
     # validate source
     parse_res = urlparse(source_url)
-    if parse_res.scheme == 'file':
+    if parse_res.scheme == "file":
         # file exists ?
         source_path = Path(parse_res.path)
         if not source_path.exists():
@@ -60,7 +61,7 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
         logging.debug("Computing SHA1")
         # compute sha1
         sha1sum = hashlib.sha1()
-        with open(source_path, 'rb') as source_file:
+        with open(source_path, "rb") as source_file:
             buf = source_file.read(BLOCKSIZE)
             while len(buf) > 0:
                 sha1sum.update(buf)
@@ -69,31 +70,33 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
     else:
         # url, we need the SHA1 to be specified
         try:
-            sha1digest = config_entry['sha1']
+            sha1digest = config_entry["sha1"]
         except KeyError:
-            raise RuntimeError('Invalid configuration: need to specify a SHA1 for URL sources')
+            raise RuntimeError(
+                "Invalid configuration: need to specify a SHA1 for URL sources"
+            )
     logging.debug("SHA1: %s", sha1digest)
     # read win10 varfile
     with open(PACKER_TEMPLATES_DIR / varfile) as varfile_f:
         varfile_data = json.load(varfile_f)
     # replace source URL and SHA1
-    varfile_data['iso_url'] = source_url
-    varfile_data['iso_checksum'] = sha1digest
+    varfile_data["iso_url"] = source_url
+    varfile_data["iso_checksum"] = sha1digest
 
     auto_path = None
     if template == WINDOWS_TEMPLATE:
-        auto_path = PACKER_TEMPLATES_DIR / varfile_data['autounattend']
+        auto_path = PACKER_TEMPLATES_DIR / varfile_data["autounattend"]
     # write a new Autounattend and configure it if needed
     # we also create a temporary directory because the file must be named 'Autounattend.xml'
     with Autounattend(auto_path) as tmp_autounattend:
         if template == WINDOWS_TEMPLATE:
             # replace product key if needed
-            product_key = config_entry.get('key')
+            product_key = config_entry.get("key")
             if product_key:
                 logging.debug("Changing Product Key to %s", product_key)
                 tmp_autounattend.product_key = product_key
             # replace image name if needed
-            image_name = config_entry.get('image_name')
+            image_name = config_entry.get("image_name")
             if image_name:
                 logging.debug("Selecting image %s", image_name)
                 tmp_autounattend.image_name = image_name
@@ -103,18 +106,18 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             tmp_autounattend.write()
             # dump new Autounattend.xml
             # replace autounattend path in the config
-            varfile_data['autounattend'] = str(tmp_autounattend.autounattend_tmp_path)
+            varfile_data["autounattend"] = str(tmp_autounattend.autounattend_tmp_path)
         # write temporary varfile and build
-        with NamedTemporaryFile(mode='w') as tmp_f:
+        with NamedTemporaryFile(mode="w") as tmp_f:
             json.dump(varfile_data, tmp_f)
             # flush
             tmp_f.flush()
             # build with Packer
-            cmdline = ['packer', 'build']
+            cmdline = ["packer", "build"]
             # only qemu
-            cmdline.extend(['-only', 'qemu'])
+            cmdline.extend(["-only", "qemu"])
             # varfile
-            cmdline.extend(['-var-file', tmp_f.name])
+            cmdline.extend(["-var-file", tmp_f.name])
             # template
             cmdline.append(str(PACKER_TEMPLATES_DIR / template))
             logging.debug("cmdline: %s", cmdline)
@@ -123,22 +126,23 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
                 logging.warning("Removing previous unfinished build")
                 shutil.rmtree(OUTPUT_QEMU_DIR)
             # open log file for packer
-            with open('packer-build.log', 'a') as packer_log_f:
+            with open("packer-build.log", "a") as packer_log_f:
                 try:
-                    subprocess.check_call(cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
-                except subprocess.CalledProcessError as e:
-                    raise RuntimeError('Packer build failed ! Check packer-buikd.log')
+                    subprocess.check_call(
+                        cmdline, stdout=packer_log_f, cwd=PACKER_TEMPLATES_DIR
+                    )
+                except subprocess.CalledProcessError:
+                    raise RuntimeError("Packer build failed ! Check packer-build.log")
         # get output file path
         image_path = OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
         try:
             yield image_path
         finally:
-            logging.info('Build: cleaning up')
+            logging.info("Build: cleaning up")
             shutil.rmtree(OUTPUT_QEMU_DIR)
 
 
 class DomXML:
-
     def __init__(self, xml_desc):
         self.tree = ET.fromstring(xml_desc)
 
@@ -148,46 +152,54 @@ class DomXML:
 
     @property
     def name(self):
-        return self.findfirst('./name').text
+        return self.findfirst("./name").text
 
     @name.setter
     def name(self, value):
-        self.findfirst('./name').text = value
+        self.findfirst("./name").text = value
 
     @property
     def memory(self):
-        return self.findfirst('memory').text
+        return self.findfirst("memory").text
 
     @memory.setter
     def memory(self, value):
-        self.findfirst('./memory').text = value
+        self.findfirst("./memory").text = value
 
     @property
     def disk(self):
-        return self.findfirst('./devices/disk[@device="disk"]/source').get('file')
+        return self.findfirst('./devices/disk[@device="disk"]/source').get("file")
 
     @disk.setter
     def disk(self, value):
-        self.findfirst('./devices/disk[@device="disk"]/source').set('file', value)
+        self.findfirst('./devices/disk[@device="disk"]/source').set("file", value)
 
     def add_network(self):
-        devices = self.findfirst('./devices')
-        interface = ET.Element('interface', {'type': 'network'})
-        interface.append(ET.Element('source', {'network': 'default'}))
+        devices = self.findfirst("./devices")
+        interface = ET.Element("interface", {"type": "network"})
+        interface.append(ET.Element("source", {"network": "default"}))
         devices.append(interface)
 
     def tostring(self):
         """Generate new XML string from tree object"""
-        return ET.tostring(self.tree, encoding='unicode')
+        return ET.tostring(self.tree, encoding="unicode")
 
 
 class LibvirtDom:
-
-    def __init__(self, con, template, varfile, config_entry, remove_domain, net_on: bool, extra_firstlogin_cmds: Optional[List[str]]):
+    def __init__(
+        self,
+        con,
+        template,
+        varfile,
+        config_entry,
+        remove_domain,
+        net_on: bool,
+        extra_firstlogin_cmds: Optional[List[str]],
+    ):
         self.con = con
         self.template = template
         self.varfile = varfile
-        self.dom_name = config_entry['name']
+        self.dom_name = config_entry["name"]
         self.config_entry = config_entry
         self.remove_domain = remove_domain
         self.extra_firstlogin_cmds = extra_firstlogin_cmds
@@ -206,28 +218,33 @@ class LibvirtDom:
         except libvirt.libvirtError:
             logging.info("Building domain")
             # build and define domain
-            self.image_builder = build_image(self.template, self.varfile, self.config_entry, self.extra_firstlogin_cmds)
+            self.image_builder = build_image(
+                self.template,
+                self.varfile,
+                self.config_entry,
+                self.extra_firstlogin_cmds,
+            )
             image_path = self.image_builder.__enter__()
             # build pool
-            pool = self.con.storagePoolLookupByName('default')
+            pool = self.con.storagePoolLookupByName("default")
             # get pool path from Pool object
             pool_xml = pool.XMLDesc()
             pool_tree = ET.fromstring(pool_xml)
-            pool_path = pool_tree.findall('./target/path')[0].text
-            logging.debug('path: %s', pool_path)
+            pool_path = pool_tree.findall("./target/path")[0].text
+            logging.debug("path: %s", pool_path)
             # make sure storage is active
             if not pool.isActive():
                 pool.create()
             # move image to storage pool
-            dst = (Path(pool_path) / self.dom_name).with_suffix('.qcow2')
-            logging.debug('Moving image to %s', dst)
+            dst = (Path(pool_path) / self.dom_name).with_suffix(".qcow2")
+            logging.debug("Moving image to %s", dst)
             shutil.move(image_path, dst)
             # important: refresh storage pool, otherwise future lookup operation on this qcow will fail
             # ex: Storage volume not found: no storage vol with matching path '..../xxx.qcow2'
             pool.refresh()
             self.domain_disk = dst
             # template default domain XML
-            with open('domain.xml') as template_f:
+            with open("domain.xml") as template_f:
                 template_xml = template_f.read()
                 template = DomXML(template_xml)
                 template.name = self.dom_name
@@ -263,13 +280,13 @@ def init_logger(debug=False):
 
 
 def main(args):
-    uri = args['--connection']
-    debug = args['--debug']
-    images_config_path = args['<images_config>']
-    only_image = args['--only-image']
-    from_image = args['--from']
-    only_series = args['--only-serie']
-    net_on = args['--net']
+    uri = args["--connection"]
+    debug = args["--debug"]
+    images_config_path = args["<images_config>"]
+    only_image = args["--only-image"]
+    from_image = args["--from"]
+    only_series = args["--only-serie"]
+    net_on = args["--net"]
 
     init_logger(debug)
     logging.debug(args)
@@ -280,40 +297,63 @@ def main(args):
     with open(images_config_path) as config_f:
         config = yaml.safe_load(config_f)
 
-        remove_domain = config.get('remove_domain', DEFAULT_REMOVE_DOMAIN_VALUE)
-        tool_list = config.get('tools')
+        remove_domain = config.get("remove_domain", DEFAULT_REMOVE_DOMAIN_VALUE)
+        tool_list = config.get("tools")
 
-        filtered_serie_list = config['series']
+        filtered_serie_list = config["series"]
         if only_series:
-            filtered_serie_list = [serie for serie in config['series'] if serie['name'] in only_series]
+            filtered_serie_list = [
+                serie for serie in config["series"] if serie["name"] in only_series
+            ]
         for serie in filtered_serie_list:
-            logging.info('Serie %s', serie['name'])
+            logging.info("Serie %s", serie["name"])
             # apply filter
             #   get all images
-            filtered_image_list = serie['images']
+            filtered_image_list = serie["images"]
             if only_image:
-                filtered_image_list = [entry for entry in serie['images'] if entry['name'] == only_image]
+                filtered_image_list = [
+                    entry for entry in serie["images"] if entry["name"] == only_image
+                ]
             elif from_image:
-                from_index_list = [index for index, entry in enumerate(serie['images']) if entry['name'] == from_image]
+                from_index_list = [
+                    index
+                    for index, entry in enumerate(serie["images"])
+                    if entry["name"] == from_image
+                ]
                 if not from_index_list:
                     raise RuntimeError("Could not find from image name")
                 from_index = from_index_list[0]
-                filtered_image_list = serie['images'][from_index:]
+                filtered_image_list = serie["images"][from_index:]
 
-            template = serie['template']
-            varfile = serie['varfile']
+            template = serie["template"]
+            varfile = serie["varfile"]
             extra_firstlogin_cmds = None
-            if serie['extra_firstlogin_cmds']:
-                extra_firstlogin_cmds = serie['extra_firstlogin_cmds']
+            if serie["extra_firstlogin_cmds"]:
+                extra_firstlogin_cmds = serie["extra_firstlogin_cmds"]
             for index, entry in enumerate(filtered_image_list):
                 logging.debug(entry)
-                logging.info("[%s/%s] Building %s", index+1, len(filtered_image_list), entry['name'])
-                with LibvirtDom(libvirt_con, template, varfile, entry, remove_domain, net_on, extra_firstlogin_cmds) as domain:
+                logging.info(
+                    "[%s/%s] Building %s",
+                    index + 1,
+                    len(filtered_image_list),
+                    entry["name"],
+                )
+                with LibvirtDom(
+                    libvirt_con,
+                    template,
+                    varfile,
+                    entry,
+                    remove_domain,
+                    net_on,
+                    extra_firstlogin_cmds,
+                ) as domain:
                     logging.info("New domain: %s", domain.name())
                     if tool_list:
                         for tool_cmd in tool_list:
                             # format and replace domain name
-                            f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
+                            f_tool_cmd = tool_cmd.format(
+                                domain_name=domain.name(), uri=uri
+                            )
                             logging.info("Running tool: %s", f_tool_cmd)
                             subprocess.check_call(f_tool_cmd, shell=True)
 
