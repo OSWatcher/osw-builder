@@ -104,6 +104,12 @@ series:
         key: *key_pro
         image_name: *win10_pro
 
+      - name: 'win10-20H1-2004.19041.264'
+        source: 'file:///home/wenzel/Téléchargements/Win10_2004_English_x64.iso'
+        sha1: '71a288febd984839b575efb3bd9bc9ab7471b604'
+        key: *key_pro
+        image_name: *win10_pro
+
   - name: 'ubuntu-server-LTS'
     template: 'ubuntu.json'
     varfile: 'ubuntu_1604_x64.json'
