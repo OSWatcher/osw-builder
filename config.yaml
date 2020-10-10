@@ -18,6 +18,8 @@ series:
       - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
       # include recommended Windows Updates
       - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v IncludeRecommendedUpdates /d 1 /t REG_DWORD /f'
+      # exclude drivers from Windows Updates
+      - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v ExcludeWUDriversInQualityUpdate /d 1 /t REG_DWORD /f'
     images:
       - name: 'win10-ts1-1507'
         source: 'https://oswimages.s3.eu-west-3.amazonaws.com/Windows/win10/Win10_1507_English_x64.iso'
