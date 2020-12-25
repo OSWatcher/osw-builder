@@ -25,7 +25,7 @@ def fmt(session):
     session.run("black", "--line-length", "120", ".")
 
 
-@nox.session
+@nox.session(venv_params=["--system-site-packages"])
 def run(session):
     args = session.posargs
     session.install("-r", "requirements.txt")
