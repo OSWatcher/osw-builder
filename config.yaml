@@ -117,6 +117,12 @@ series:
         key: *key_pro
         image_name: *win10_pro
 
+      - name: 'win10-20H2-2009.19042.631'
+        source: 'https://oswimages.s3.eu-west-3.amazonaws.com/ISO/Windows/win10/Win10_20H2_v2_English_x64.iso'
+        sha1: '69a1739609c1059fdd2e0688891bf59a78413c6b'
+        key: *key_pro
+        image_name: *win10_pro
+
   - name: 'ubuntu-server-LTS'
     template: 'ubuntu.json'
     varfile: 'ubuntu_1604_x64.json'
