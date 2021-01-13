@@ -13,7 +13,7 @@ tools:
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
-  - 'oswatcher {domain_name} hooks_windows.json --connection={uri}'
+  - 'oswatcher {domain_name} hooks_windows.json --connection={uri} --tag {domain_name}'
 series:
   - name: 'windows-10'
     template: 'windows.json'
