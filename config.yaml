@@ -6,6 +6,7 @@ image_names:
   win10_pro: &win10_pro 'Windows 10 Pro'
 # whether we should remove the domain after once we ran our tools
 remove_domain: true
+storage_pool: "osw"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
