@@ -4,6 +4,9 @@ from pathlib import Path
 excluded = [".nox", "packer-templates"]
 nox.options.sessions = ["fmt", "lint"]
 
+PACKER_CACHE_HOME = Path.home() / ".packer_cache"
+PACKER_CACHE_USB = "/media/wenzel/OSWatcher/packer_cache"
+
 
 @nox.session
 def lint(session):
@@ -33,4 +36,4 @@ def run(session):
     session.install("../oswatcher")
     # install pywinupdate
     session.install("../pywinupdate")
-    session.run("python", "builder.py", *args, env={"PACKER_CACHE_DIR": Path.home() / ".packer_cache"})
+    session.run("python", "builder.py", *args, env={"PACKER_CACHE_DIR": PACKER_CACHE_USB})
