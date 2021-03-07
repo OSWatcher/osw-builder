@@ -43,6 +43,7 @@ BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
 WINDOWS_TEMPLATE = "windows.json"
+DEFAULT_STORAGE_POOL = "default"
 
 
 @contextmanager
@@ -189,6 +190,7 @@ class LibvirtDom:
         config_entry,
         remove_domain,
         net_on: bool,
+        storage_pool: str,
         extra_firstlogin_cmds: Optional[List[str]],
     ):
         self.con = con
@@ -199,6 +201,7 @@ class LibvirtDom:
         self.remove_domain = remove_domain
         self.extra_firstlogin_cmds = extra_firstlogin_cmds
         self.net_on = net_on
+        self.storage_pool = storage_pool
         self.dom = None
         self.image_builder = None
         self.domain_disk = None
@@ -221,7 +224,7 @@ class LibvirtDom:
             )
             image_path = self.image_builder.__enter__()
             # build pool
-            pool = self.con.storagePoolLookupByName("default")
+            pool = self.con.storagePoolLookupByName(self.storage_pool)
             # get pool path from Pool object
             pool_xml = pool.XMLDesc()
             pool_tree = ET.fromstring(pool_xml)
@@ -293,6 +296,7 @@ def main(args):
         config = yaml.safe_load(config_f)
 
         remove_domain = config.get("remove_domain", DEFAULT_REMOVE_DOMAIN_VALUE)
+        storage_pool = config.get("storage_pool", DEFAULT_STORAGE_POOL)
         tool_list = config.get("tools")
 
         filtered_serie_list = config["series"]
@@ -332,6 +336,7 @@ def main(args):
                     entry,
                     remove_domain,
                     net_on,
+                    storage_pool,
                     extra_firstlogin_cmds,
                 ) as domain:
                     logging.info("New domain: %s", domain.name())
