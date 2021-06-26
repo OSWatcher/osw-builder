@@ -36,4 +36,6 @@ def run(session):
     session.install("../oswatcher")
     # install pywinupdate
     session.install("../pywinupdate")
+    # install neogit
+    session.install("../neogit")
     session.run("python", "builder.py", *args, env={"PACKER_CACHE_DIR": PACKER_CACHE_USB})
