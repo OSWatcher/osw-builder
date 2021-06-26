@@ -5,16 +5,17 @@ keys:
 image_names:
   win10_pro: &win10_pro 'Windows 10 Pro'
 # whether we should remove the domain after once we ran our tools
-remove_domain: true
+remove_domain: false
 storage_pool: "osw"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
-  # - './tools/capture.py {domain_name} hooks_ubuntu.json --connection={uri}'
+  # - './tools/capture.py {domain_name} hooks_windows.json --connection={uri} --debug'
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
-  - 'oswatcher {domain_name} hooks_windows.json --connection={uri} --tag {domain_name}'
+  # - 'oswatcher {domain_name} hooks_windows.json --connection={uri} --tag {domain_name}'
+  - './tools/capture.py neogit {domain_name} --connection={uri}'
 series:
   - name: 'windows-10'
     template: 'windows.json'
