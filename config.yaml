@@ -10,7 +10,7 @@ storage_pool: "osw"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
-  - './tools/capture.py oswatcher {domain_name} hooks_windows.json --connection={uri} --debug --updates'
+  - './tools/capture.py oswatcher {domain_name} hooks_windows.json --connection={uri} --updates'
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
