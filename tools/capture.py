@@ -135,7 +135,8 @@ def wait_for_ip(domain, network_name="default"):
 
 def shutdown(domain):
     logging.info("shutting down")
-    domain.shutdown()
+    if domain.state()[0] != libvirt.VIR_DOMAIN_SHUTOFF:
+        domain.shutdown()
     while domain.state()[0] != libvirt.VIR_DOMAIN_SHUTOFF:
         time.sleep(2)
 
