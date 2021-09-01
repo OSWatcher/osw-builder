@@ -12,7 +12,6 @@ Options:
     -c --connection=<URI>           Specify a libvirt URI [Default: qemu:///session]
 """
 
-
 import sys
 
 import libvirt
@@ -31,7 +30,7 @@ import os
 from contextlib import closing
 
 from oswatcher.capture import capture_vm
-from winupdate.winupdate import WinUpdate, WinUpdateModData, WinUpdateInfo
+from winupdate.winupdate import WinUpdate, WinUpdateModData, WinUpdateInfo, UpdateNotInstalledError
 
 from neogit.service import Neogit
 
@@ -141,6 +140,17 @@ def shutdown(domain):
         time.sleep(2)
 
 
+def take_snapshot(domain, snap_name: str, snap_desc: str = ""):
+    """take snapshot and return snapshot object"""
+    snap_xml = SNAPSHOT_XML.format(snapshot_name=snap_name, description=snap_desc)
+    try:
+        domain.snapshotLookupByName(snap_name)
+    except libvirt.libvirtError:
+        # create it
+        domain.snapshotCreateXML(snap_xml)
+    return domain.snapshotLookupByName(snap_name)
+
+
 def oswatcher(args):
     debug = args["--debug"]
     vm_name = args["<vm_name>"]
@@ -152,60 +162,84 @@ def oswatcher(args):
     con = libvirt.open(uri)
     domain = con.lookupByName(vm_name)
 
-    # take snapshot
-    snap_xml = SNAPSHOT_XML.format(snapshot_name="ready", description="")
-    try:
-        domain.snapshotLookupByName("ready")
-    except libvirt.libvirtError:
-        # create it
-        domain.snapshotCreateXML(snap_xml)
-    # revert to snapshot
-    # domain.revertToSnapshot("ready")
-    logging.info("Start domain %s", vm_name)
-    domain.create()
-    # wait for ip
-    logging.info("Wait for IP address")
-    ip_addr = wait_for_ip(domain)
-    logging.info("IP: %s", ip_addr)
-    # wait WinRM
-    logging.info("Wait for WinRM service")
-    wait_winrm(ip_addr)
-    logging.info("Searching for Windows Updates")
-    # search for updates
-    win_log_level = 0
-    if debug:
-        win_log_level = 1
-    win_update = WinUpdate(ip_addr, debug_lvl=win_log_level)
-
+    ready_snap = take_snapshot(domain, "ready")
+    # ensure revert to snapshot
+    domain.revertToSnapshot(ready_snap)
     if args["--updates"]:
-        for update in win_update.search():
-            logging.info("[%s] %s", update.kb[0], update.title)
-            # shutdown VM
-            shutdown(domain)
-            # take snapshot
-            snap_name = update.kb[0]
-            snap_xml = SNAPSHOT_XML.format(snapshot_name=snap_name, description=update.title)
+        logging.info("Start domain %s", vm_name)
+        domain.create()
+        # wait for ip
+        logging.info("Wait for IP address")
+        ip_addr = wait_for_ip(domain)
+        logging.info("IP: %s", ip_addr)
+        # wait WinRM
+        logging.info("Wait for WinRM service")
+        wait_winrm(ip_addr)
+        logging.info("Searching for Windows Updates")
+        # search for updates
+        win_log_level = 0
+        if debug:
+            win_log_level = 1
+        win_update = WinUpdate(ip_addr, debug_lvl=win_log_level)
+
+        previous_snap = ready_snap
+        for index, update in enumerate(win_update.search()):
+            domain.revertToSnapshot(previous_snap)
+            # for each update
+            # check snapshot exists
+            # if yes
+            #   revert
+            #   recapture
+            #   continue
+            # if not
+            #   install update
+            #   shutdown
+            #   recapture
+            #   take snapshot
+            logging.info("[%s][%s] %s", index + 1, update.kb[0], update.title)
+            # check if snapshot exists
+            kb_snap_name = f"KB{update.kb[0]}"
             try:
-                domain.snapshotLookupByName(snap_name)
+                kb_snap = domain.snapshotLookupByName(kb_snap_name)
             except libvirt.libvirtError:
-                # create it
-                domain.snapshotCreateXML(snap_xml)
-            # recapture image, on a specific branch
-            # capture_vm(vm_name, plugins_path, connection=uri, base_branch=vm_name, debug=debug)
+                # start VM, wait for IP and WinRM
+                logging.info("Start domain %s", vm_name)
+                domain.create()
+                # wait for ip
+                logging.info("Wait for IP address")
+                ip_addr = wait_for_ip(domain)
+                logging.info("IP: %s", ip_addr)
+                # wait WinRM
+                logging.info("Wait for WinRM service")
+                wait_winrm(ip_addr)
+                # not exists, need to install update, take snapshot and recapture
+                logging.info("Installing update")
+                # install update
+                try:
+                    win_update.apply_update(update.id, update.kb[0])
+                except UpdateNotInstalledError:
+                    # revert to previous snap
+                    domain.revertToSnapshot(previous_snap)
+                    logging.warning("Failed to install update")
+                else:
+                    # installed successfully
+                    # shutdown VM
+                    shutdown(domain)
+                    # take snapshot
+                    previous_snap = take_snapshot(domain, kb_snap_name, snap_desc=update.title)
+            else:
+                logging.info("Update already installed on %s snapshot", kb_snap_name)
+                # already exists, just force revert, recapture and continue
+                domain.revertToSnapshot(kb_snap)
+                previous_snap = kb_snap
+            finally:
+                # recapture
+                # capture_vm(vm_name, plugins_path, connection=uri, base_branch=vm_name, debug=debug)
+                pass
 
-            logging.info("Start domain %s", vm_name)
-            domain.create()
-            # wait for ip
-            logging.info("Wait for IP address")
-            ip_addr = wait_for_ip(domain)
-            logging.info("IP: %s", ip_addr)
-            # wait WinRM
-            logging.info("Wait for WinRM service")
-            wait_winrm(ip_addr)
-
-    # while has_updates
-    # install update
-    # capture
+        # done !
+        # shutdown VM
+        shutdown(domain)
     retcode = 0
     sys.exit(retcode)
 
