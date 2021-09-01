@@ -10,12 +10,12 @@ storage_pool: "osw"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
-  # - './tools/capture.py {domain_name} hooks_windows.json --connection={uri} --debug'
+  - './tools/capture.py oswatcher {domain_name} hooks_windows.json --connection={uri} --debug --updates'
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
   # - 'oswatcher {domain_name} hooks_windows.json --connection={uri} --tag {domain_name}'
-  - './tools/capture.py neogit {domain_name} --connection={uri}'
+  # - './tools/capture.py neogit {domain_name} --connection={uri}'
 series:
   - name: 'windows-10'
     template: 'windows.json'
