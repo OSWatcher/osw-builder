@@ -15,27 +15,25 @@ Options:
 """
 
 
-import sys
-import os
-import logging
-from typing import List, Optional
-
-import yaml
-import json
-import subprocess
 import hashlib
+import json
+import logging
+import os
 import shutil
-import libvirt
-from contextlib import contextmanager
-from tempfile import NamedTemporaryFile
-from urllib.parse import urlparse
-from pathlib import Path
+import subprocess
+import sys
 import xml.etree.ElementTree as ET
+from contextlib import contextmanager
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import List, Optional
+from urllib.parse import urlparse
+
+import libvirt
+import yaml
+from docopt import docopt
 
 from autounattend import Autounattend
-
-
-from docopt import docopt
 
 PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / "packer-templates"
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
@@ -344,6 +342,8 @@ def main(args):
                         for tool_cmd in tool_list:
                             # format and replace domain name
                             f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
+                            if debug:
+                                f_tool_cmd += " --debug"
                             logging.info("Running tool: %s", f_tool_cmd)
                             subprocess.check_call(f_tool_cmd, shell=True)
 
