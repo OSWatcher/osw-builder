@@ -11,29 +11,28 @@ Options:
     -u --updates                    Install Windows Updates
     -c --connection=<URI>           Specify a libvirt URI [Default: qemu:///session]
 """
-
-import sys
-
-import libvirt
-import time
 import logging
-import socket
-import guestfs
-import subprocess
-from pathlib import Path
-from threading import Thread
-from tempfile import TemporaryDirectory
-import xml.etree.ElementTree as tree
-from functools import partial
-from docopt import docopt
 import os
+import re
+import socket
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as tree
 from contextlib import closing
+from functools import partial
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from threading import Thread
 
-from oswatcher.capture import capture_vm
-from winupdate.winupdate import WinUpdate, WinUpdateModData, WinUpdateInfo, UpdateNotInstalledError
-
+import guestfs
+import libvirt
+from docopt import docopt
 from neogit.service import Neogit
+from oswatcher.capture import capture_vm
+from winupdate.winupdate import UpdateNotInstalledError, WinUpdate
 
+READY_SNAP_NAME = "ready"
 SNAPSHOT_XML = """
 <domainsnapshot>
     <name>{snapshot_name}</name>
@@ -127,7 +126,7 @@ def wait_for_ip(domain, network_name="default"):
     while True:
         net = domain.connect().networkLookupByName(network_name)
         leases = net.DHCPLeases()
-        found = [l for l in leases if l["mac"] == mac_addr]
+        found = [lea for lea in leases if lea["mac"] == mac_addr]
         if found:
             return found[0]["ipaddr"]
         time.sleep(1)
@@ -157,16 +156,38 @@ def oswatcher(args):
     vm_name = args["<vm_name>"]
     plugins_path = args["<plugins_configuration>"]
     uri = args["--connection"]
-    # run first capture
-    # retcode = capture_vm(vm_name, plugins_path, connection=uri, base_branch=None, tag=vm_name, debug=debug)
-    # start vm
+
     con = libvirt.open(uri)
     domain = con.lookupByName(vm_name)
 
-    ready_snap = take_snapshot(domain, "ready")
+    ready_snap = take_snapshot(domain, READY_SNAP_NAME)
     # ensure revert to snapshot
     domain.revertToSnapshot(ready_snap)
+    # run first capture
+    retcode = capture_vm(vm_name, plugins_path, connection=uri, base_branch=None, tag=vm_name, debug=debug)
     if args["--updates"]:
+        # first pass on each snapshot update
+        # each snapshto name is <counter>-KBXXXX
+        # split on -
+        # sort by counter
+        snap_list = []
+        for snap_update in domain.listAllSnapshots():
+            match = re.match(r"^(?P<counter>\d+)-(?P<id>KB.*)$", snap_update.getName())
+            if match:
+                counter, update_id = match.group("counter"), match.group("id")
+                snap_list.append((counter, update_id, snap_update))
+        previous_snap = ready_snap
+        snap_counter = 0
+        for up_counter, up_id, snap_update in sorted(snap_list, key=lambda tup: int(tup[0])):
+            # revert
+            logging.info("Revert to snap %s", snap_update.getName())
+            domain.revertToSnapshot(snap_update)
+            previous_snap = snap_update
+            snap_counter = int(up_counter)
+            # capture
+            commit_name = f"{vm_name}-{up_id}"
+            retcode = capture_vm(vm_name, plugins_path, connection=uri, base_branch=None, tag=commit_name, debug=debug)
+        # check for updates
         logging.info("Start domain %s", vm_name)
         domain.create()
         # wait for ip
@@ -183,7 +204,6 @@ def oswatcher(args):
             win_log_level = 1
         win_update = WinUpdate(ip_addr, debug_lvl=win_log_level)
 
-        previous_snap = ready_snap
         for index, update in enumerate(win_update.search()):
             domain.revertToSnapshot(previous_snap)
             # for each update
@@ -199,7 +219,8 @@ def oswatcher(args):
             #   take snapshot
             logging.info("[%s][%s] %s", index + 1, update.kb[0], update.title)
             # check if snapshot exists
-            kb_snap_name = f"KB{update.kb[0]}"
+            snap_counter += 1
+            kb_snap_name = f"{snap_counter}-KB{update.kb[0]}"
             try:
                 kb_snap = domain.snapshotLookupByName(kb_snap_name)
             except libvirt.libvirtError:
@@ -235,8 +256,8 @@ def oswatcher(args):
                 previous_snap = kb_snap
             finally:
                 # recapture
-                # capture_vm(vm_name, plugins_path, connection=uri, base_branch=vm_name, debug=debug)
-                pass
+                commit_name = f"{vm_name}-{update.kb[0]}"
+                retcode = capture_vm(vm_name, plugins_path, connection=uri, base_branch=None, debug=debug, tag=commit_name)
 
         # done !
         # shutdown VM
@@ -253,17 +274,16 @@ def neogit(args):
     domain = con.lookupByName(vm_name)
     dom_xml = domain.XMLDesc()
     root = tree.fromstring(dom_xml)
-    qcow_path = root.findall('./devices/disk[@device="disk"]/source')[0].get("file")
+    qcow_path = Path(root.findall('./devices/disk[@device="disk"]/source')[0].get("file"))
     logging.info("Qcow path: %s", qcow_path)
 
     with LibguestFSMnt(qcow_path, local=True, readonly=True) as local_mnt:
         logging.info("Local mountpoint: %s", local_mnt)
         # ensure init
-        cmdline = ["neogit", "init"]
-        subprocess.check_call(cmdline)
-        cmdline = ["neogit", "commit", vm_name, "-r", local_mnt]
+        neo = Neogit()
+        neo.init()
         logging.info("Running Neogit ...")
-        subprocess.check_call(cmdline)
+        neo.commit(vm_name, local_mnt)
 
 
 def main():
