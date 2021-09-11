@@ -1,5 +1,6 @@
-import nox
 from pathlib import Path
+
+import nox
 
 excluded = [".nox", "packer-templates"]
 nox.options.sessions = ["fmt", "lint"]
