@@ -1,12 +1,11 @@
 """A module to manipulate Windows Autounattend.xml configuration files"""
 
-from contextlib import AbstractContextManager
-from tempfile import TemporaryDirectory
-from pathlib import Path
-from typing import Optional, Any, Dict, Union
-from copy import deepcopy
-
 import xml.etree.ElementTree as ET
+from contextlib import AbstractContextManager
+from copy import deepcopy
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Any, Dict, Optional, Union
 
 
 class ElementNotFoundError(Exception):
