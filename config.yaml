@@ -6,11 +6,11 @@ image_names:
   win10_pro: &win10_pro 'Windows 10 Pro'
 # whether we should remove the domain after once we ran our tools
 remove_domain: false
-storage_pool: "osw"
+storage_pool: "default"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
-  - './tools/capture.py oswatcher {domain_name} hooks_windows.json --connection={uri} --updates'
+  - './tools/capture.py oswatcher {domain_name} hooks_filesystem_neogit.json --updates --connection={uri}'
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
@@ -124,6 +124,12 @@ series:
       - name: 'win10-20H2-2009.19042.631'
         source: 'https://oswimages.s3.eu-west-3.amazonaws.com/ISO/Windows/win10/Win10_20H2_v2_English_x64.iso'
         sha1: '69a1739609c1059fdd2e0688891bf59a78413c6b'
+        key: *key_pro
+        image_name: *win10_pro
+
+      - name: 'win10-21h1-19043.928'
+        source: 'https://oswimages.s3.eu-west-3.amazonaws.com/ISO/Windows/win10/Win10_21H1_English_x64.iso'
+        sha1: '78aa5fa0fd332ee0822ef5a533cd2cfe12333274'
         key: *key_pro
         image_name: *win10_pro
 
