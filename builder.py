@@ -109,6 +109,8 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             tmp_f.flush()
             # build with Packer
             cmdline = ["packer", "build"]
+            # produce log file free of ANSI escape codes
+            cmdline.append("-color=false")
             # only qemu
             cmdline.extend(["-only", "qemu"])
             # varfile
