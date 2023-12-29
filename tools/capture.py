@@ -283,7 +283,7 @@ def neogit(args):
         neo = Neogit()
         neo.init()
         logging.info("Running Neogit ...")
-        neo.commit(vm_name, local_mnt)
+        neo.commit(vm_name, Path(local_mnt))
 
 
 def main():
