@@ -1,3 +1,4 @@
 docopt==0.6.2
 pyyaml==5.3.1
 libvirt-python==9.7.0
+https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz
