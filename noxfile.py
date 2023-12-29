@@ -5,8 +5,8 @@ import nox
 excluded = [".nox", "packer-templates"]
 nox.options.sessions = ["fmt", "lint"]
 
-PACKER_CACHE_HOME = Path.home() / ".packer_cache"
-PACKER_CACHE_USB = "/media/wenzel/OSWatcher/packer_cache"
+# PACKER_CACHE_DIR = "/media/wenzel/OSWatcher/packer_cache"
+PACKER_CACHE_DIR = ""
 
 
 @nox.session
@@ -39,4 +39,4 @@ def run(session):
     session.install("../pywinupdate")
     # install neogit
     session.install("../neogit")
-    session.run("python", "builder.py", *args, env={"PACKER_CACHE_DIR": PACKER_CACHE_USB})
+    session.run("python", "builder.py", *args, env={"PACKER_CACHE_DIR": PACKER_CACHE_DIR})
