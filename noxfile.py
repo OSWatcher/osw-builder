@@ -5,10 +5,6 @@ import nox
 excluded = [".nox", "packer-templates"]
 nox.options.sessions = ["fmt", "lint"]
 
-# PACKER_CACHE_DIR = "/media/wenzel/OSWatcher/packer_cache"
-PACKER_CACHE_DIR = ""
-
-
 @nox.session
 def lint(session):
     session.install("flake8", "flake8-bugbear", "isort", "mypy")
@@ -39,4 +35,4 @@ def run(session):
     session.install("../pywinupdate")
     # install neogit
     session.install("../neogit")
-    session.run("python", "builder.py", *args, env={"PACKER_CACHE_DIR": PACKER_CACHE_DIR})
+    session.run("python", "builder.py", *args)
