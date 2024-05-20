@@ -27,6 +27,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
 from urllib.parse import urlparse
+import importlib.resources as resources
 
 import libvirt
 import yaml
@@ -34,7 +35,12 @@ from docopt import docopt
 
 from osw_builder.autounattend import Autounattend
 
-PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent.parent / "packer-templates"
+# Access the packer-templates directory
+def get_packer_templates_dir():
+    with resources.path(__package__, 'packer-templates') as path:
+        return Path(path)
+
+PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
