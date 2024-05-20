@@ -34,7 +34,7 @@ from docopt import docopt
 
 from osw_builder.autounattend import Autounattend
 
-PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / "packer-templates"
+PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent.parent / "packer-templates"
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
