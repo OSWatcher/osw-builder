@@ -2,3 +2,13 @@
 	path = packer-templates
 	url = https://github.com/Wenzel/packer-templates
 	branch = win10_pro
+[submodule "vendor/oswatcher"]
+	path = vendor/oswatcher
+	url = git@github.com:OSWatcher/oswatcher_private.git
+	branch = integration/neogit
+[submodule "vendor/neogit"]
+	path = vendor/neogit
+	url = git@github.com:OSWatcher/neogit.git
+[submodule "vendor/pywinupdate"]
+	path = vendor/pywinupdate
+	url = git@github.com:OSWatcher/pywinupdate.git
