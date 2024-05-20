@@ -21,7 +21,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 from pathlib import Path
@@ -33,7 +32,7 @@ import libvirt
 import yaml
 from docopt import docopt
 
-from autounattend import Autounattend
+from osw_builder.autounattend import Autounattend
 
 PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / "packer-templates"
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
@@ -349,7 +348,6 @@ def main(args):
                             logging.info("Running tool: %s", f_tool_cmd)
                             subprocess.check_call(f_tool_cmd, shell=True)
 
-
-args = docopt(__doc__)
-retcode = main(args)
-sys.exit(retcode)
+def entrypoint():
+    args = docopt(__doc__)
+    main(args)
