@@ -2,7 +2,7 @@
 
 """
 Usage: builder.py [options] <images_config>
-       builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] <images_config>
+       builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...]
 
 Options:
     -h --help                       Display this message
@@ -30,10 +30,10 @@ from typing import List, Optional
 from urllib.parse import urlparse
 
 import libvirt
-import yaml
 from docopt import docopt
 
 from osw_builder.autounattend import Autounattend
+from osw_builder.settings import settings
 
 
 # Access the packer-templates directory
@@ -287,7 +287,6 @@ def init_logger(debug=False):
 def main(args):
     uri = args["--connection"]
     debug = args["--debug"]
-    images_config_path = args["<images_config>"]
     only_image = args["--only-image"]
     from_image = args["--from"]
     only_series = args["--only-serie"]
@@ -298,63 +297,59 @@ def main(args):
 
     libvirt_con = libvirt.open(uri)
 
-    # load yaml config
-    with open(images_config_path) as config_f:
-        config = yaml.safe_load(config_f)
+    remove_domain = settings.get("remove_domain", DEFAULT_REMOVE_DOMAIN_VALUE)
+    storage_pool = settings.get("storage_pool", DEFAULT_STORAGE_POOL)
+    tool_list = settings.get("tools")
 
-        remove_domain = config.get("remove_domain", DEFAULT_REMOVE_DOMAIN_VALUE)
-        storage_pool = config.get("storage_pool", DEFAULT_STORAGE_POOL)
-        tool_list = config.get("tools")
+    filtered_serie_list = settings["series"]
+    if only_series:
+        filtered_serie_list = [serie for serie in settings["series"] if serie["name"] in only_series]
+    for serie in filtered_serie_list:
+        logging.info("Serie %s", serie["name"])
+        # apply filter
+        #   get all images
+        filtered_image_list = serie["images"]
+        if only_image:
+            filtered_image_list = [entry for entry in serie["images"] if entry["name"] == only_image]
+        elif from_image:
+            from_index_list = [index for index, entry in enumerate(serie["images"]) if entry["name"] == from_image]
+            if not from_index_list:
+                raise RuntimeError("Could not find from image name")
+            from_index = from_index_list[0]
+            filtered_image_list = serie["images"][from_index:]
 
-        filtered_serie_list = config["series"]
-        if only_series:
-            filtered_serie_list = [serie for serie in config["series"] if serie["name"] in only_series]
-        for serie in filtered_serie_list:
-            logging.info("Serie %s", serie["name"])
-            # apply filter
-            #   get all images
-            filtered_image_list = serie["images"]
-            if only_image:
-                filtered_image_list = [entry for entry in serie["images"] if entry["name"] == only_image]
-            elif from_image:
-                from_index_list = [index for index, entry in enumerate(serie["images"]) if entry["name"] == from_image]
-                if not from_index_list:
-                    raise RuntimeError("Could not find from image name")
-                from_index = from_index_list[0]
-                filtered_image_list = serie["images"][from_index:]
-
-            template = serie["template"]
-            varfile = serie["varfile"]
-            extra_firstlogin_cmds = None
-            if serie.get("extra_firstlogin_cmds"):
-                extra_firstlogin_cmds = serie["extra_firstlogin_cmds"]
-            for index, entry in enumerate(filtered_image_list):
-                logging.debug(entry)
-                logging.info(
-                    "[%s/%s] Building %s",
-                    index + 1,
-                    len(filtered_image_list),
-                    entry["name"],
-                )
-                with LibvirtDom(
-                    libvirt_con,
-                    template,
-                    varfile,
-                    entry,
-                    remove_domain,
-                    net_on,
-                    storage_pool,
-                    extra_firstlogin_cmds,
-                ) as domain:
-                    logging.info("New domain: %s", domain.name())
-                    if tool_list:
-                        for tool_cmd in tool_list:
-                            # format and replace domain name
-                            f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
-                            if debug:
-                                f_tool_cmd += " --debug"
-                            logging.info("Running tool: %s", f_tool_cmd)
-                            subprocess.check_call(f_tool_cmd, shell=True)
+        template = serie["template"]
+        varfile = serie["varfile"]
+        extra_firstlogin_cmds = None
+        if serie.get("extra_firstlogin_cmds"):
+            extra_firstlogin_cmds = serie["extra_firstlogin_cmds"]
+        for index, entry in enumerate(filtered_image_list):
+            logging.debug(entry)
+            logging.info(
+                "[%s/%s] Building %s",
+                index + 1,
+                len(filtered_image_list),
+                entry["name"],
+            )
+            with LibvirtDom(
+                libvirt_con,
+                template,
+                varfile,
+                entry,
+                remove_domain,
+                net_on,
+                storage_pool,
+                extra_firstlogin_cmds,
+            ) as domain:
+                logging.info("New domain: %s", domain.name())
+                if tool_list:
+                    for tool_cmd in tool_list:
+                        # format and replace domain name
+                        f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
+                        if debug:
+                            f_tool_cmd += " --debug"
+                        logging.info("Running tool: %s", f_tool_cmd)
+                        subprocess.check_call(f_tool_cmd, shell=True)
 
 
 def entrypoint():

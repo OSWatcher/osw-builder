@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Mathieu Tarral <mathieu.tarral@protonmail.com>"]
 readme = "README.md"
-include = ["packer-templates/**"]
+include = ["packer-templates/**", "osw_builder/default_settings.yaml"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -15,6 +15,7 @@ guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz"
 neogit = { path = "vendor/neogit" }
 oswatcher = { path = "vendor/oswatcher" }
 pywinupdate = { path = "vendor/pywinupdate" }
+dynaconf = "^3.2.5"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.26.1"
