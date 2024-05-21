@@ -32,7 +32,7 @@ build-backend = "poetry.core.masonry.api"
 osw-builder = "osw_builder.__main__:entrypoint"
 
 [tool.poe.tasks]
-flake8 = "flake8 --show-source --statistics --exclude .nox,packer-templates"
+flake8 = "flake8 --show-source --statistics"
 isort = "isort --line-length 120 ."
 lint.shell = "poe flake8 && poe isort"
 format = "black --line-length 120 ."
