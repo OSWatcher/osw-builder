@@ -1,1 +1,2 @@
 include packer-templates/*
+include osw_builder/default_settings.yaml
