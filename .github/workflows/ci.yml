@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    strategy:
+      matrix:
+        check: ['format', 'lint']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PAT_TOKEN}}
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Setup Poetry
+        run: pip install poetry==1.8.2
+
+      - name: Run check ${{ matrix.check }}
+        run: |
+          poetry install --only dev
+          poetry run poe ${{ matrix.check }}
