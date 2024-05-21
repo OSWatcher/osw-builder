@@ -41,6 +41,7 @@ RUN poetry install --only main
 ENV PYTHONUNBUFFERED=1
 # Set PATH to include Poetry's virtualenv
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PACKER_CACHE_DIR="/packer_cache"
 
 # Command to run the application
 CMD ["poetry", "run", "osw-builder"]
