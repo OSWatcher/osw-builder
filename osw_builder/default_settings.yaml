@@ -6,7 +6,7 @@ image_names:
   win10_pro: &win10_pro "Windows 10 Pro"
 # whether we should remove the domain after once we ran our tools
 remove_domain: false
-storage_pool: "toschiba"
+storage_pool: "default"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
