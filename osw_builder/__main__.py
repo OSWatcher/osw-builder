@@ -16,12 +16,12 @@ Options:
 
 
 import hashlib
+import importlib.resources as resources
 import json
 import logging
 import os
 import shutil
 import subprocess
-import sys
 import xml.etree.ElementTree as ET
 from contextlib import contextmanager
 from pathlib import Path
@@ -33,9 +33,16 @@ import libvirt
 import yaml
 from docopt import docopt
 
-from autounattend import Autounattend
+from osw_builder.autounattend import Autounattend
 
-PACKER_TEMPLATES_DIR = Path(__file__).absolute().parent / "packer-templates"
+
+# Access the packer-templates directory
+def get_packer_templates_dir():
+    with resources.path(__package__, "packer-templates") as path:
+        return Path(path)
+
+
+PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
@@ -109,6 +116,8 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             tmp_f.flush()
             # build with Packer
             cmdline = ["packer", "build"]
+            # produce log file free of ANSI escape codes
+            cmdline.append("-color=false")
             # only qemu
             cmdline.extend(["-only", "qemu"])
             # varfile
@@ -348,6 +357,6 @@ def main(args):
                             subprocess.check_call(f_tool_cmd, shell=True)
 
 
-args = docopt(__doc__)
-retcode = main(args)
-sys.exit(retcode)
+def entrypoint():
+    args = docopt(__doc__)
+    main(args)

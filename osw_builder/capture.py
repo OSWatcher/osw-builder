@@ -257,7 +257,9 @@ def oswatcher(args):
             finally:
                 # recapture
                 commit_name = f"{vm_name}-{update.kb[0]}"
-                retcode = capture_vm(vm_name, plugins_path, connection=uri, base_branch=None, debug=debug, tag=commit_name)
+                retcode = capture_vm(
+                    vm_name, plugins_path, connection=uri, base_branch=None, debug=debug, tag=commit_name
+                )
 
         # done !
         # shutdown VM
@@ -283,7 +285,7 @@ def neogit(args):
         neo = Neogit()
         neo.init()
         logging.info("Running Neogit ...")
-        neo.commit(vm_name, local_mnt)
+        neo.commit(vm_name, Path(local_mnt))
 
 
 def main():
