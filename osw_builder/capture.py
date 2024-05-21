@@ -301,7 +301,3 @@ def main():
         return neogit(args)
     if args["oswatcher"]:
         return oswatcher(args)
-
-
-if __name__ == "__main__":
-    main()
