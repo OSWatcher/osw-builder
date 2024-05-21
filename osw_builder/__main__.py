@@ -35,10 +35,12 @@ from docopt import docopt
 
 from osw_builder.autounattend import Autounattend
 
+
 # Access the packer-templates directory
 def get_packer_templates_dir():
-    with resources.path(__package__, 'packer-templates') as path:
+    with resources.path(__package__, "packer-templates") as path:
         return Path(path)
+
 
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
@@ -353,6 +355,7 @@ def main(args):
                                 f_tool_cmd += " --debug"
                             logging.info("Running tool: %s", f_tool_cmd)
                             subprocess.check_call(f_tool_cmd, shell=True)
+
 
 def entrypoint():
     args = docopt(__doc__)
