@@ -10,12 +10,12 @@ storage_pool: "toschiba"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
-  # - "./tools/capture.py oswatcher {domain_name} hooks_filesystem_neogit.json --updates --connection={uri}"
+  # - "osw-capture-tool oswatcher {domain_name} hooks_filesystem_neogit.json --updates --connection={uri}"
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
   # - "oswatcher {domain_name} hooks_windows.json --connection={uri} --tag {domain_name}"
-  - "./tools/capture.py neogit {domain_name} --connection={uri}"
+  - "osw-capture-tool neogit {domain_name} --connection={uri}"
 series:
   - name: "windows-10"
     template: "windows.json"
