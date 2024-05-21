@@ -11,6 +11,9 @@ COPY vendor /app/vendor
 # Install Poetry
 RUN pip install poetry==1.8.2
 
+# Configure Poetry to create virtualenvs in the project directory
+RUN poetry config virtualenvs.in-project true
+
 # install libs dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config libvirt-dev build-essential libguestfs-dev && \
@@ -27,6 +30,8 @@ RUN poetry install --only main
 
 # Set environment variables to ensure output is sent straight to the terminal without buffering
 ENV PYTHONUNBUFFERED=1
+# Set PATH to include Poetry's virtualenv
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Command to run the application
 CMD ["poetry", "run", "osw-builder"]
