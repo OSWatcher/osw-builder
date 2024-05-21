@@ -16,6 +16,7 @@ Options:
 
 
 import hashlib
+import importlib.resources as resources
 import json
 import logging
 import os
@@ -27,7 +28,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
 from urllib.parse import urlparse
-import importlib.resources as resources
 
 import libvirt
 import yaml
