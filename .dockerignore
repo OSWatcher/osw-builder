@@ -1,0 +1,10 @@
+# ignore everything
+*
+
+# include
+!osw_builder/
+!vendor/
+!pyproject.toml
+!poetry.lock
+!MANIFEST.in
+!README.md
