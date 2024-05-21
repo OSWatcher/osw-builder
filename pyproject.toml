@@ -37,3 +37,10 @@ isort = "isort --line-length 120 ."
 lint.shell = "poe flake8 && poe isort"
 format = "black --line-length 120 ."
 typecheck = "mypy ."
+
+[tool.black]
+exclude = '''
+/(
+    vendor
+)/
+'''
