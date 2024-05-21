@@ -34,3 +34,5 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.LOWER_OWNER }}/builder:latest
           file: ./Dockerfile
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.PAT_TOKEN }}
