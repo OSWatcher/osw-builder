@@ -1,2 +1,2 @@
-include packer-templates/*
+recursive-include osw_builder/packer-templates *
 include osw_builder/default_settings.yaml

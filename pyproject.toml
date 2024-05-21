@@ -4,7 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["Mathieu Tarral <mathieu.tarral@protonmail.com>"]
 readme = "README.md"
-include = ["packer-templates/**", "osw_builder/default_settings.yaml"]
+include = [
+    "osw_builder/packer-templates/**",
+    "osw_builder/default_settings.yaml",
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
