@@ -15,4 +15,4 @@ jobs:
 
     steps:
       - name: Run command inside container
-        run: poetry run osw-builder
+        run: osw-builder
