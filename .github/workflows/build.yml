@@ -9,10 +9,10 @@ jobs:
     runs-on: self-hosted
     container:
       image: docker://ghcr.io/oswatcher/builder:latest
-      options: >
+      options: >-
         --volume /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
         --volume packer_cache:/packer_cache
-
+        --device /dev/kvm
     steps:
       - name: Cleanup
         run: rm -f packer-build.log
