@@ -300,7 +300,6 @@ def main(args):
     net_on = args["--net"]
     packer_args = args["<packer_args>"]
 
-    print(packer_args)
     init_logger(debug)
     logging.debug(args)
 
