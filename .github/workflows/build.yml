@@ -19,6 +19,8 @@ jobs:
 
       - name: Run command inside container
         run: osw-builder
+        env:
+          PACKER_LOG: 1
 
       - name: Upload packer-build.log
         uses: actions/upload-artifact@v4
