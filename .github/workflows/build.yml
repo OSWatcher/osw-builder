@@ -16,3 +16,10 @@ jobs:
     steps:
       - name: Run command inside container
         run: osw-builder
+
+      - name: Upload packer-build.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: packer-build-log
+          path: packer-build.log
+        if: always()
