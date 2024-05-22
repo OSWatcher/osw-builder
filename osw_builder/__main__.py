@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Usage: builder.py [options] <images_config>
+Usage: builder.py [options] [<packer_args>...]
        builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...]
 
 Options:
@@ -52,7 +52,7 @@ DEFAULT_STORAGE_POOL = "default"
 
 
 @contextmanager
-def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]]):
+def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]], packer_args: List[str]):
     source_url = config_entry["source"]
     # validate source
     parse_res = urlparse(source_url)
@@ -122,6 +122,10 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             cmdline.extend(["-only", "qemu"])
             # varfile
             cmdline.extend(["-var-file", tmp_f.name])
+            # append additional packer arguments
+            if packer_args:
+                for arg in packer_args:
+                    cmdline.extend(["-var", arg])
             # template
             cmdline.append(str(PACKER_TEMPLATES_DIR / template))
             logging.debug("cmdline: %s", cmdline)
@@ -199,6 +203,7 @@ class LibvirtDom:
         net_on: bool,
         storage_pool: str,
         extra_firstlogin_cmds: Optional[List[str]],
+        packer_args: List[str],
     ):
         self.con = con
         self.template = template
@@ -212,6 +217,7 @@ class LibvirtDom:
         self.dom = None
         self.image_builder = None
         self.domain_disk = None
+        self.packer_args = packer_args
 
     def __enter__(self):
         """Build a Libvirt domain and returns it"""
@@ -228,6 +234,7 @@ class LibvirtDom:
                 self.varfile,
                 self.config_entry,
                 self.extra_firstlogin_cmds,
+                self.packer_args,
             )
             image_path = self.image_builder.__enter__()
             # build pool
@@ -291,7 +298,9 @@ def main(args):
     from_image = args["--from"]
     only_series = args["--only-serie"]
     net_on = args["--net"]
+    packer_args = args["<packer_args>"]
 
+    print(packer_args)
     init_logger(debug)
     logging.debug(args)
 
@@ -340,6 +349,7 @@ def main(args):
                 net_on,
                 storage_pool,
                 extra_firstlogin_cmds,
+                packer_args
             ) as domain:
                 logging.info("New domain: %s", domain.name())
                 if tool_list:
