@@ -9,7 +9,9 @@ jobs:
     runs-on: self-hosted
     container:
       image: docker://ghcr.io/oswatcher/builder:latest
-      options: --volume /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+      options: >
+        --volume /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+        --volume packer_cache:/packer_cache
 
     steps:
       - name: Run command inside container
