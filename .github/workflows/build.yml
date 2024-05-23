@@ -12,13 +12,14 @@ jobs:
       options: >-
         --volume /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
         --volume packer_cache:/packer_cache
+        --volume /var/lib/libvirt/images:/var/lib/libvirt/images
         --device /dev/kvm
     steps:
       - name: Cleanup
         run: rm -f packer-build.log
 
       - name: Run command inside container
-        run: osw-builder -d cpus=4
+        run: osw-builder -c qemu:///system -d cpus=4
         env:
           PACKER_LOG: 1
 
