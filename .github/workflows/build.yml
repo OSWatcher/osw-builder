@@ -18,7 +18,7 @@ jobs:
         run: rm -f packer-build.log
 
       - name: Run command inside container
-        run: osw-builder cpus=4
+        run: osw-builder -d cpus=4
         env:
           PACKER_LOG: 1
 
