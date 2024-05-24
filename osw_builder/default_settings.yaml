@@ -132,6 +132,12 @@ series:
         key: *key_pro
         image_name: *win10_pro
 
+      - name: "win10-21h2-19044.1288"
+        source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
+        sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
+        key: *key_pro
+        image_name: *win10_pro
+
       # https://archive.org/details/windows-10-english-21h2
       # 19044.2846 ?
 
