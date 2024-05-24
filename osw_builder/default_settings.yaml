@@ -138,13 +138,13 @@ series:
         key: *key_pro
         image_name: *win10_pro
 
-      # https://archive.org/details/windows-10-english-21h2
-      # 19044.2846 ?
-
       # 22h1 doesn't exist
 
-      # https://archive.org/details/windows-10-english-22h2
-      # 19045.2846 ?
+      - name: "win10-22h2-19045.2965"
+        source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
+        sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
+        key: *key_pro
+        image_name: *win10_pro
 
   - name: "ubuntu-server-LTS"
     template: "ubuntu.json"
