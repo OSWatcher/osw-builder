@@ -120,17 +120,17 @@ series:
         key: *key_pro
         image_name: *win10_pro
 
-      # - name: "win10-20H2-2009.19042.631"
-      #   source: "https://storage.grapheos.app/images/win10/Win10_20H2_v2_English_x64.iso"
-      #   sha1: "69a1739609c1059fdd2e0688891bf59a78413c6b"
-      #   key: *key_pro
-      #   image_name: *win10_pro
+      - name: "win10-20H2-2009.19042.631"
+        source: "https://storage.grapheos.app/images/win10/Win10_20H2_v2_English_x64.iso"
+        sha1: "d6922dc5ec7358f7276fed5e3a81eb52e264d5c7"
+        key: *key_pro
+        image_name: *win10_pro
 
-      # - name: "win10-21h1-19043.928"
-      #   source: "https://storage.grapheos.app/images/win10/Win10_21H1_English_x64.iso"
-      #   sha1: "78aa5fa0fd332ee0822ef5a533cd2cfe12333274"
-      #   key: *key_pro
-      #   image_name: *win10_pro
+      - name: "win10-21h1-19043.928"
+        source: "https://storage.grapheos.app/images/win10/Win10_21H1_English_x64.iso"
+        sha1: "78aa5fa0fd332ee0822ef5a533cd2cfe12333274"
+        key: *key_pro
+        image_name: *win10_pro
 
       # https://archive.org/details/windows-10-english-21h2
       # 19044.2846 ?
