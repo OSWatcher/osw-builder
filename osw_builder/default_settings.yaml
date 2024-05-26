@@ -138,7 +138,7 @@ series:
       - name: "win10-20H2-2009.19042.631"
         description: "Windows 10 20H2 (October 2020 Update, 2009)"
         source: "https://storage.grapheos.app/images/win10/Win10_20H2_v2_English_x64.iso"
-        sha1: "d6922dc5ec7358f7276fed5e3a81eb52e264d5c7"
+        sha1: "69a1739609c1059fdd2e0688891bf59a78413c6b"
         key: *key_pro
         image_name: *win10_pro
 

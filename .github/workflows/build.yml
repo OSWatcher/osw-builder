@@ -32,6 +32,7 @@ jobs:
         env:
           PACKER_LOG: 1
           NEOGIT_OBJECT__SECRET_KEY: ${{ secrets.MINIO_ADMIN_PASSWD }}
+          PACKER_CACHE_DIR: /home/ops/.cache/packer
 
       - name: Upload packer-build.log
         uses: actions/upload-artifact@v4
