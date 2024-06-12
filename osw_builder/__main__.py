@@ -17,7 +17,6 @@ Options:
 
 import hashlib
 import importlib.resources as resources
-import json
 import logging
 import os
 import shutil
@@ -29,6 +28,7 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional
 from urllib.parse import urlparse
 
+import hcl2
 import libvirt
 from docopt import docopt
 
@@ -44,6 +44,7 @@ def get_packer_templates_dir():
 
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
+PACKER_TEMPLATES_IMAGE = "packer-templates"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
@@ -80,7 +81,7 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
     logging.debug("SHA1: %s", sha1digest)
     # read win10 varfile
     with open(PACKER_TEMPLATES_DIR / varfile) as varfile_f:
-        varfile_data = json.load(varfile_f)
+        varfile_data = hcl2.load(varfile_f)
     # replace source URL and SHA1
     varfile_data["iso_url"] = source_url
     varfile_data["iso_checksum"] = sha1digest
@@ -110,8 +111,14 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             # replace autounattend path in the config
             varfile_data["autounattend"] = str(tmp_autounattend.autounattend_tmp_path)
         # write temporary varfile and build
-        with NamedTemporaryFile(mode="w") as tmp_f:
-            json.dump(varfile_data, tmp_f)
+        with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f:
+            # manual dump
+            for key, value in varfile_data.items():
+                # check if value is a string
+                if isinstance(value, str):
+                    tmp_f.write(f'{key} = "{value}"\n')
+                else:
+                    tmp_f.write(f"{key} = {value}\n")
             # flush
             tmp_f.flush()
             # build with Packer
@@ -119,7 +126,7 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             # produce log file free of ANSI escape codes
             cmdline.append("-color=false")
             # only qemu
-            cmdline.extend(["-only", "qemu"])
+            cmdline.extend(["-only", "qemu.windows"])
             # varfile
             cmdline.extend(["-var-file", tmp_f.name])
             # append additional packer arguments
@@ -133,6 +140,7 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             if OUTPUT_QEMU_DIR.exists():
                 logging.warning("Removing previous unfinished build")
                 shutil.rmtree(OUTPUT_QEMU_DIR)
+
             # open log file for packer
             with open("packer-build.log", "a") as packer_log_f:
                 try:
@@ -288,6 +296,8 @@ def init_logger(debug=False):
     logging_level = logging.INFO
     if debug:
         logging_level = logging.DEBUG
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("docker").setLevel(logging.WARNING)
     logging.basicConfig(level=logging_level, format=formatter)
 
 
@@ -348,7 +358,7 @@ def main(args):
                 net_on,
                 storage_pool,
                 extra_firstlogin_cmds,
-                packer_args
+                packer_args,
             ) as domain:
                 logging.info("New domain: %s", domain.name())
                 if tool_list:
