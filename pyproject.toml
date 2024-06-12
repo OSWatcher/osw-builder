@@ -19,6 +19,7 @@ neogit = { path = "vendor/neogit" }
 oswatcher = { path = "vendor/oswatcher" }
 pywinupdate = { path = "vendor/pywinupdate" }
 dynaconf = "^3.2.5"
+python-hcl2 = "^4.3.4"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.26.1"
