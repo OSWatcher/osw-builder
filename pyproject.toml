@@ -20,6 +20,7 @@ oswatcher = { path = "vendor/oswatcher" }
 pywinupdate = { path = "vendor/pywinupdate" }
 dynaconf = "^3.2.5"
 python-hcl2 = "^4.3.4"
+docker = "^7.1.0"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.26.1"
