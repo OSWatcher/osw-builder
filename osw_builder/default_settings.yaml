@@ -10,7 +10,7 @@ storage_pool: "default"
 # which command line tools we should run
 tools:
   # for windows with pywinupdate
-  # - "osw-capture-tool oswatcher {domain_name} hooks_filesystem_neogit.json --updates --connection={uri}"
+  # - "osw-capture-tool oswatcher {domain_name} hooks_filesystem_neogit.json --connection={uri}"
   # for linux
   # - 'oswatcher {domain_name} hooks_ubuntu.json --connection={uri}'
   # for windows
@@ -18,8 +18,8 @@ tools:
   - "osw-capture-tool neogit {domain_name} --connection={uri}"
 series:
   - name: "windows-10"
-    template: "windows.json"
-    varfile: "win10.json"
+    template: "windows.pkr.hcl"
+    varfile: "win10.pkrvars.hcl"
     extra_firstlogin_cmds:
       # disable automated Windows Updates (ask to download and ask to install)
       - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
