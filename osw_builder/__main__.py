@@ -15,6 +15,7 @@ Options:
 """
 
 
+import contextlib
 import hashlib
 import importlib.resources as resources
 import logging
@@ -28,6 +29,7 @@ from tempfile import NamedTemporaryFile
 from typing import List, Optional
 from urllib.parse import urlparse
 
+import docker
 import hcl2
 import libvirt
 from docopt import docopt
@@ -43,7 +45,7 @@ def get_packer_templates_dir():
 
 
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
-OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output-qemu"
+OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
 PACKER_TEMPLATES_IMAGE = "packer-templates"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
@@ -52,8 +54,47 @@ WINDOWS_TEMPLATE = "windows.json"
 DEFAULT_STORAGE_POOL = "default"
 
 
+def run_packer(varfile, autounattend, packer_args, network_disabled: bool = False) -> Path:
+    dk_client = docker.from_env()
+    packer_home_cache = Path.home() / ".cache" / "packer"
+    # ensure we create packer cache dir
+    packer_home_cache.mkdir(parents=True, exist_ok=True)
+    volumes = {
+        packer_home_cache: {"bind": "/cache", "mode": "rw"},
+        PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
+        varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
+        autounattend: {"bind": "/packer/answer_files/10/Autounattend.xml", "mode": "ro"},
+    }
+    # open log file for packer
+    with open("packer-build.log", "a") as packer_log_f:
+        container = dk_client.containers.run(
+            PACKER_TEMPLATES_IMAGE,
+            remove=True,
+            volumes=volumes,
+            devices=["/dev/kvm"],
+            ports={"5900/tcp": 5900},
+            user=f"{os.getuid()}:{os.getgid()}",
+            group_add=["sudo", "kvm"],
+            network_disabled=network_disabled,
+            detach=True,
+        )
+        try:
+            for line in container.logs(stream=True):
+                packer_log_f.write(line.decode())
+                packer_log_f.flush()
+            # wait for container to finish
+            code = container.wait()
+            if code["StatusCode"] != 0:
+                raise RuntimeError("Packer failed")
+        finally:
+            with contextlib.suppress(docker.errors.NotFound):
+                container.remove(force=True)
+    return OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
+
+
 @contextmanager
 def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]], packer_args: List[str]):
+
     source_url = config_entry["source"]
     # validate source
     parse_res = urlparse(source_url)
@@ -121,40 +162,32 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
                     tmp_f.write(f"{key} = {value}\n")
             # flush
             tmp_f.flush()
-            # build with Packer
-            cmdline = ["packer", "build"]
-            # produce log file free of ANSI escape codes
-            cmdline.append("-color=false")
-            # only qemu
-            cmdline.extend(["-only", "qemu.windows"])
-            # varfile
-            cmdline.extend(["-var-file", tmp_f.name])
-            # append additional packer arguments
-            if packer_args:
-                for arg in packer_args:
-                    cmdline.extend(["-var", arg])
-            # template
-            cmdline.append(str(PACKER_TEMPLATES_DIR / template))
-            logging.debug("cmdline: %s", cmdline)
             # ensure output-qemu dir is removed
             if OUTPUT_QEMU_DIR.exists():
                 logging.warning("Removing previous unfinished build")
                 shutil.rmtree(OUTPUT_QEMU_DIR)
 
-            # open log file for packer
-            with open("packer-build.log", "a") as packer_log_f:
-                try:
-                    subprocess.check_call(
-                        ["packer", "init", str(PACKER_TEMPLATES_DIR / template)],
-                        stdout=packer_log_f,
-                        stderr=packer_log_f,
-                        cwd=PACKER_TEMPLATES_DIR,
+            # since we want to have network=none, we need to force cache the ISO first
+            # do a first run that will fail and cache the ISO
+            with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f_fake:
+                # manual dump
+                for key, value in varfile_data.items():
+                    # check if value is a string
+                    if key == "cpus":
+                        tmp_f_fake.write(f"{key} = 999999\n")
+                    elif isinstance(value, str):
+                        tmp_f_fake.write(f'{key} = "{value}"\n')
+                    else:
+                        tmp_f_fake.write(f"{key} = {value}\n")
+                tmp_f_fake.flush()
+                with contextlib.suppress(RuntimeError):
+                    run_packer(
+                        tmp_f_fake.name, tmp_autounattend.autounattend_tmp_path, packer_args, network_disabled=False
                     )
-                    subprocess.check_call(cmdline, stdout=packer_log_f, stderr=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
-                except subprocess.CalledProcessError:
-                    raise RuntimeError("Packer build failed ! Check packer-build.log")
-        # get output file path
-        image_path = OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
+            # real run
+            image_path = run_packer(
+                tmp_f.name, tmp_autounattend.autounattend_tmp_path, packer_args, network_disabled=True
+            )
         try:
             yield image_path
         finally:
