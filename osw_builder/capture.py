@@ -271,6 +271,7 @@ def oswatcher(args):
 def neogit(args):
     vm_name = args["<vm_name>"]
     uri = args["--connection"]
+    debug = args["--debug"]
     # get qcow path
     con = libvirt.open(uri)
     domain = con.lookupByName(vm_name)
@@ -282,7 +283,7 @@ def neogit(args):
     with LibguestFSMnt(qcow_path, local=True, readonly=True) as local_mnt:
         logging.info("Local mountpoint: %s", local_mnt)
         # ensure init
-        neo = Neogit()
+        neo = Neogit(debug=debug)
         neo.init()
         logging.info("Running Neogit ...")
         neo.commit(vm_name, Path(local_mnt))
