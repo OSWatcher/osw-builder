@@ -144,6 +144,12 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             # open log file for packer
             with open("packer-build.log", "a") as packer_log_f:
                 try:
+                    subprocess.check_call(
+                        ["packer", "init", str(PACKER_TEMPLATES_DIR / template)],
+                        stdout=packer_log_f,
+                        stderr=packer_log_f,
+                        cwd=PACKER_TEMPLATES_DIR,
+                    )
                     subprocess.check_call(cmdline, stdout=packer_log_f, stderr=packer_log_f, cwd=PACKER_TEMPLATES_DIR)
                 except subprocess.CalledProcessError:
                     raise RuntimeError("Packer build failed ! Check packer-build.log")
