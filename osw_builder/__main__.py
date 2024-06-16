@@ -47,7 +47,7 @@ def get_packer_templates_dir():
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
 PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH = "/packer/answer_files/10/Autounattend.xml"
-PACKER_TEMPLATES_IMAGE = "packer-templates"
+PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
