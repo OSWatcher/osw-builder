@@ -46,6 +46,7 @@ def get_packer_templates_dir():
 
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
+PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH = "/packer/answer_files/10/Autounattend.xml"
 PACKER_TEMPLATES_IMAGE = "packer-templates"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
@@ -63,7 +64,7 @@ def run_packer(varfile, autounattend, packer_args, network_disabled: bool = Fals
         packer_home_cache: {"bind": "/cache", "mode": "rw"},
         PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
         varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
-        autounattend: {"bind": "/packer/answer_files/10/Autounattend.xml", "mode": "ro"},
+        autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
     }
     # open log file for packer
     with open("packer-build.log", "a") as packer_log_f:
@@ -150,7 +151,7 @@ def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional
             tmp_autounattend.write()
             # dump new Autounattend.xml
             # replace autounattend path in the config
-            varfile_data["autounattend"] = str(tmp_autounattend.autounattend_tmp_path)
+            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH
         # write temporary varfile and build
         with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f:
             # manual dump
