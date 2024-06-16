@@ -88,7 +88,8 @@ def run_packer(varfile, autounattend, packer_args, network_disabled: bool = Fals
             if code["StatusCode"] != 0:
                 raise RuntimeError("Packer failed")
         finally:
-            with contextlib.suppress(docker.errors.NotFound):
+            # APIError: removal of container is already in progress
+            with contextlib.suppress(docker.errors.NotFound, docker.errors.APIError):
                 container.remove(force=True)
     return OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
 
