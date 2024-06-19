@@ -1,7 +1,7 @@
 """A module to manipulate Windows Autounattend.xml configuration files"""
 
 import xml.etree.ElementTree as ET
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, suppress
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -45,7 +45,8 @@ class Autounattend(AbstractContextManager):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.tmp_autounattend_f.close()
-        self.tmp_autounattend.unlink()
+        with suppress(FileNotFoundError):
+            self.tmp_autounattend.unlink()
         self.tmp_dir.cleanup()
 
     @property

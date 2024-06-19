@@ -15,186 +15,22 @@ Options:
 """
 
 
-import contextlib
-import hashlib
-import importlib.resources as resources
 import logging
-import os
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
-from contextlib import contextmanager
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import List, Optional
-from urllib.parse import urlparse
 
-import docker
-import hcl2
 import libvirt
 from docopt import docopt
 
-from osw_builder.autounattend import Autounattend
+from osw_builder.build import build_image
 from osw_builder.settings import settings
 
-
-# Access the packer-templates directory
-def get_packer_templates_dir():
-    with resources.path(__package__, "packer-templates") as path:
-        return Path(path)
-
-
-PACKER_TEMPLATES_DIR = get_packer_templates_dir()
-OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
-PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH = "/packer/answer_files/10/Autounattend.xml"
-PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
-BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
-DEFAULT_REMOVE_DOMAIN_VALUE = True
-WINDOWS_TEMPLATE = "windows.pkr.hcl"
+DEFAULT_REMOVE_DOMAIN_VALUE = False
 DEFAULT_STORAGE_POOL = "default"
-
-
-def run_packer(varfile, autounattend, packer_args, network_disabled: bool = False) -> Path:
-    dk_client = docker.from_env()
-    packer_home_cache = Path.home() / ".cache" / "packer"
-    # ensure we create packer cache dir
-    packer_home_cache.mkdir(parents=True, exist_ok=True)
-    volumes = {
-        packer_home_cache: {"bind": "/cache", "mode": "rw"},
-        PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
-        varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
-        autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
-    }
-    # open log file for packer
-    with open("packer-build.log", "a") as packer_log_f:
-        container = dk_client.containers.run(
-            PACKER_TEMPLATES_IMAGE,
-            remove=True,
-            volumes=volumes,
-            devices=["/dev/kvm"],
-            ports={"5900/tcp": 5900},
-            user=f"{os.getuid()}:{os.getgid()}",
-            group_add=["sudo", "kvm"],
-            network_disabled=network_disabled,
-            detach=True,
-        )
-        try:
-            for line in container.logs(stream=True):
-                packer_log_f.write(line.decode())
-                packer_log_f.flush()
-            # wait for container to finish
-            code = container.wait()
-            if code["StatusCode"] != 0:
-                raise RuntimeError("Packer failed")
-        finally:
-            # APIError: removal of container is already in progress
-            with contextlib.suppress(docker.errors.NotFound, docker.errors.APIError):
-                container.remove(force=True)
-    return OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
-
-
-@contextmanager
-def build_image(template, varfile, config_entry, extra_firstlogin_cmds: Optional[List[str]], packer_args: List[str]):
-
-    source_url = config_entry["source"]
-    # validate source
-    parse_res = urlparse(source_url)
-    if parse_res.scheme == "file":
-        # file exists ?
-        source_path = Path(parse_res.path)
-        if not source_path.exists():
-            raise RuntimeError("source file does not exists")
-        logging.debug("Source: %s", source_url)
-        logging.debug("Computing SHA1")
-        # compute sha1
-        sha1sum = hashlib.sha1()
-        with open(source_path, "rb") as source_file:
-            buf = source_file.read(BLOCKSIZE)
-            while len(buf) > 0:
-                sha1sum.update(buf)
-                buf = source_file.read(BLOCKSIZE)
-        sha1digest = sha1sum.hexdigest()
-    else:
-        # url, we need the SHA1 to be specified
-        try:
-            sha1digest = config_entry["sha1"]
-        except KeyError:
-            raise RuntimeError("Invalid configuration: need to specify a SHA1 for URL sources")
-    logging.debug("SHA1: %s", sha1digest)
-    # read win10 varfile
-    with open(PACKER_TEMPLATES_DIR / varfile) as varfile_f:
-        varfile_data = hcl2.load(varfile_f)
-    # replace source URL and SHA1
-    varfile_data["iso_url"] = source_url
-    varfile_data["iso_checksum"] = sha1digest
-
-    auto_path = None
-    if template == WINDOWS_TEMPLATE:
-        auto_path = PACKER_TEMPLATES_DIR / varfile_data["autounattend"]
-    # write a new Autounattend and configure it if needed
-    # we also create a temporary directory because the file must be named 'Autounattend.xml'
-    with Autounattend(auto_path) as tmp_autounattend:
-        if template == WINDOWS_TEMPLATE:
-            # replace product key if needed
-            product_key = config_entry.get("key")
-            if product_key:
-                logging.debug("Changing Product Key to %s", product_key)
-                tmp_autounattend.product_key = product_key
-            # replace image name if needed
-            image_name = config_entry.get("image_name")
-            if image_name:
-                logging.debug("Selecting image %s", image_name)
-                tmp_autounattend.image_name = image_name
-            if extra_firstlogin_cmds:
-                for cmd in reversed(extra_firstlogin_cmds):
-                    tmp_autounattend.prepend_cmd(cmd)
-            tmp_autounattend.write()
-            # dump new Autounattend.xml
-            # replace autounattend path in the config
-            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH
-        # write temporary varfile and build
-        with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f:
-            # manual dump
-            for key, value in varfile_data.items():
-                # check if value is a string
-                if isinstance(value, str):
-                    tmp_f.write(f'{key} = "{value}"\n')
-                else:
-                    tmp_f.write(f"{key} = {value}\n")
-            # flush
-            tmp_f.flush()
-            # ensure output-qemu dir is removed
-            if OUTPUT_QEMU_DIR.exists():
-                logging.warning("Removing previous unfinished build")
-                shutil.rmtree(OUTPUT_QEMU_DIR)
-
-            # since we want to have network=none, we need to force cache the ISO first
-            # do a first run that will fail and cache the ISO
-            with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f_fake:
-                # manual dump
-                for key, value in varfile_data.items():
-                    # check if value is a string
-                    if key == "cpus":
-                        tmp_f_fake.write(f"{key} = 999999\n")
-                    elif isinstance(value, str):
-                        tmp_f_fake.write(f'{key} = "{value}"\n')
-                    else:
-                        tmp_f_fake.write(f"{key} = {value}\n")
-                tmp_f_fake.flush()
-                with contextlib.suppress(RuntimeError):
-                    run_packer(
-                        tmp_f_fake.name, tmp_autounattend.autounattend_tmp_path, packer_args, network_disabled=False
-                    )
-            # real run
-            image_path = run_packer(
-                tmp_f.name, tmp_autounattend.autounattend_tmp_path, packer_args, network_disabled=True
-            )
-        try:
-            yield image_path
-        finally:
-            logging.info("Build: cleaning up")
-            shutil.rmtree(OUTPUT_QEMU_DIR)
 
 
 class DomXML:
