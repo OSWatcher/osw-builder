@@ -51,7 +51,7 @@ PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 BLOCKSIZE = 65536
 DOMAIN_MEMORY = 4096
 DEFAULT_REMOVE_DOMAIN_VALUE = True
-WINDOWS_TEMPLATE = "windows.json"
+WINDOWS_TEMPLATE = "windows.pkr.hcl"
 DEFAULT_STORAGE_POOL = "default"
 
 
