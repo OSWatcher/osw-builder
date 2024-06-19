@@ -45,6 +45,7 @@ isort = "isort --line-length 120 ."
 lint.shell = "poe flake8 && poe isort"
 format = "black --line-length 120 ."
 typecheck = "mypy ."
+unit_test = "pytest"
 
 [tool.black]
 exclude = '''
@@ -57,3 +58,6 @@ exclude = '''
 profile = "black"
 line_length = 120
 skip = ["vendor", "osw_builder/packer-templates"]
+
+[tool.pytest.ini_options]
+norecursedirs = ["vendor"]
