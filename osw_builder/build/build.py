@@ -28,7 +28,6 @@ PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
 PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH = "/packer/answer_files/10/Autounattend.xml"
 PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
-
 WINDOWS_TEMPLATE = "windows.pkr.hcl"
 
 
@@ -91,7 +90,6 @@ def build_image(
     varfile: str,
     config_entry: dict,
     extra_firstlogin_cmds: Optional[list[str]],
-    network: bool = True,
     packer_args: list[str] = None,
 ) -> Generator[Path, None, None]:
     sha1digest = validate_source_and_compute_sha1(config_entry)
@@ -140,6 +138,25 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
         varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
         autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
     }
+
+    cmdline = [
+        "build",
+        "-only",
+        "qemu.windows",
+        "-var-file",
+        "docker.pkrvars.hcl",
+        "-var-file",
+        "win10.pkrvars.hcl",
+    ]
+
+    var_packer_args = []
+    for arg in packer_args:
+        var_packer_args.extend(["-var", arg])
+
+    cmdline.extend(var_packer_args)
+
+    cmdline.append("windows.pkr.hcl")
+
     with open("packer-build.log", "a") as packer_log_f:
         container = dk_client.containers.run(
             PACKER_TEMPLATES_IMAGE,
@@ -151,7 +168,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
             group_add=["sudo", "kvm"],
             network_disabled=not network,
             detach=True,
-            command=packer_args,
+            command=cmdline,
         )
         try:
             for line in container.logs(stream=True):
