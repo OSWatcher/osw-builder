@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Usage: builder.py [options] [<packer_args>...]
-       builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...]
+Usage: builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] [--var <packer_args>...]
 
 Options:
     -h --help                       Display this message
@@ -11,161 +10,19 @@ Options:
     -o --only-image=<NAME>          Build only image NAME
     -s --only-serie=<SERIE>         Build only serie SERIE
     -f --from=<NAME>                Build images from NAME
-    -n --net                        Add network section in domain.xml
+    --var <packer_args>...          Extra packer arguments
 """
 
 
 import logging
-import shutil
-import subprocess
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from typing import List, Optional
+from contextlib import ExitStack
 
 import libvirt
 from docopt import docopt
 
+from osw_builder import vagrant
 from osw_builder.build import build_image
 from osw_builder.settings import settings
-
-DOMAIN_MEMORY = 4096
-DEFAULT_REMOVE_DOMAIN_VALUE = False
-DEFAULT_STORAGE_POOL = "default"
-
-
-class DomXML:
-    def __init__(self, xml_desc):
-        self.tree = ET.fromstring(xml_desc)
-
-    # helpers
-    def findfirst(self, xpath):
-        return self.tree.findall(xpath)[0]
-
-    @property
-    def name(self):
-        return self.findfirst("./name").text
-
-    @name.setter
-    def name(self, value):
-        self.findfirst("./name").text = value
-
-    @property
-    def memory(self):
-        return self.findfirst("memory").text
-
-    @memory.setter
-    def memory(self, value):
-        self.findfirst("./memory").text = value
-
-    @property
-    def disk(self):
-        return self.findfirst('./devices/disk[@device="disk"]/source').get("file")
-
-    @disk.setter
-    def disk(self, value):
-        self.findfirst('./devices/disk[@device="disk"]/source').set("file", value)
-
-    def add_network(self):
-        devices = self.findfirst("./devices")
-        interface = ET.Element("interface", {"type": "network"})
-        interface.append(ET.Element("source", {"network": "default"}))
-        interface.append(ET.Element("model", {"type": "e1000e"}))
-        devices.append(interface)
-
-    def tostring(self):
-        """Generate new XML string from tree object"""
-        return ET.tostring(self.tree, encoding="unicode")
-
-
-class LibvirtDom:
-    def __init__(
-        self,
-        con,
-        template,
-        varfile,
-        config_entry,
-        remove_domain,
-        net_on: bool,
-        storage_pool: str,
-        extra_firstlogin_cmds: Optional[List[str]],
-        packer_args: List[str],
-    ):
-        self.con = con
-        self.template = template
-        self.varfile = varfile
-        self.dom_name = config_entry["name"]
-        self.config_entry = config_entry
-        self.remove_domain = remove_domain
-        self.extra_firstlogin_cmds = extra_firstlogin_cmds
-        self.net_on = net_on
-        self.storage_pool = storage_pool
-        self.dom = None
-        self.image_builder = None
-        self.domain_disk = None
-        self.packer_args = packer_args
-
-    def __enter__(self):
-        """Build a Libvirt domain and returns it"""
-        # check whether the domain already exists
-        try:
-            logging.info("Checking for domain %s", self.dom_name)
-            self.dom = self.con.lookupByName(self.dom_name)
-            logging.debug("Domain exists")
-        except libvirt.libvirtError:
-            logging.info("Building domain")
-            # build and define domain
-            self.image_builder = build_image(
-                self.template,
-                self.varfile,
-                self.config_entry,
-                self.extra_firstlogin_cmds,
-                self.packer_args,
-            )
-            image_path = self.image_builder.__enter__()
-            # build pool
-            pool = self.con.storagePoolLookupByName(self.storage_pool)
-            # get pool path from Pool object
-            pool_xml = pool.XMLDesc()
-            pool_tree = ET.fromstring(pool_xml)
-            pool_path = pool_tree.findall("./target/path")[0].text
-            logging.debug("path: %s", pool_path)
-            # make sure storage is active
-            if not pool.isActive():
-                pool.create()
-            # move image to storage pool
-            dst = (Path(pool_path) / self.dom_name).with_suffix(".qcow2")
-            logging.debug("Moving image to %s", dst)
-            shutil.move(image_path, dst)
-            # important: refresh storage pool, otherwise future lookup operation on this qcow will fail
-            # ex: Storage volume not found: no storage vol with matching path '..../xxx.qcow2'
-            pool.refresh()
-            self.domain_disk = dst
-            # template default domain XML
-            with open("domain.xml") as template_f:
-                template_xml = template_f.read()
-                template = DomXML(template_xml)
-                template.name = self.dom_name
-                template.memory = str(DOMAIN_MEMORY)
-                template.disk = str(dst)
-                if self.net_on:
-                    template.add_network()
-                domain_xml = template.tostring()
-                # define domain
-                logging.info("Defining domain")
-                self.con.defineXML(domain_xml)
-                self.dom = self.con.lookupByName(self.dom_name)
-        return self.dom
-
-    def __exit__(self, type, value, traceback):
-        # cleanup domain and image
-        if self.remove_domain:
-            logging.info("Undefining domain")
-            self.dom.undefine()
-            logging.info("Removing disk")
-            if self.domain_disk:
-                self.domain_disk.unlink()
-            if self.image_builder:
-                self.image_builder.__exit__(type, value, traceback)
 
 
 def init_logger(debug=False):
@@ -184,17 +41,12 @@ def main(args):
     only_image = args["--only-image"]
     from_image = args["--from"]
     only_series = args["--only-serie"]
-    net_on = args["--net"]
-    packer_args = args["<packer_args>"]
+    packer_args = args["--var"]
 
     init_logger(debug)
     logging.debug(args)
 
     libvirt_con = libvirt.open(uri)
-
-    remove_domain = settings.get("remove_domain", DEFAULT_REMOVE_DOMAIN_VALUE)
-    storage_pool = settings.get("storage_pool", DEFAULT_STORAGE_POOL)
-    tool_list = settings.get("tools")
 
     filtered_serie_list = settings["series"]
     if only_series:
@@ -219,33 +71,26 @@ def main(args):
         if serie.get("extra_firstlogin_cmds"):
             extra_firstlogin_cmds = serie["extra_firstlogin_cmds"]
         for index, entry in enumerate(filtered_image_list):
+            box_name = entry["name"]
             logging.debug(entry)
             logging.info(
-                "[%s/%s] Building %s",
+                "[%s/%s] Processing %s",
                 index + 1,
                 len(filtered_image_list),
-                entry["name"],
+                box_name,
             )
-            with LibvirtDom(
-                libvirt_con,
-                template,
-                varfile,
-                entry,
-                remove_domain,
-                net_on,
-                storage_pool,
-                extra_firstlogin_cmds,
-                packer_args,
-            ) as domain:
-                logging.info("New domain: %s", domain.name())
-                if tool_list:
-                    for tool_cmd in tool_list:
-                        # format and replace domain name
-                        f_tool_cmd = tool_cmd.format(domain_name=domain.name(), uri=uri)
-                        if debug:
-                            f_tool_cmd += " --debug"
-                        logging.info("Running tool: %s", f_tool_cmd)
-                        subprocess.check_call(f_tool_cmd, shell=True)
+            with ExitStack() as ex:
+                if not vagrant.box_exists(box_name):
+                    image = ex.enter_context(
+                        build_image(libvirt_con, template, varfile, entry, extra_firstlogin_cmds, packer_args)
+                    )
+                    vagrant.box_add(image, name=box_name)
+
+                # prepare vagrant env
+                vagrant_dir = ex.enter_context(vagrant.prepare_vagrantfile(box_name))
+                ex.enter_context(vagrant.ensure_destroyed(vagrant_dir))
+                ex.enter_context(vagrant.up_down_ctxt(vagrant_dir))
+                vagrant.provision(vagrant_dir)
 
 
 def entrypoint():
