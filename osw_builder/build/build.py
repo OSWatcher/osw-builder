@@ -180,4 +180,5 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
         finally:
             with suppress(docker.errors.NotFound, docker.errors.APIError):
                 container.remove(force=True)
-    return OUTPUT_QEMU_DIR / os.listdir(OUTPUT_QEMU_DIR)[0]
+    # return the fist file ending with .box in the output directory
+    return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
