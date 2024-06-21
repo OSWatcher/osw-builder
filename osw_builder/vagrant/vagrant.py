@@ -5,6 +5,20 @@ from typing import Generator
 
 PLACEHOLDER_VALUE = "# PLACEHOLDER"
 LIBVIRT_LOADER_FAIL = "libvirt.loader = '/nonexistent'"
+LOG_FILE = "vagrant.log"
+
+
+def log_subprocess_call(cmdline: list[str], cwd: Path = None, check: bool = True):
+    with open(LOG_FILE, "a") as log:
+        process = subprocess.Popen(cmdline, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        output = ""
+        for line in process.stdout:
+            log.write(line)
+            output += line
+        return_code = process.wait()
+        if check and return_code:
+            raise subprocess.CalledProcessError(return_code, cmdline, output=output)
+        return return_code
 
 
 def box_add(box_path: Path, name: str = None):
@@ -44,19 +58,19 @@ def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True):
     if no_provision:
         cmdline.append("--no-provision")
 
-    subprocess.run(cmdline, cwd=cwd, capture_output=True, text=True, check=True)
+    log_subprocess_call(cmdline, cwd=cwd)
 
 
 def halt(cwd: Path):
-    subprocess.check_call(["vagrant", "halt"], cwd=cwd)
+    log_subprocess_call(["vagrant", "halt"], cwd=cwd)
 
 
 def destroy(cwd: Path):
-    subprocess.check_call(["vagrant", "destroy", "-f"], cwd=cwd)
+    log_subprocess_call(["vagrant", "destroy", "-f"], cwd=cwd)
 
 
 def provision(cwd: Path):
-    subprocess.check_call(["vagrant", "provision"], cwd=cwd)
+    log_subprocess_call(["vagrant", "provision"], cwd=cwd)
 
 
 def define(cwd: Path):
@@ -66,7 +80,7 @@ def define(cwd: Path):
             up(cwd, no_destroy=True)
         except subprocess.CalledProcessError as e:
             # check for error "Path '/nonexistent' is not accessible"
-            if "Path '/nonexistent' is not accessible" not in e.stderr:
+            if "Path '/nonexistent' is not accessible" not in e.output:
                 raise
 
 
