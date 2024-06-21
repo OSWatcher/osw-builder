@@ -19,4 +19,4 @@ def prepare_vagrantfile(box_name: str):
         with open(vagrantfile, "w") as f:
             f.write(read_vagrantfile_template().format(box_name=box_name))
             f.flush()
-            yield tmp_dir
+            yield Path(tmp_dir)
