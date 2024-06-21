@@ -3,6 +3,9 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
+PLACEHOLDER_VALUE = "# PLACEHOLDER"
+LIBVIRT_LOADER_FAIL = "libvirt.loader = '/nonexistent'"
+
 
 def box_add(box_path: Path, name: str = None):
     cmdline = ["vagrant", "box", "add"]
@@ -34,8 +37,14 @@ def box_exists(name: str) -> bool:
     return name in box_list()
 
 
-def up(cwd: Path):
-    subprocess.check_call(["vagrant", "up", "--no-provision"], cwd=cwd)
+def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True):
+    cmdline = ["vagrant", "up"]
+    if no_destroy:
+        cmdline.append("--no-destroy-on-error")
+    if no_provision:
+        cmdline.append("--no-provision")
+
+    subprocess.run(cmdline, cwd=cwd, capture_output=True, text=True, check=True)
 
 
 def halt(cwd: Path):
@@ -48,6 +57,39 @@ def destroy(cwd: Path):
 
 def provision(cwd: Path):
     subprocess.check_call(["vagrant", "provision"], cwd=cwd)
+
+
+def define(cwd: Path):
+    """Define the VM in the provider without starting it"""
+    with loader_fail_ctxt(cwd):
+        try:
+            up(cwd, no_destroy=True)
+        except subprocess.CalledProcessError as e:
+            # check for error "Path '/nonexistent' is not accessible"
+            if "Path '/nonexistent' is not accessible" not in e.stderr:
+                raise
+
+
+@contextmanager
+def loader_fail_ctxt(cwd: Path):
+    try:
+        with open(cwd / "Vagrantfile", "r") as f:
+            content = f.read()
+            # replace PLACEHOLDER_VALUE
+            content = content.replace(PLACEHOLDER_VALUE, LIBVIRT_LOADER_FAIL)
+            # write it back
+            with open(cwd / "Vagrantfile", "w") as f:
+                f.write(content)
+            yield
+    finally:
+        # revert back to original
+        with open(cwd / "Vagrantfile", "r") as f:
+            content = f.read()
+            # replace LIBVIRT_LOADER_FAIL
+            content = content.replace(LIBVIRT_LOADER_FAIL, PLACEHOLDER_VALUE)
+            # write it back
+            with open(cwd / "Vagrantfile", "w") as f:
+                f.write(content)
 
 
 @contextmanager
