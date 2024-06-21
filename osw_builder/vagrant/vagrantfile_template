@@ -1,9 +1,11 @@
 Vagrant.configure("2") do |config|
     config.vm.box = "{box_name}"
+    # change name "default" in libvirt to the box name
     config.vm.define "{box_name}"
 
     config.vm.provider :libvirt do |libvirt|
-        libvirt.default_prefix = "{box_name}"
+        # remove prefix (tmp directory)
+        libvirt.default_prefix = ""
         # PLACEHOLDER
     end
 end
