@@ -1,9 +1,12 @@
 from contextlib import contextmanager
 from importlib.resources import as_file, files
 from pathlib import Path
-from tempfile import TemporaryDirectory
+
+from appdirs import AppDirs
 
 import osw_builder as root_package
+
+APPDIRS = AppDirs("osw-builder", "OSWatcher")
 
 
 def read_vagrantfile_template() -> str:
@@ -14,9 +17,10 @@ def read_vagrantfile_template() -> str:
 
 @contextmanager
 def prepare_vagrantfile(box_name: str):
-    with TemporaryDirectory() as tmp_dir:
-        vagrantfile = Path(tmp_dir) / "Vagrantfile"
-        with open(vagrantfile, "w") as f:
-            f.write(read_vagrantfile_template().format(box_name=box_name))
-            f.flush()
-            yield Path(tmp_dir)
+    box_dir = Path(APPDIRS.user_data_dir) / box_name
+    box_dir.mkdir(parents=True, exist_ok=True)
+    vagrantfile = Path(box_dir) / "Vagrantfile"
+    with open(vagrantfile, "w") as f:
+        f.write(read_vagrantfile_template().format(box_name=box_name))
+        f.flush()
+        yield Path(box_dir)
