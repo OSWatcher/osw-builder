@@ -1,8 +1,17 @@
 import logging
+import re
 import subprocess
 from contextlib import contextmanager
+from enum import Enum, auto
 from pathlib import Path
-from typing import Generator
+from typing import Generator, Tuple
+
+
+class MachineStateEnum(Enum):
+    NOT_CREATED = auto()
+    SHUTOFF = auto()
+    RUNNING = auto()
+
 
 PLACEHOLDER_VALUE = "# PLACEHOLDER"
 LIBVIRT_LOADER_FAIL = "libvirt.loader = '/nonexistent'"
@@ -21,7 +30,7 @@ def log_subprocess_call(cmdline: list[str], cwd: Path = None, check: bool = True
         return_code = process.wait()
         if check and return_code:
             raise subprocess.CalledProcessError(return_code, cmdline, output=output)
-        return return_code
+        return return_code, output
 
 
 def box_add(box_path: Path, name: str = None):
@@ -95,6 +104,41 @@ def snapshot_save(cwd: Path, name: str = None):
     logging.debug("vagrant snapshot save %s", name)
     cmdline = ["vagrant", "snapshot", "save", name]
     log_subprocess_call(cmdline, cwd=cwd)
+
+
+def status(cwd: Path):
+    logging.debug("vagrant status")
+    _, output = log_subprocess_call(["vagrant", "status"], cwd=cwd)
+    return parse_status(output)
+
+
+def parse_status(output: str) -> Tuple[str, MachineStateEnum]:
+    """
+    Current machine states:
+
+    win10-ts1-1507            not created (libvirt)
+
+    The Libvirt domain is not created. Run `vagrant up` to create it.
+    """
+    # extract vm and machine state
+    # return Tuple[str, MachineStateEnum]
+    for line in output.splitlines()[2:]:
+        line = line.strip()
+        if not line:
+            continue
+        # sample line
+        # win10-ts1-1507            not created (libvirt)
+        match = re.match(r"(\S+)\s+([^\(]+)\((\w+)\)", line)
+        if not match:
+            continue
+        vm, state, provider = match.groups()
+        state = state.strip()
+        try:
+            return vm, MachineStateEnum[state.upper()]
+        except KeyError:
+            if state == "not created":
+                return vm, MachineStateEnum.NOT_CREATED
+            raise
 
 
 @contextmanager
