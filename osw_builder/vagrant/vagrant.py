@@ -196,8 +196,13 @@ def up_down_ctxt(cwd: Path):
 
 
 @contextmanager
-def ensure_destroyed(cwd: Path):
+def ensure_destroyed(cwd: Path, only_on_error: bool = False):
     try:
         yield
+    except BaseException:
+        if only_on_error:
+            destroy(cwd)
+        raise
     finally:
-        destroy(cwd)
+        if not only_on_error:
+            destroy(cwd)
