@@ -2,10 +2,6 @@
 	path = osw_builder/packer-templates
 	url = https://github.com/OSWatcher/packer-templates
 	branch = win10_pro
-[submodule "vendor/oswatcher"]
-  	path = vendor/oswatcher
-  	url = https://github.com/OSWatcher/oswatcher_private.git
-  	branch = integration/neogit
 [submodule "vendor/neogit"]
   	path = vendor/neogit
   	url = https://github.com/OSWatcher/neogit.git
