@@ -12,7 +12,7 @@ import docker
 import hcl2
 
 import osw_builder as root_package
-from osw_builder.autounattend import Autounattend
+from .autounattend import Autounattend
 
 from .utils import compute_sha1sum
 
