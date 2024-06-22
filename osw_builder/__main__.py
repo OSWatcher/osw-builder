@@ -95,9 +95,11 @@ def main(args):
                 logging.info("VM state: %s", state)
                 if state == vagrant.MachineStateEnum.NOT_CREATED:
                     # define the VM
-                    logging.info("Defining VM")
-                    vagrant.define(vagrant_dir)
-                    vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
+                    # ensure atomicity
+                    with vagrant.ensure_destroyed(vagrant_dir, only_on_error=True):
+                        logging.info("Defining VM")
+                        vagrant.define(vagrant_dir)
+                        vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
 
                 for snapshot in vagrant.snapshot_list(vagrant_dir):
                     vagrant.snapshot_restore(vagrant_dir, snapshot)
