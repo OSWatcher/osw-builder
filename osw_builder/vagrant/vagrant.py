@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path
@@ -14,6 +15,8 @@ def log_subprocess_call(cmdline: list[str], cwd: Path = None, check: bool = True
         output = ""
         for line in process.stdout:
             log.write(line)
+            # force flush on every line to see progress live when tail -f vagrant.log
+            log.flush()
             output += line
         return_code = process.wait()
         if check and return_code:
@@ -52,6 +55,7 @@ def box_exists(name: str) -> bool:
 
 
 def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True):
+    logging.debug("vagrant up - %s %s", no_destroy, no_provision)
     cmdline = ["vagrant", "up"]
     if no_destroy:
         cmdline.append("--no-destroy-on-error")
@@ -62,14 +66,17 @@ def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True):
 
 
 def halt(cwd: Path):
+    logging.debug("vagrant halt")
     log_subprocess_call(["vagrant", "halt"], cwd=cwd)
 
 
 def destroy(cwd: Path):
+    logging.debug("vagrant destroy")
     log_subprocess_call(["vagrant", "destroy", "-f"], cwd=cwd)
 
 
 def provision(cwd: Path):
+    logging.debug("vagrant provision")
     log_subprocess_call(["vagrant", "provision"], cwd=cwd)
 
 
