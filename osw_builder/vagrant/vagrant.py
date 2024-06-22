@@ -15,6 +15,8 @@ class MachineStateEnum(Enum):
 
 PLACEHOLDER_VALUE = "# PLACEHOLDER"
 LIBVIRT_LOADER_FAIL = "libvirt.loader = '/nonexistent'"
+LIBVIRT_USER_LOADER_FAIL_ERR = "could not load PC BIOS '/nonexistent'"
+LIBVIRT_SYSTEM_LOADER_FAIL_ERR = "Path '/nonexistent' is not accessible"
 LOG_FILE = "vagrant.log"
 
 
@@ -96,7 +98,7 @@ def define(cwd: Path):
             up(cwd, no_destroy=True)
         except subprocess.CalledProcessError as e:
             # check for error "Path '/nonexistent' is not accessible"
-            if "Path '/nonexistent' is not accessible" not in e.output:
+            if LIBVIRT_SYSTEM_LOADER_FAIL_ERR not in e.output and LIBVIRT_USER_LOADER_FAIL_ERR not in e.output:
                 raise
 
 
