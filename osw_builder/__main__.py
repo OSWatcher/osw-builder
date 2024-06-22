@@ -24,6 +24,8 @@ from osw_builder import vagrant
 from osw_builder.build import build_image
 from osw_builder.settings import settings
 
+BUILD_SNAPSHOT_NAME = "build"
+
 
 def init_logger(debug=False):
     formatter = "%(asctime)s %(levelname)s:%(name)s:%(message)s"
@@ -90,6 +92,7 @@ def main(args):
                 # define the VM
                 logging.info("Defining VM")
                 vagrant.define(vagrant_dir)
+                vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
 
                 ex.enter_context(vagrant.up_down_ctxt(vagrant_dir))
                 vagrant.provision(vagrant_dir)
