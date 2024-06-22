@@ -4,6 +4,7 @@ Vagrant.configure("2") do |config|
     config.vm.define "{box_name}"
 
     config.vm.provider :libvirt do |libvirt|
+        libvirt.uri = "qemu:///session"
         # remove prefix (tmp directory)
         libvirt.default_prefix = ""
         # PLACEHOLDER
