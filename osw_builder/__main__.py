@@ -22,9 +22,11 @@ from docopt import docopt
 
 from osw_builder import vagrant
 from osw_builder.build import build_image
+from osw_builder.capture import capture_neogit
 from osw_builder.settings import settings
 
 BUILD_SNAPSHOT_NAME = "build"
+LIBVIRT_URI = "qemu:///session"
 
 
 def init_logger(debug=False):
@@ -97,8 +99,11 @@ def main(args):
                     vagrant.define(vagrant_dir)
                     vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
 
-                ex.enter_context(vagrant.up_down_ctxt(vagrant_dir))
-                vagrant.provision(vagrant_dir)
+                for snapshot in vagrant.snapshot_list(vagrant_dir):
+                    vagrant.snapshot_restore(vagrant_dir, snapshot)
+                    qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
+                    logging.debug("Qcow path: %s", qcow_path)
+                    capture_neogit(qcow_path, box_name)
 
 
 def entrypoint():
