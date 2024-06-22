@@ -92,6 +92,7 @@ def build_image(
     extra_firstlogin_cmds: Optional[list[str]],
     packer_args: list[str] = None,
 ) -> Generator[Path, None, None]:
+    logging.info("Building image")
     sha1digest = validate_source_and_compute_sha1(config_entry)
     varfile_data = update_varfile(PACKER_TEMPLATES_DIR / varfile, config_entry["source"], sha1digest)
 
@@ -119,6 +120,7 @@ def build_image(
 
 
 def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list[str], network: bool = True):
+    logging.debug("Fake Packer run")
     with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f_fake:
         with open(varfile_path) as original_varfile:
             for line in original_varfile:
@@ -138,7 +140,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
         varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
         autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
     }
-
+    logging.debug("Volumes: %s", volumes)
     cmdline = [
         "build",
         "-only",
@@ -157,6 +159,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
 
     cmdline.append("windows.pkr.hcl")
 
+    logging.debug("Running packer with command line: %s", cmdline)
     with open("packer-build.log", "a") as packer_log_f:
         container = dk_client.containers.run(
             PACKER_TEMPLATES_IMAGE,
