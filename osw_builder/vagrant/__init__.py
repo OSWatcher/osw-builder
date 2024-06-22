@@ -1,4 +1,5 @@
 from .ctxt import prepare_vagrantfile
+from .lib_virt import get_qcow_path
 from .vagrant import (
     MachineStateEnum,
     box_add,
@@ -28,4 +29,5 @@ __all__ = [
     "MachineStateEnum",
     "snapshot_list",
     "snapshot_restore",
+    "get_qcow_path",
 ]
