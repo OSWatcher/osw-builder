@@ -91,6 +91,12 @@ def define(cwd: Path):
                 raise
 
 
+def snapshot_save(cwd: Path, name: str = None):
+    logging.debug("vagrant snapshot save %s", name)
+    cmdline = ["vagrant", "snapshot", "save", name]
+    log_subprocess_call(cmdline, cwd=cwd)
+
+
 @contextmanager
 def loader_fail_ctxt(cwd: Path):
     try:
