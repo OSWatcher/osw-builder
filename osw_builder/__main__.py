@@ -10,6 +10,7 @@ Options:
     -o --only-image=<NAME>          Build only image NAME
     -s --only-serie=<SERIE>         Build only serie SERIE
     -f --from=<NAME>                Build images from NAME
+    --destroy                       Destroy the VM after build
     --var <packer_args>...          Extra packer arguments
 """
 
@@ -17,7 +18,6 @@ Options:
 import logging
 from contextlib import ExitStack
 
-import libvirt
 from docopt import docopt
 
 from osw_builder import vagrant
@@ -36,17 +36,15 @@ def init_logger(debug=False):
 
 
 def main(args):
-    uri = args["--connection"]
     debug = args["--debug"]
     only_image = args["--only-image"]
     from_image = args["--from"]
     only_series = args["--only-serie"]
     packer_args = args["--var"]
+    destroy = args["--destroy"]
 
     init_logger(debug)
     logging.debug(args)
-
-    libvirt_con = libvirt.open(uri)
 
     filtered_serie_list = settings["series"]
     if only_series:
@@ -81,14 +79,18 @@ def main(args):
             )
             with ExitStack() as ex:
                 if not vagrant.box_exists(box_name):
-                    image = ex.enter_context(
-                        build_image(libvirt_con, template, varfile, entry, extra_firstlogin_cmds, packer_args)
-                    )
+                    image = ex.enter_context(build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args))
                     vagrant.box_add(image, name=box_name)
 
                 # prepare vagrant env
                 vagrant_dir = ex.enter_context(vagrant.prepare_vagrantfile(box_name))
-                ex.enter_context(vagrant.ensure_destroyed(vagrant_dir))
+                if destroy:
+                    ex.enter_context(vagrant.ensure_destroyed(vagrant_dir))
+                logging.info("Vagrant dir: %s", vagrant_dir)
+                # define the VM
+                logging.info("Defining VM")
+                vagrant.define(vagrant_dir)
+
                 ex.enter_context(vagrant.up_down_ctxt(vagrant_dir))
                 vagrant.provision(vagrant_dir)
 
