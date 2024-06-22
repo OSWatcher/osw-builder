@@ -86,13 +86,16 @@ def main(args):
 
                 # prepare vagrant env
                 vagrant_dir = ex.enter_context(vagrant.prepare_vagrantfile(box_name))
+                logging.info("Vagrant dir: %s", vagrant_dir)
                 if destroy:
                     ex.enter_context(vagrant.ensure_destroyed(vagrant_dir))
-                logging.info("Vagrant dir: %s", vagrant_dir)
-                # define the VM
-                logging.info("Defining VM")
-                vagrant.define(vagrant_dir)
-                vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
+                vm, state = vagrant.status(vagrant_dir)
+                logging.info("VM state: %s", state)
+                if state == vagrant.MachineStateEnum.NOT_CREATED:
+                    # define the VM
+                    logging.info("Defining VM")
+                    vagrant.define(vagrant_dir)
+                    vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
 
                 ex.enter_context(vagrant.up_down_ctxt(vagrant_dir))
                 vagrant.provision(vagrant_dir)
