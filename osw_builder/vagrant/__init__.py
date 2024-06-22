@@ -1,5 +1,16 @@
 from .ctxt import prepare_vagrantfile
-from .vagrant import box_add, box_exists, box_list, define, ensure_destroyed, provision, snapshot_save, up_down_ctxt
+from .vagrant import (
+    MachineStateEnum,
+    box_add,
+    box_exists,
+    box_list,
+    define,
+    ensure_destroyed,
+    provision,
+    snapshot_save,
+    status,
+    up_down_ctxt,
+)
 
 __all__ = [
     "box_add",
@@ -11,4 +22,6 @@ __all__ = [
     "define",
     "prepare_vagrantfile",
     "snapshot_save",
+    "status",
+    "MachineStateEnum",
 ]
