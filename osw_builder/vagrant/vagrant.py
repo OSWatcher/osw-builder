@@ -100,7 +100,7 @@ def define(cwd: Path):
                 raise
 
 
-def snapshot_save(cwd: Path, name: str = None):
+def snapshot_save(cwd: Path, name: str):
     logging.debug("vagrant snapshot save %s", name)
     cmdline = ["vagrant", "snapshot", "save", name]
     log_subprocess_call(cmdline, cwd=cwd)
@@ -110,6 +110,11 @@ def status(cwd: Path):
     logging.debug("vagrant status")
     _, output = log_subprocess_call(["vagrant", "status"], cwd=cwd)
     return parse_status(output)
+
+
+def snapshot_restore(cwd: Path, name: str):
+    logging.debug("vagrant snapshot restore %s", name)
+    log_subprocess_call(["vagrant", "snapshot", "restore", name], cwd=cwd)
 
 
 def parse_status(output: str) -> Tuple[str, MachineStateEnum]:
@@ -139,6 +144,22 @@ def parse_status(output: str) -> Tuple[str, MachineStateEnum]:
             if state == "not created":
                 return vm, MachineStateEnum.NOT_CREATED
             raise
+
+
+def snapshot_list(cwd: Path) -> list[str]:
+    logging.debug("vagrant snapshot list")
+    _, output = log_subprocess_call(["vagrant", "snapshot", "list"], cwd=cwd)
+    return list(parse_snapshot_list(output))
+
+
+def parse_snapshot_list(output: str) -> Generator[str, None, None]:
+    for line in output.splitlines()[1:]:
+        line = line.strip()
+        if not line:
+            continue
+        # sample line
+        # build
+        yield line
 
 
 @contextmanager

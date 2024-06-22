@@ -7,6 +7,8 @@ from .vagrant import (
     define,
     ensure_destroyed,
     provision,
+    snapshot_list,
+    snapshot_restore,
     snapshot_save,
     status,
     up_down_ctxt,
@@ -24,4 +26,6 @@ __all__ = [
     "snapshot_save",
     "status",
     "MachineStateEnum",
+    "snapshot_list",
+    "snapshot_restore",
 ]
