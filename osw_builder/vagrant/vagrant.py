@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
 from typing import Generator, Tuple
+
 from attrs import define
 
 
@@ -19,6 +20,12 @@ class WinRMConfig:
     RDPPort: int
     RDPUser: str
     RDPPassword: str
+
+
+@define(auto_attribs=True)
+class QEMUSnapshot:
+    ID: int
+    Tag: str
 
 
 class MachineStateEnum(Enum):
@@ -162,10 +169,11 @@ def parse_status(output: str) -> Tuple[str, MachineStateEnum]:
             raise
 
 
-def snapshot_list(cwd: Path) -> list[str]:
-    logging.debug("vagrant snapshot list")
-    _, output = log_subprocess_call(["vagrant", "snapshot", "list"], cwd=cwd)
-    return list(parse_snapshot_list(output))
+def snapshot_list(cwd: Path, qcow_path: Path) -> list[QEMUSnapshot]:
+    # use qemu-img
+    cmdline = ["qemu-img", "snapshot", "-l", str(qcow_path)]
+    _, output = log_subprocess_call(cmdline)
+    return list(parse_qemu_img_snapshot_list(output))
 
 
 def snapshot_push(cwd: Path):
@@ -180,7 +188,39 @@ def snapshot_pop(cwd: Path):
     log_subprocess_call(cmdline, cwd=cwd)
 
 
-def parse_snapshot_list(output: str) -> Generator[str, None, None]:
+def vagrant_snapshot_list(cwd: Path) -> list[QEMUSnapshot]:
+    logging.debug("vagrant snapshot list")
+    _, output = log_subprocess_call(["vagrant", "snapshot", "list"], cwd=cwd)
+    return list(parse_vagrant_snapshot_list(output))
+
+
+def parse_qemu_img_snapshot_list(output: str) -> Generator[QEMUSnapshot, None, None]:
+    """
+        Snapshot list:
+    ID        TAG               VM SIZE                DATE     VM CLOCK     ICOUNT
+    1         build                 0 B 2024-06-23 01:57:19 00:00:00.000          0
+    2         2267602          3.05 GiB 2024-06-23 16:31:11 00:05:17.849
+    3         3125217          2.35 GiB 2024-06-23 16:35:46 00:02:59.605
+    4         4056254          2.05 GiB 2024-06-23 16:39:09 00:01:39.459
+    5         890830           2.92 GiB 2024-06-23 16:43:45 00:03:26.232
+    6         3161102          1.93 GiB 2024-06-23 16:47:33 00:02:12.826
+    7         4033631          1.96 GiB 2024-06-23 16:52:11 00:03:40.142
+    8         4480730           1.9 GiB 2024-06-23 16:54:46 00:01:34.657
+    9         4023057          1.93 GiB 2024-06-23 16:57:34 00:01:49.845
+    10        4019474          3.56 GiB 2024-06-23 17:31:24 00:32:51.087
+    """
+    for line in output.splitlines()[2:]:
+        parts = re.split(r"\s{2,}", line)
+        if len(parts) < 4:
+            continue
+
+        yield QEMUSnapshot(
+            ID=int(parts[0]),
+            Tag=parts[1],
+        )
+
+
+def parse_vagrant_snapshot_list(output: str) -> Generator[str, None, None]:
     for line in output.splitlines()[1:]:
         line = line.strip()
         if not line:
