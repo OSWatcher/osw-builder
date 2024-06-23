@@ -168,6 +168,18 @@ def snapshot_list(cwd: Path) -> list[str]:
     return list(parse_snapshot_list(output))
 
 
+def snapshot_push(cwd: Path):
+    logging.debug("vagrant snapshot push")
+    cmdline = ["vagrant", "snapshot", "push"]
+    log_subprocess_call(cmdline, cwd=cwd)
+
+
+def snapshot_pop(cwd: Path):
+    logging.debug("vagrant snapshot pop")
+    cmdline = ["vagrant", "snapshot", "pop"]
+    log_subprocess_call(cmdline, cwd=cwd)
+
+
 def parse_snapshot_list(output: str) -> Generator[str, None, None]:
     for line in output.splitlines()[1:]:
         line = line.strip()
