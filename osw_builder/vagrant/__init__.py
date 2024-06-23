@@ -9,13 +9,13 @@ from .vagrant import (
     ensure_destroyed,
     provision,
     snapshot_list,
+    snapshot_pop,
+    snapshot_push,
     snapshot_restore,
     snapshot_save,
     status,
     up_down_ctxt,
     winrm_config,
-    snapshot_push,
-    snapshot_pop,
 )
 
 __all__ = [
