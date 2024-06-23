@@ -5,6 +5,20 @@ from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
 from typing import Generator, Tuple
+from attrs import define
+
+
+@define(auto_attribs=True)
+class WinRMConfig:
+    Host: str
+    HostName: str
+    User: str
+    Password: str
+    Port: int
+    RDPHostName: str
+    RDPPort: int
+    RDPUser: str
+    RDPPassword: str
 
 
 class MachineStateEnum(Enum):
@@ -162,6 +176,45 @@ def parse_snapshot_list(output: str) -> Generator[str, None, None]:
         # sample line
         # build
         yield line
+
+
+def winrm_config(cwd: Path) -> WinRMConfig:
+    logging.debug("vagrant winrm-config")
+    _, output = log_subprocess_call(["vagrant", "winrm-config"], cwd=cwd)
+    return parse_winrm_config(output)
+
+
+def parse_winrm_config(output: str) -> WinRMConfig:
+    """sample output:
+    Host win10-ts1-1507
+        HostName 192.168.122.173
+        User vagrant
+        Password vagrant
+        Port 5985
+        RDPHostName 192.168.122.173
+        RDPPort 3389
+        RDPUser vagrant
+        RDPPassword vagrant
+    """
+    config = {}
+    lines = output.strip().split("\n")
+
+    for line in lines:
+        if line.strip():
+            key, value = line.strip().split(None, 1)
+            config[key] = value
+
+    return WinRMConfig(
+        Host=config.get("Host"),
+        HostName=config.get("HostName"),
+        User=config.get("User"),
+        Password=config.get("Password"),
+        Port=int(config.get("Port")),
+        RDPHostName=config.get("RDPHostName"),
+        RDPPort=int(config.get("RDPPort")),
+        RDPUser=config.get("RDPUser"),
+        RDPPassword=config.get("RDPPassword"),
+    )
 
 
 @contextmanager

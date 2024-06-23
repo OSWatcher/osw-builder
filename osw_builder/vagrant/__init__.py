@@ -13,6 +13,7 @@ from .vagrant import (
     snapshot_save,
     status,
     up_down_ctxt,
+    winrm_config,
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "snapshot_list",
     "snapshot_restore",
     "get_qcow_path",
+    "winrm_config",
 ]
