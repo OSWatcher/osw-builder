@@ -4,14 +4,14 @@
 Usage: builder.py [options] [(--only-image=<NAME> | --from=<NAME>)] [--only-serie=<SERIE>...] [--var <packer_args>...]
 
 Options:
-    -h --help                       Display this message
-    -d --debug                      Enable debug output
-    -c --connection=<URI>           Specify a libvirt URI [Default: qemu:///session]
-    -o --only-image=<NAME>          Build only image NAME
-    -s --only-serie=<SERIE>         Build only serie SERIE
-    -f --from=<NAME>                Build images from NAME
-    --destroy                       Destroy the VM after build
-    --var <packer_args>...          Extra packer arguments
+    -h --help                           Display this message
+    -d --debug                          Enable debug output
+    -c --connection=<URI>               Specify a libvirt URI [Default: qemu:///session]
+    -o --only-image=<NAME>              Build only image NAME
+    -s --only-serie=<SERIE>             Build only serie SERIE
+    -f --from=<NAME>                    Build images from NAME
+    --destroy                           Destroy the VM after build
+    --var <packer_args>...              Extra packer arguments
 """
 
 
@@ -25,6 +25,8 @@ from osw_builder import vagrant
 from osw_builder.build import build_image
 from osw_builder.capture import capture_neogit, create_branch
 from osw_builder.settings import settings
+
+from .snapshot import Snapshot
 
 BUILD_SNAPSHOT_NAME = "build"
 LIBVIRT_URI = "qemu:///session"
@@ -125,17 +127,18 @@ def main(args):
                 assert snap_list[0].Tag == BUILD_SNAPSHOT_NAME
 
                 # iterate after 'build' snapshot
-                for snap in snap_list[1:]:
-                    vagrant.snapshot_restore(vagrant_dir, snap.Tag)
-                    capture_neogit(qcow_path, snap.Tag, branch_name, unique=True)
+                for raw_snap in snap_list[1:]:
+                    vagrant.snapshot_restore(vagrant_dir, raw_snap.Tag)
+                    snap = Snapshot.from_raw_tag(raw_snap.Tag)
+                    capture_neogit(qcow_path, snap.name, branch_name, unique=True, desc=snap.description)
 
                 # take last snapshot
-                previous_snap = snap_list[-1].Tag
+                previous_raw_snap = snap_list[-1].Tag
                 # apply latest winupdates
                 with vagrant.up_down_ctxt(vagrant_dir):
                     logging.info("Searching for Windows Updates")
                     winrm_config = vagrant.winrm_config(vagrant_dir)
-                    win_update = WinUpdate(winrm_config.HostName, debug_lvl=0)
+                    win_update = WinUpdate(winrm_config.HostName, debug_lvl=1)
                     for index, update in enumerate(win_update.search()):
                         kb_name = f"KB-{update.kb[0]}"
                         logging.info("[%s][%s] %s", index + 1, kb_name, update.title)
@@ -145,14 +148,16 @@ def main(args):
                         except UpdateNotInstalledError:
                             logging.warning("Update not installed")
                             # restore previous snapshot
-                            vagrant.snapshot_restore(vagrant_dir, previous_snap)
+                            vagrant.snapshot_restore(vagrant_dir, previous_raw_snap)
                         else:
                             # SUCCESS !
+                            snap = Snapshot(kb_name, update.title)
+                            raw_tag = snap.to_raw_tag()
                             # take snapshot
-                            vagrant.snapshot_save(vagrant_dir, kb_name)
+                            vagrant.snapshot_save(vagrant_dir, raw_tag)
                             # update previous
-                            previous_snap = kb_name
-                            capture_neogit(qcow_path, kb_name, branch_name, unique=True)
+                            previous_raw_snap = raw_tag
+                            capture_neogit(qcow_path, kb_name, branch_name, unique=True, desc=update.title)
 
 
 def entrypoint():
