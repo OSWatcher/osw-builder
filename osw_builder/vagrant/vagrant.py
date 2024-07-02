@@ -304,10 +304,12 @@ def up_down_ctxt(cwd: Path):
 def ensure_destroyed(cwd: Path, only_on_error: bool = False):
     try:
         yield
-    except BaseException:
+    except BaseException as e:
         if only_on_error:
+            logging.debug("Error: %s. Destroying VM", e)
             destroy(cwd)
         raise
     finally:
         if not only_on_error:
+            logging.debug("Destroying VM")
             destroy(cwd)
