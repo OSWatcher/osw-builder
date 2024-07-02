@@ -11,6 +11,8 @@ Options:
     -s --only-serie=<SERIE>             Build only serie SERIE
     -f --from=<NAME>                    Build images from NAME
     --destroy                           Destroy the VM after build
+    --updates=<UP_ANSWER>               Apply branch updates [Default: yes]
+    --search-updates=<SEARCH_ANSWER>    Search for updates [Default: yes]
     --var <packer_args>...              Extra packer arguments
 """
 
@@ -32,6 +34,10 @@ BUILD_SNAPSHOT_NAME = "build"
 LIBVIRT_URI = "qemu:///session"
 
 
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
+
+
 def init_logger(debug=False):
     formatter = "%(asctime)s %(levelname)s:%(name)s:%(message)s"
     logging_level = logging.INFO
@@ -49,6 +55,8 @@ def main(args):
     only_series = args["--only-serie"]
     packer_args = args["--var"]
     destroy = args["--destroy"]
+    apply_updates = str2bool(args["--updates"])
+    search_updates = str2bool(args["--search-updates"])
 
     init_logger(debug)
     logging.debug(args)
@@ -126,12 +134,16 @@ def main(args):
                 snap_list = vagrant.snapshot_list(vagrant_dir, qcow_path)
                 assert snap_list[0].Tag == BUILD_SNAPSHOT_NAME
 
+                if not apply_updates:
+                    return
                 # iterate after 'build' snapshot
                 for raw_snap in snap_list[1:]:
                     vagrant.snapshot_restore(vagrant_dir, raw_snap.Tag)
                     snap = Snapshot.from_raw_tag(raw_snap.Tag)
                     capture_neogit(qcow_path, snap.name, branch_name, unique=True, desc=snap.description)
 
+                if not search_updates:
+                    return
                 # take last snapshot
                 previous_raw_snap = snap_list[-1].Tag
                 # apply latest winupdates
