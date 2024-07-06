@@ -85,6 +85,7 @@ def main(args):
             extra_firstlogin_cmds = serie["extra_firstlogin_cmds"]
         for index, entry in enumerate(filtered_image_list):
             box_name = entry["name"]
+            description = entry.get("description", None)
             logging.debug(entry)
             logging.info(
                 "[%s/%s] Processing %s",
@@ -118,7 +119,7 @@ def main(args):
 
                 # restore build snapshot
                 vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT_NAME)
-                build_commit = capture_neogit(qcow_path, box_name, unique=True)
+                build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description)
 
                 # create branch
                 branch_name = box_name
