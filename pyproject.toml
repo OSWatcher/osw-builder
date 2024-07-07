@@ -42,6 +42,7 @@ osw-capture-tool = "osw_builder.capture:main"
 
 [tool.poe.tasks]
 fmt = "black ."
+fmt-check = "black --check ."
 _flake8 = "flake8 --show-source --statistics ."
 _isort = "isort ."
 lint = ["_flake8", "_isort"]
