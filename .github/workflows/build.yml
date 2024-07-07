@@ -37,6 +37,9 @@ jobs:
             echo "allow virbr0" | sudo tee /etc/qemu/bridge.conf
           fi
 
+      - name: Ensure vmlinuz is readable for libguestfs supermin
+        run: sudo chmod 644 /boot/vmlinuz
+
       - name: Ensure vagrant-libvirt
         run: vagrant plugin install vagrant-libvirt
 
