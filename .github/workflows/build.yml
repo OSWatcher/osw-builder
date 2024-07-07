@@ -28,6 +28,15 @@ jobs:
       - name: Enforce setuid on qemu bridge helper
         run: sudo chmod u+s /usr/lib/qemu/qemu-bridge-helper
 
+      - name: Ensure /etc/qemu/bridge.conf exists
+        run: |
+          # ensure /etc/qemu/bridge.conf exists and create the directory if needed
+          # ensure the content is "allow virbr0"
+          if [ ! -f /etc/qemu/bridge.conf ]; then
+            sudo mkdir -p /etc/qemu
+            echo "allow virbr0" | sudo tee /etc/qemu/bridge.conf
+          fi
+
       - name: Ensure vagrant-libvirt
         run: vagrant plugin install vagrant-libvirt
 
