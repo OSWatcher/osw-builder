@@ -55,7 +55,7 @@ jobs:
         run: poetry install
 
       - name: build
-        run: poetry run osw-builder --only-serie windows-10 --search-updates=no --var cpus=4
+        run: poetry run osw-builder --only-serie windows-10 --updates=yes --search-updates=yes --var cpus=4
         env:
           PACKER_LOG: 1
           NEOGIT_OBJECT__SECRET_KEY: ${{ secrets.MINIO_ADMIN_PASSWD }}
