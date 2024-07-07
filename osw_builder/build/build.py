@@ -1,3 +1,4 @@
+import grp
 import logging
 import os
 import shutil
@@ -132,7 +133,7 @@ def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list
 
 def run_packer(varfile: str, autounattend: str, packer_args: list[str], network: bool) -> Path:
     dk_client = docker.from_env()
-    dk_client.login(username="oswatcher", password=os.environ['GHCR_TOKEN'], registry="ghcr.io")
+    dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
     packer_home_cache = Path.home() / ".cache" / "packer"
     packer_home_cache.mkdir(parents=True, exist_ok=True)
     volumes = {
@@ -141,6 +142,9 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
         varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
         autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
     }
+    # Get the group IDs for 'kvm' and 'sudo'
+    kvm_group_id = grp.getgrnam("kvm").gr_gid
+    sudo_group_id = grp.getgrnam("sudo").gr_gid
     logging.debug("Volumes: %s", volumes)
     cmdline = [
         "build",
@@ -169,7 +173,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
             devices=["/dev/kvm"],
             ports={"5900/tcp": 5900},
             user=f"{os.getuid()}:{os.getgid()}",
-            group_add=["sudo", "kvm"],
+            group_add=[sudo_group_id, kvm_group_id],
             network_disabled=not network,
             detach=True,
             command=cmdline,
