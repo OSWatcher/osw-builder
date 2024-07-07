@@ -18,6 +18,7 @@ Options:
 
 
 import logging
+import time
 from contextlib import ExitStack, suppress
 
 from docopt import docopt
@@ -30,7 +31,8 @@ from osw_builder.settings import settings
 
 from .snapshot import Snapshot
 
-BUILD_SNAPSHOT_NAME = "build"
+BUILD_SNAPSHOT = Snapshot("BUILD", "Build state")
+IDLE_SNAPSHOT = Snapshot("IDLE", "Idle state (10 min)")
 LIBVIRT_URI = "qemu:///session"
 
 
@@ -111,14 +113,15 @@ def main(args):
                     with vagrant.ensure_destroyed(vagrant_dir, only_on_error=True):
                         logging.info("Defining VM")
                         vagrant.define(vagrant_dir)
-                        vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT_NAME)
+                        vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
 
                 # get the qcow path
                 qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
                 logging.debug("Qcow path: %s", qcow_path)
 
                 # restore build snapshot
-                vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT_NAME)
+                vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
+                # use description from default_settings.yaml just for build snapshot
                 build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description)
 
                 # create branch
@@ -129,16 +132,26 @@ def main(args):
                         build_commit,
                     )
 
-                # TODO idle state
+                if not apply_updates:
+                    return
 
                 # loop through the snapshot list, and assert that the first one is the build snapshot
                 snap_list = vagrant.snapshot_list(vagrant_dir, qcow_path)
-                assert snap_list[0].Tag == BUILD_SNAPSHOT_NAME
+                assert snap_list[0].Tag == BUILD_SNAPSHOT.to_raw_tag()
 
-                if not apply_updates:
-                    return
-                # iterate after 'build' snapshot
-                for raw_snap in snap_list[1:]:
+                # check and capture IDLE state
+                if len(snap_list) < 2:
+                    with vagrant.up_down_ctxt(vagrant_dir):
+                        # 10 min
+                        logging.info("Waiting for 10 minutes")
+                        time.sleep(10 * 60)
+                    vagrant.snapshot_save(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
+                    capture_neogit(
+                        qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description
+                    )
+
+                # iterate after 'build' and 'IDLE' snapshot
+                for raw_snap in snap_list[2:]:
                     vagrant.snapshot_restore(vagrant_dir, raw_snap.Tag)
                     snap = Snapshot.from_raw_tag(raw_snap.Tag)
                     capture_neogit(qcow_path, snap.name, branch_name, unique=True, desc=snap.description)
