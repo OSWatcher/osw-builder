@@ -86,6 +86,20 @@ def configure_autounattend(
 
 
 @contextmanager
+def ensure_cleanup_output():
+    try:
+        logging.info("Build: cleaning up")
+        with suppress(FileNotFoundError):
+            shutil.rmtree(OUTPUT_QEMU_DIR)
+        yield
+    except BaseException:
+        logging.info("Build: cleaning up")
+        with suppress(FileNotFoundError):
+            shutil.rmtree(OUTPUT_QEMU_DIR)
+        raise
+
+
+@contextmanager
 def build_image(
     template: str,
     varfile: str,
@@ -101,7 +115,6 @@ def build_image(
     if template == WINDOWS_TEMPLATE:
         auto_path = PACKER_TEMPLATES_DIR / varfile_data["autounattend"]
 
-    ex = ExitStack()
     with ExitStack() as ex:
         tmp_autounattend = ex.enter_context(Autounattend(auto_path))
         if tmp_autounattend:
@@ -114,10 +127,6 @@ def build_image(
         fake_run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=True)
         # enforce no network for now
         yield run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=False)
-
-        logging.info("Build: cleaning up")
-        with suppress(FileNotFoundError):
-            shutil.rmtree(OUTPUT_QEMU_DIR)
 
 
 def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list[str], network: bool = True):
@@ -132,61 +141,62 @@ def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list
 
 
 def run_packer(varfile: str, autounattend: str, packer_args: list[str], network: bool) -> Path:
-    dk_client = docker.from_env()
-    dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
-    packer_home_cache = Path.home() / ".cache" / "packer"
-    packer_home_cache.mkdir(parents=True, exist_ok=True)
-    volumes = {
-        packer_home_cache: {"bind": "/cache", "mode": "rw"},
-        PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
-        varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
-        autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
-    }
-    # Get the group IDs for 'kvm' and 'sudo'
-    kvm_group_id = grp.getgrnam("kvm").gr_gid
-    sudo_group_id = grp.getgrnam("sudo").gr_gid
-    logging.debug("Volumes: %s", volumes)
-    cmdline = [
-        "build",
-        "-only",
-        "qemu.windows",
-        "-var-file",
-        "docker.pkrvars.hcl",
-        "-var-file",
-        "win10.pkrvars.hcl",
-    ]
+    with ensure_cleanup_output():
+        dk_client = docker.from_env()
+        dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
+        packer_home_cache = Path.home() / ".cache" / "packer"
+        packer_home_cache.mkdir(parents=True, exist_ok=True)
+        volumes = {
+            packer_home_cache: {"bind": "/cache", "mode": "rw"},
+            PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
+            varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
+            autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
+        }
+        # Get the group IDs for 'kvm' and 'sudo'
+        kvm_group_id = grp.getgrnam("kvm").gr_gid
+        sudo_group_id = grp.getgrnam("sudo").gr_gid
+        logging.debug("Volumes: %s", volumes)
+        cmdline = [
+            "build",
+            "-only",
+            "qemu.windows",
+            "-var-file",
+            "docker.pkrvars.hcl",
+            "-var-file",
+            "win10.pkrvars.hcl",
+        ]
 
-    var_packer_args = []
-    for arg in packer_args:
-        var_packer_args.extend(["-var", arg])
+        var_packer_args = []
+        for arg in packer_args:
+            var_packer_args.extend(["-var", arg])
 
-    cmdline.extend(var_packer_args)
+        cmdline.extend(var_packer_args)
 
-    cmdline.append("windows.pkr.hcl")
+        cmdline.append("windows.pkr.hcl")
 
-    logging.debug("Running packer with command line: %s", cmdline)
-    with open("packer-build.log", "a") as packer_log_f:
-        container = dk_client.containers.run(
-            PACKER_TEMPLATES_IMAGE,
-            remove=True,
-            volumes=volumes,
-            devices=["/dev/kvm"],
-            ports={"5900/tcp": 5900},
-            user=f"{os.getuid()}:{os.getgid()}",
-            group_add=[sudo_group_id, kvm_group_id],
-            network_disabled=not network,
-            detach=True,
-            command=cmdline,
-        )
-        try:
-            for line in container.logs(stream=True):
-                packer_log_f.write(line.decode())
-                packer_log_f.flush()
-            code = container.wait()
-            if code["StatusCode"] != 0:
-                raise RuntimeError("Packer failed")
-        finally:
-            with suppress(docker.errors.NotFound, docker.errors.APIError):
-                container.remove(force=True)
-    # return the fist file ending with .box in the output directory
-    return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
+        logging.debug("Running packer with command line: %s", cmdline)
+        with open("packer-build.log", "a") as packer_log_f:
+            container = dk_client.containers.run(
+                PACKER_TEMPLATES_IMAGE,
+                remove=True,
+                volumes=volumes,
+                devices=["/dev/kvm"],
+                ports={"5900/tcp": 5900},
+                user=f"{os.getuid()}:{os.getgid()}",
+                group_add=[sudo_group_id, kvm_group_id],
+                network_disabled=not network,
+                detach=True,
+                command=cmdline,
+            )
+            try:
+                for line in container.logs(stream=True):
+                    packer_log_f.write(line.decode())
+                    packer_log_f.flush()
+                code = container.wait()
+                if code["StatusCode"] != 0:
+                    raise RuntimeError("Packer failed")
+            finally:
+                with suppress(docker.errors.NotFound, docker.errors.APIError):
+                    container.remove(force=True)
+        # return the fist file ending with .box in the output directory
+        return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
