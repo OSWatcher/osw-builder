@@ -16,19 +16,34 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.PAT_TOKEN }}
 
+      - name: Install Packer and vagrant
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/hashicorp.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y packer vagrant
+
+      - name: Enforce setuid on qemu bridge helper
+        run: sudo chmod u+s /usr/lib/qemu/qemu-bridge-helper
+
+      - name: Ensure vagrant-libvirt
+        run: vagrant plugin install vagrant-libvirt
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
       - name: Install Poetry
-        run: pip install poetry==1.8.2
+        run: pip install poetry==1.8.3
 
       - name: Install dependencies
         run: poetry install
 
       - name: build
-        run: poetry run osw-builder --only-serie windows-10 cpus=4
+        run: poetry run osw-builder --only-serie windows-10 --search-updates=no --var cpus=4
         env:
           PACKER_LOG: 1
           NEOGIT_OBJECT__SECRET_KEY: ${{ secrets.MINIO_ADMIN_PASSWD }}
