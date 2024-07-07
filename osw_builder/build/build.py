@@ -132,6 +132,7 @@ def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list
 
 def run_packer(varfile: str, autounattend: str, packer_args: list[str], network: bool) -> Path:
     dk_client = docker.from_env()
+    dk_client.login(username="oswatcher", password=os.environ['GHCR_TOKEN'], registry="ghcr.io")
     packer_home_cache = Path.home() / ".cache" / "packer"
     packer_home_cache.mkdir(parents=True, exist_ok=True)
     volumes = {
