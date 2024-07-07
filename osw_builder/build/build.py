@@ -61,7 +61,7 @@ def update_varfile(varfile_path: Path, source_url: str, sha1digest: str) -> dict
 @contextmanager
 def write_temp_varfile(varfile_data: dict) -> Generator[str, None, None]:
     """write the varfile data to a temporary file in HCL2 like format and return the path"""
-    with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f:
+    with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl", delete=False) as tmp_f:
         for key, value in varfile_data.items():
             tmp_f.write(f'{key} = "{value}"\n' if isinstance(value, str) else f"{key} = {value}\n")
         tmp_f.flush()
@@ -121,7 +121,7 @@ def build_image(
 
 def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list[str], network: bool = True):
     logging.debug("Fake Packer run")
-    with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl") as tmp_f_fake:
+    with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl", delete=False) as tmp_f_fake:
         with open(varfile_path) as original_varfile:
             for line in original_varfile:
                 tmp_f_fake.write("cpus = 999999\n" if line.startswith("cpus =") else line)
