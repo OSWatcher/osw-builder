@@ -34,6 +34,7 @@ from .snapshot import Snapshot
 BUILD_SNAPSHOT = Snapshot("BUILD", "Build state")
 IDLE_SNAPSHOT = Snapshot("IDLE", "Idle state (10 min)")
 LIBVIRT_URI = "qemu:///session"
+BLACKLISTED_UPDATES = {"win10-rs2-1703.15063.0": "4462939"}
 
 
 def str2bool(v):
@@ -147,9 +148,7 @@ def main(args):
                         time.sleep(10 * 60)
                     vagrant.snapshot_save(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
                 vagrant.snapshot_restore(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
-                capture_neogit(
-                    qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description
-                )
+                capture_neogit(qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description)
 
                 # iterate after 'build' and 'IDLE' snapshot
                 for raw_snap in snap_list[2:]:
@@ -167,6 +166,9 @@ def main(args):
                     winrm_config = vagrant.winrm_config(vagrant_dir)
                     win_update = WinUpdate(winrm_config.HostName, debug_lvl=1)
                     for index, update in enumerate(win_update.search()):
+                        if update.kb[0] in BLACKLISTED_UPDATES.get(box_name, []):
+                            logging.warning("Blacklisted update found, skipping")
+                            continue
                         kb_name = f"KB-{update.kb[0]}"
                         logging.info("[%s][%s] %s", index + 1, kb_name, update.title)
                         try:
