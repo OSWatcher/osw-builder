@@ -146,9 +146,10 @@ def main(args):
                         logging.info("Waiting for 10 minutes")
                         time.sleep(10 * 60)
                     vagrant.snapshot_save(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
-                    capture_neogit(
-                        qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description
-                    )
+                vagrant.snapshot_restore(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
+                capture_neogit(
+                    qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description
+                )
 
                 # iterate after 'build' and 'IDLE' snapshot
                 for raw_snap in snap_list[2:]:
