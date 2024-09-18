@@ -1,0 +1,57 @@
+name: Capture Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        type: string
+        required: true
+        description: 'Branch to capture'
+        default: 'master'
+      only:
+        type: string
+        required: false
+        description: 'Only capture specific OS'
+        default: null
+
+jobs:
+  build_matrix:
+    runs-on: self-hosted
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+
+      - name: Build Matrix
+        id: set-matrix
+        shell: poetry run python {0}
+        run: |
+          import yaml
+          import os
+          import json
+
+          with open('osw_builder/default_settings.yaml', 'r') as file:
+              data = yaml.safe_load(file)
+              branches = data['branches']
+              os_list = branches['${{ inputs.branch }}']
+              only = None if '${{ inputs.only }}' == '' else '${{ inputs.only }}'
+              if only is not None:
+                os_list = [os for os in os_list if os == only]
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as o:
+                matrix = {
+                  'os_name': os_list
+                }
+                o.write(f'matrix={json.dumps(matrix)}')
+
+  capture:
+    needs: build_matrix
+    strategy:
+      matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
+      max-parallel: 1
+    uses: ./.github/workflows/capture_os.yml
+    with:
+      os_name: ${{ matrix.os_name }}
