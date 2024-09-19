@@ -21,12 +21,12 @@ runs:
         cache: "pip"
       if: ${{ !env.ACT }}
 
-    - name: Cache Poetry installation
-      uses: actions/cache@v3
-      with:
-        path: ~/.local
-        key: poetry-${{ inputs.poetry-version }}
-      if: ${{ !env.ACT }}
+    # - name: Cache Poetry installation
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ~/.local
+    #     key: poetry-${{ inputs.poetry-version }}
+    #   if: ${{ !env.ACT }}
 
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
