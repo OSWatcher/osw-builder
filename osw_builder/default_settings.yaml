@@ -13,8 +13,8 @@ extra_firstlogin_cmds:
   - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v IncludeRecommendedUpdates /d 1 /t REG_DWORD /f'
   # exclude drivers from Windows Updates
   - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v ExcludeWUDriversInQualityUpdate /d 1 /t REG_DWORD /f'
-  # disable password expiration for all accounts
-  - "wmic UserAccount set PasswordExpires=False"
+  # disable password expiration
+  - 'cmd.exe /c reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v MaximumPasswordAge /t REG_DWORD /d 0 /f'
 
 # whether we should remove the domain after once we ran our tools
 remove_domain: false
