@@ -62,3 +62,4 @@ jobs:
     uses: ./.github/workflows/capture_os.yml
     with:
       os_name: ${{ matrix.os_name }}
+    secrets: inherit
