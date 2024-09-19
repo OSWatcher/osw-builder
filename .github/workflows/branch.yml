@@ -13,6 +13,9 @@ on:
         required: false
         description: 'Only capture specific OS'
         default: null
+  pull_request:
+    paths:
+      - '.github/workflows/branch.yml'
 
 jobs:
   build_matrix:
@@ -37,9 +40,10 @@ jobs:
           with open('osw_builder/default_settings.yaml', 'r') as file:
               data = yaml.safe_load(file)
               branches = data['branches']
-              os_list = branches['${{ inputs.branch }}']
-              only = None if '${{ inputs.only }}' == '' else '${{ inputs.only }}'
-              if only is not None:
+              branch = '${{ github.event.inputs.branch }}' or 'master'
+              os_list = branches[branch]
+              only = '${{ github.event.inputs.only }}' or None
+              if only:
                 os_list = [os for os in os_list if os == only]
               with open(os.environ['GITHUB_OUTPUT'], 'a') as o:
                 matrix = {
