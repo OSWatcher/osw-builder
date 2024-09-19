@@ -37,13 +37,15 @@ runs:
         virtualenvs-path: .venv
         installer-parallel: true
 
-    - name: Cache virtualenv
-      uses: actions/cache@v3
-      id: cached-poetry-dependencies
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-      if: ${{ !env.ACT }}
+    # disabled: very slow
+    # zstd compression takes too long
+    # - name: Cache virtualenv
+    #   uses: actions/cache@v3
+    #   id: cached-poetry-dependencies
+    #   with:
+    #     path: .venv
+    #     key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+    #   if: ${{ !env.ACT }}
 
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
