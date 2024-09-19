@@ -36,8 +36,9 @@ from .snapshot import Snapshot
 BUILD_SNAPSHOT = Snapshot("BUILD", "Build state")
 IDLE_SNAPSHOT = Snapshot("IDLE", "Idle state (10 min)")
 LIBVIRT_URI = "qemu:///session"
-BLACKLISTED_UPDATES = {"win10-rs2-1703.15063.0": "4462939"}
-
+BLACKLISTED_UPDATES = ["4462939", "2267602"]
+# win10-rs2-1703.15063.0: 4462939
+# 2267602 causes issues but still returns as installed, so can be installed twice or more
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
@@ -143,7 +144,7 @@ def capture_os(os_name, args):
             winrm_config = vagrant.winrm_config(vagrant_dir)
             win_update = WinUpdate(winrm_config.HostName, debug_lvl=1)
             for index, update in enumerate(win_update.search()):
-                if update.kb[0] in BLACKLISTED_UPDATES.get(box_name, []):
+                if update.kb[0] in BLACKLISTED_UPDATES:
                     logging.warning("Blacklisted update found, skipping")
                     continue
                 kb_name = f"KB-{update.kb[0]}"
