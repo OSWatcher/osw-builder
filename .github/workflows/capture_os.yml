@@ -39,13 +39,13 @@ jobs:
       - name: Upload packer-build.log
         uses: actions/upload-artifact@v4
         with:
-          name: packer-build-log
+          name: ${{ inputs.os_name }}-packer-build-log
           path: packer-build.log
         if: always()
 
       - name: Upload vagrant.log
         uses: actions/upload-artifact@v4
         with:
-          name: vagrant.log
+          name: ${{ inputs.os_name }}-vagrant.log
           path: vagrant.log
         if: always()
