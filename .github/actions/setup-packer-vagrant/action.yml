@@ -12,7 +12,7 @@ runs:
 
     - name: Add HashiCorp GPG key and repository
       run: |
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor --no-tty -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor --batch -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
         sudo add-apt-repository "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
       shell: bash
 
