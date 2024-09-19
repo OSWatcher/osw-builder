@@ -25,20 +25,8 @@ jobs:
       - name: Setup Python and Poetry
         uses: ./.github/actions/setup-python-poetry
 
-      - name: Read os_name from file if os_name is empty
-        id: read_os_name
-        run: |
-          # if inputs.os_name is empty, read from file
-          # else set os_name to inputs.os_name
-          if [ -z ${{ inputs.os_name }} ]; then
-            os_name=$(cat /tmp/os_name)
-          else
-            os_name=${{ inputs.os_name }}
-          fi
-          echo "os_name=$os_name" >> $GITHUB_OUTPUT
-
       - name: Capture OS
-        run: poetry run osw-builder capture_os ${{ steps.read_os_name.outputs.os_name }}
+        run: poetry run osw-builder capture_os ${{ inputs.os_name }}
 
       - name: Upload packer-build.log
         uses: actions/upload-artifact@v4
