@@ -4,174 +4,252 @@ keys:
   1511_pro: &key_1511_pro "W269N-WFGWX-YVC9B-4J6C9-T83GX"
 image_names:
   win10_pro: &win10_pro "Windows 10 Pro"
+template: &win10_template "windows.pkr.hcl"
+varfile: &win10_varfile "win10.pkrvars.hcl"
+extra_firstlogin_cmds:
+  &win10_extra_firstlogin_cmds # disable automated Windows Updates (ask to download and ask to install)
+  - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
+  # include recommended Windows Updates
+  - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v IncludeRecommendedUpdates /d 1 /t REG_DWORD /f'
+  # exclude drivers from Windows Updates
+  - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v ExcludeWUDriversInQualityUpdate /d 1 /t REG_DWORD /f'
+  # disable password expiration for all accounts
+  - "wmic UserAccount set PasswordExpires=False"
+
 # whether we should remove the domain after once we ran our tools
 remove_domain: false
 storage_pool: "default"
-series:
-  - name: "windows-10"
-    template: "windows.pkr.hcl"
-    varfile: "win10.pkrvars.hcl"
-    extra_firstlogin_cmds:
-      # disable automated Windows Updates (ask to download and ask to install)
-      - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
-      # include recommended Windows Updates
-      - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v IncludeRecommendedUpdates /d 1 /t REG_DWORD /f'
-      # exclude drivers from Windows Updates
-      - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate" /v ExcludeWUDriversInQualityUpdate /d 1 /t REG_DWORD /f'
-      # disable password expiration for all accounts
-      - "wmic UserAccount set PasswordExpires=False"
-    images:
-      - name: "win10-ts1-1507"
-        description: "Windows 10 Threshold 1 (1507)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1507_English_x64.iso"
-        sha1: "60cce9e9c6557335b4f7b18d02cfe2b438a8b3e2"
-        key: *key_pro
-        image_name: *win10_pro
+images:
+  - name: &win10_ts1_1507 "win10-ts1-1507"
+    description: "Windows 10 Threshold 1 (1507)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1507_English_x64.iso"
+    sha1: "60cce9e9c6557335b4f7b18d02cfe2b438a8b3e2"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-ts2-1511.10586.0"
-        description: "Windows 10 Threshold 2 (November Update, 1511)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1511_nov2015_English_x64.iso"
-        sha1: "875ec108288b9f581e5d8099cf0edb79f0f3e483"
-        key: *key_pro
-        image_name: "Windows 10 Pro Technical Preview"
+  - name: &win10_ts2_1511_10586_0 "win10-ts2-1511.10586.0"
+    description: "Windows 10 Threshold 2 (November Update, 1511)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1511_nov2015_English_x64.iso"
+    sha1: "875ec108288b9f581e5d8099cf0edb79f0f3e483"
+    key: *key_pro
+    image_name: "Windows 10 Pro Technical Preview"
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-ts2-1511.10586.104"
-        description: "Windows 10 Threshold 2 (November Update, 1511)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1511_feb2016_English_x64.iso"
-        sha1: "b57921ddf4672c101f312aa66dd481350035d7e9"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_ts2_1511_10586_104 "win10-ts2-1511.10586.104"
+    description: "Windows 10 Threshold 2 (November Update, 1511)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1511_feb2016_English_x64.iso"
+    sha1: "b57921ddf4672c101f312aa66dd481350035d7e9"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-ts2-1511.10586.164"
-        description: "Windows 10 Threshold 2 (November Update, 1511)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1511_apr2016_English_x64.iso"
-        sha1: "1b247b5b348e78c9bc3afd3c1cbe10cee3d1b9d5"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_ts2_1511_10586_164 "win10-ts2-1511.10586.164"
+    description: "Windows 10 Threshold 2 (November Update, 1511)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1511_apr2016_English_x64.iso"
+    sha1: "1b247b5b348e78c9bc3afd3c1cbe10cee3d1b9d5"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs1-1607.14393.0"
-        description: "Windows 10 Redstone 1 (Anniversary Update, 1607)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1607_redstone1_English_x64.iso"
-        sha1: "99fd8082a609997ae97a514dca22becf20420891"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs1_1607_14393_0 "win10-rs1-1607.14393.0"
+    description: "Windows 10 Redstone 1 (Anniversary Update, 1607)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1607_redstone1_English_x64.iso"
+    sha1: "99fd8082a609997ae97a514dca22becf20420891"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs2-1703.15063.0"
-        description: "Windows 10 Redstone 2 (Creators Update, 1703)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1703_redstone2_English_x64.iso"
-        sha1: "ce8005a659e8df7fe9b080352cb1c313c3e9adce"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs2_1703_15063_0 "win10-rs2-1703.15063.0"
+    description: "Windows 10 Redstone 2 (Creators Update, 1703)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1703_redstone2_English_x64.iso"
+    sha1: "ce8005a659e8df7fe9b080352cb1c313c3e9adce"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs3-1709.16299.15"
-        description: "Windows 10 Redstone 3 (Fall Creators Update, 1709)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1709_redstone3_English_x64.iso"
-        sha1: "1ad928cfef439f6aa4044ddc3a96b0b6830bdd0f"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs3_1709_16299_15 "win10-rs3-1709.16299.15"
+    description: "Windows 10 Redstone 3 (Fall Creators Update, 1709)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1709_redstone3_English_x64.iso"
+    sha1: "1ad928cfef439f6aa4044ddc3a96b0b6830bdd0f"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs4-1803.17134.1"
-        description: "Windows 10 Redstone 4 (April 2018 Update, 1803)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1803_redstone4_English_x64.iso"
-        sha1: "08fbb24627fa768f869c09f44c5d6c1e53a57a6f"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs4_1803_17134_1 "win10-rs4-1803.17134.1"
+    description: "Windows 10 Redstone 4 (April 2018 Update, 1803)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1803_redstone4_English_x64.iso"
+    sha1: "08fbb24627fa768f869c09f44c5d6c1e53a57a6f"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs5-1809.17763.1"
-        description: "Windows 10 Redstone 5 (October 2018 Update, 1809)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1809_redstone5_sept2018_English_x64.iso"
-        sha1: "500c9635645a91c09d3c3904fd12f0e1fd3f709e"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs5_1809_17763_1 "win10-rs5-1809.17763.1"
+    description: "Windows 10 Redstone 5 (October 2018 Update, 1809)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1809_redstone5_sept2018_English_x64.iso"
+    sha1: "500c9635645a91c09d3c3904fd12f0e1fd3f709e"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs5-1809.17763.107"
-        description: "Windows 10 Redstone 5 (October 2018 Update, 1809)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1809_redstone5_oct2018_English_x64.iso"
-        sha1: "bee211937f3ed11606590b541b2f5b97237ac09d"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs5_1809_17763_107 "win10-rs5-1809.17763.107"
+    description: "Windows 10 Redstone 5 (October 2018 Update, 1809)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1809_redstone5_oct2018_English_x64.iso"
+    sha1: "bee211937f3ed11606590b541b2f5b97237ac09d"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-rs5-1809.17763.379"
-        description: "Windows 10 Redstone 5 (October 2018 Update, 1809)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1809_redstone5_mar2019_English_x64.iso"
-        sha1: "e448fd3ceb724a924a2afce17d80739329c30c74"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_rs5_1809_17763_379 "win10-rs5-1809.17763.379"
+    description: "Windows 10 Redstone 5 (October 2018 Update, 1809)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1809_redstone5_mar2019_English_x64.iso"
+    sha1: "e448fd3ceb724a924a2afce17d80739329c30c74"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-19H1-1903.18362.30"
-        description: "Windows 10 19H1 (May 2019 Update, 1903)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1903_V1_English_x64.iso"
-        sha1: "344ca92459c23663d5f857c72a7c030f85f19be8"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_19h1_1903_18362_30 "win10-19H1-1903.18362.30"
+    description: "Windows 10 19H1 (May 2019 Update, 1903)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1903_V1_English_x64.iso"
+    sha1: "344ca92459c23663d5f857c72a7c030f85f19be8"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-19H1-1903.18362.356"
-        description: "Windows 10 19H1 (May 2019 Update, 1903)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1903_V2_English_x64.iso"
-        sha1: "b7ca3ccdfe292e0466f2a62ffbeab18972a7c7f9"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_19h1_1903_18362_356 "win10-19H1-1903.18362.356"
+    description: "Windows 10 19H1 (May 2019 Update, 1903)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1903_V2_English_x64.iso"
+    sha1: "b7ca3ccdfe292e0466f2a62ffbeab18972a7c7f9"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-19H2-1909.18363.418"
-        description: "Windows 10 19H2 (November 2019 Update, 1909)"
-        source: "https://storage.grapheos.app/images/win10/Win10_1909_English_x64.iso"
-        sha1: "9dc9cd4d956c51fdaa9ecd0f86fdf0a1e35526d9"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_19h2_1909_18363_418 "win10-19H2-1909.18363.418"
+    description: "Windows 10 19H2 (November 2019 Update, 1909)"
+    source: "https://storage.grapheos.app/images/win10/Win10_1909_English_x64.iso"
+    sha1: "9dc9cd4d956c51fdaa9ecd0f86fdf0a1e35526d9"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-20H1-2004.19041.264"
-        description: "Windows 10 20H1 (May 2020 Update, 2004)"
-        source: "https://storage.grapheos.app/images/win10/Win10_2004_English_x64.iso"
-        sha1: "71a288febd984839b575efb3bd9bc9ab7471b604"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_20h1_2004_19041_264 "win10-20H1-2004.19041.264"
+    description: "Windows 10 20H1 (May 2020 Update, 2004)"
+    source: "https://storage.grapheos.app/images/win10/Win10_2004_English_x64.iso"
+    sha1: "71a288febd984839b575efb3bd9bc9ab7471b604"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-20H2-2009.19042.631"
-        description: "Windows 10 20H2 (October 2020 Update, 2009)"
-        source: "https://storage.grapheos.app/images/win10/Win10_20H2_v2_English_x64.iso"
-        sha1: "69a1739609c1059fdd2e0688891bf59a78413c6b"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_20h2_2009_19042_631 "win10-20H2-2009.19042.631"
+    description: "Windows 10 20H2 (October 2020 Update, 2009)"
+    source: "https://storage.grapheos.app/images/win10/Win10_20H2_v2_English_x64.iso"
+    sha1: "69a1739609c1059fdd2e0688891bf59a78413c6b"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-21h1-19043.928"
-        description: "Windows 10 21H1 (May 2021 Update, 19043)"
-        source: "https://storage.grapheos.app/images/win10/Win10_21H1_English_x64.iso"
-        sha1: "78aa5fa0fd332ee0822ef5a533cd2cfe12333274"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_21h1_19043_928 "win10-21h1-19043.928"
+    description: "Windows 10 21H1 (May 2021 Update, 19043)"
+    source: "https://storage.grapheos.app/images/win10/Win10_21H1_English_x64.iso"
+    sha1: "78aa5fa0fd332ee0822ef5a533cd2cfe12333274"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      - name: "win10-21h2-19044.1288"
-        description: "Windows 10 21H2 (October 2021 Update, 19044)"
-        source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
-        sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_21h2_19044_1288 "win10-21h2-19044.1288"
+    description: "Windows 10 21H2 (October 2021 Update, 19044)"
+    source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
+    sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-      # 22h1 doesn't exist
+  # 22h1 doesn't exist
 
-      - name: "win10-22h2-19045.2965"
-        description: "Windows 10 22H2 (March 2022 Update, 19045)"
-        source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
-        sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
-        key: *key_pro
-        image_name: *win10_pro
+  - name: &win10_22h2_19045_2965 "win10-22h2-19045.2965"
+    description: "Windows 10 22H2 (March 2022 Update, 19045)"
+    source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
+    sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
+    key: *key_pro
+    image_name: *win10_pro
+    template: *win10_template
+    varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
-  - name: "ubuntu-server-LTS"
-    template: "ubuntu.json"
-    varfile: "ubuntu_1604_x64.json"
-    images:
-      - name: "ubuntu-server-12.04"
-        source: "http://old-releases.ubuntu.com/releases/12.04.0/ubuntu-12.04-server-amd64.iso"
-        sha1: "f44b5f8fc9d56e8fd7599e9c1677a640dda85eda"
+  # - name: "ubuntu-server-LTS"
+  #   template: "ubuntu.json"
+  #   varfile: "ubuntu_1604_x64.json"
+  #   images:
+  #     - name: "ubuntu-server-12.04"
+  #       source: "http://old-releases.ubuntu.com/releases/12.04.0/ubuntu-12.04-server-amd64.iso"
+  #       sha1: "f44b5f8fc9d56e8fd7599e9c1677a640dda85eda"
 
-      - name: "ubuntu-server-14.04"
-        source: "http://old-releases.ubuntu.com/releases/14.04.0/ubuntu-14.04-server-amd64.iso"
-        sha1: "4d94f6111b8fe47da94396180ce499d8c0bb44f3"
+  #     - name: "ubuntu-server-14.04"
+  #       source: "http://old-releases.ubuntu.com/releases/14.04.0/ubuntu-14.04-server-amd64.iso"
+  #       sha1: "4d94f6111b8fe47da94396180ce499d8c0bb44f3"
 
-      - name: "ubuntu-server-16.04"
-        source: "http://old-releases.ubuntu.com/releases/16.04.0/ubuntu-16.04-server-amd64.iso"
-        sha1: "70db69379816b91eb01559212ae474a36ecec9ef"
+  #     - name: "ubuntu-server-16.04"
+  #       source: "http://old-releases.ubuntu.com/releases/16.04.0/ubuntu-16.04-server-amd64.iso"
+  #       sha1: "70db69379816b91eb01559212ae474a36ecec9ef"
 
-      - name: "ubuntu-server-18.04"
-        source: "http://old-releases.ubuntu.com/releases/18.04.0/ubuntu-18.04-server-amd64.iso"
-        sha1: "73ae6579ef7c51d944a0be5c4c48f748bfd689df"
+  #     - name: "ubuntu-server-18.04"
+  #       source: "http://old-releases.ubuntu.com/releases/18.04.0/ubuntu-18.04-server-amd64.iso"
+  #       sha1: "73ae6579ef7c51d944a0be5c4c48f748bfd689df"
+
+branches:
+  master:
+    - *win10_ts1_1507
+    - *win10_ts2_1511_10586_0
+    - *win10_ts2_1511_10586_104
+    - *win10_ts2_1511_10586_164
+    - *win10_rs1_1607_14393_0
+    - *win10_rs2_1703_15063_0
+    - *win10_rs3_1709_16299_15
+    - *win10_rs4_1803_17134_1
+    - *win10_rs5_1809_17763_1
+    - *win10_rs5_1809_17763_107
+    - *win10_rs5_1809_17763_379
+    - *win10_19h1_1903_18362_30
+    - *win10_19h1_1903_18362_356
+    - *win10_19h2_1909_18363_418
+    - *win10_20h1_2004_19041_264
+    - *win10_20h2_2009_19042_631
+    - *win10_21h1_19043_928
+    - *win10_21h2_19044_1288
+    - *win10_22h2_19045_2965
