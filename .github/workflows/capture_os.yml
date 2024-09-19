@@ -42,3 +42,10 @@ jobs:
           name: packer-build-log
           path: packer-build.log
         if: always()
+
+      - name: Upload vagrant.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: vagrant.log
+          path: vagrant.log
+        if: always()
