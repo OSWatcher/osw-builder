@@ -27,6 +27,8 @@ jobs:
 
       - name: Setup Python and Poetry
         uses: ./.github/actions/setup-python-poetry
+        with:
+          pat_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Capture OS
         run: poetry run osw-builder capture_os ${{ inputs.os_name }} --var cpus=4
