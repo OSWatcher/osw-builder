@@ -40,6 +40,7 @@ BLACKLISTED_UPDATES = ["4462939", "2267602"]
 # win10-rs2-1703.15063.0: 4462939
 # 2267602 causes issues but still returns as installed, so can be installed twice or more
 
+
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
@@ -166,17 +167,17 @@ def capture_os(os_name, args):
                     previous_raw_snap = raw_tag
                     capture_neogit(qcow_path, kb_name, branch_name, unique=True, desc=update.title)
 
+
 def main(args):
     debug = args["--debug"]
-
 
     init_logger(debug)
     logging.debug(args)
 
-    if args['capture_os']:
-        capture_os(args['<os_name>'], args)
+    if args["capture_os"]:
+        capture_os(args["<os_name>"], args)
         return
-    
+
 
 def entrypoint():
     args = docopt(__doc__)
