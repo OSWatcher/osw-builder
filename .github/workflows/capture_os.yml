@@ -1,0 +1,51 @@
+name: Capture OS
+
+on:
+  workflow_call:
+    inputs:
+      os_name:
+        type: string
+        required: true
+        description: 'Name of the OS to capture'
+
+jobs:
+  capture:
+    runs-on: self-hosted
+
+    steps:
+      - name: Cleanup
+        run: rm -rf *
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Setup environment for Packer and Vagrant
+        if: ${{ !env.ACT }}
+        uses: ./.github/actions/setup-packer-vagrant
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+
+      - name: Capture OS
+        run: poetry run osw-builder capture_os ${{ inputs.os_name }} --var cpus=4
+        env:
+          PACKER_LOG: 1
+          PACKER_CACHE_DIR: $HOME/.cache/packer
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
+
+      - name: Upload packer-build.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.os_name }}-${{ github.run_attempt }}-packer-build.log
+          path: packer-build.log
+        if: always()
+
+      - name: Upload vagrant.log
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.os_name }}-${{ github.run_attempt }}-vagrant.log
+          path: vagrant.log
+        if: always()

@@ -1,0 +1,47 @@
+name: "Setup Packer and Vagrant"
+description: "Installs Packer and Vagrant on the runner"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update package lists and install required packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gnupg software-properties-common curl
+      shell: bash
+
+    - name: Add HashiCorp GPG key and repository
+      run: |
+        curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor --batch --yes -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+      shell: bash
+
+    - name: Update package lists again
+      run: sudo apt-get update
+      shell: bash
+
+    - name: Install Packer and Vagrant
+      run: sudo apt-get install -y packer vagrant
+      shell: bash
+
+    - name: Install vagrant-libvirt plugin
+      run: vagrant plugin install vagrant-libvirt
+      shell: bash
+
+    - name: Enforce setuid on qemu bridge helper
+      run: sudo chmod u+s /usr/lib/qemu/qemu-bridge-helper
+      shell: bash
+
+    - name: Ensure /etc/qemu/bridge.conf exists
+      run: |
+        # ensure /etc/qemu/bridge.conf exists and create the directory if needed
+        # ensure the content is "allow virbr0"
+        if [ ! -f /etc/qemu/bridge.conf ]; then
+          sudo mkdir -p /etc/qemu
+          echo "allow virbr0" | sudo tee /etc/qemu/bridge.conf
+        fi
+      shell: bash
+
+    - name: Ensure vmlinuz is readable for libguestfs supermin
+      run: sudo chmod 644 /boot/vmlinuz
+      shell: bash
