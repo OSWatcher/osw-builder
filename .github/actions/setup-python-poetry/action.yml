@@ -2,6 +2,9 @@ name: "Setup Python and Poetry"
 description: "Installs Python and Poetry with caching"
 
 inputs:
+  pat_token:
+    description: "Personal Access Token for Github"
+    required: true
   python-version:
     description: "Python version to install"
     required: false
@@ -14,6 +17,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - run: echo "Empty secret passed !"; exit 1
+      if: ${{ inputs.pat_token == '' }}
+      shell: bash
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -36,6 +43,14 @@ runs:
         virtualenvs-in-project: true
         virtualenvs-path: .venv
         installer-parallel: true
+
+    - name: Configure Github token
+      run: |
+        poetry config repositories.neogit "https://github.com/OSWatcher/neogit.git"
+        poetry config repositories.pywinupdate "https://github.com/OSWatcher/pywinupdate.git"
+        poetry config http-basic.neogit "wenzel" ${{ inputs.pat_token }}
+        poetry config http-basic.pywinupdate "wenzel" ${{ inputs.pat_token }}
+      shell: bash
 
     # disabled: very slow
     # zstd compression takes too long
