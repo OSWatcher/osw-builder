@@ -84,6 +84,9 @@ def capture_os(os_name, args):
         logging.info("Vagrant dir: %s", vagrant_dir)
         if destroy:
             ex.enter_context(vagrant.ensure_destroyed(vagrant_dir))
+        # ensure we refresh the libvirt pool, just in case it has been manually modified
+        # and isn't up to date
+        vagrant.pool_refresh(uri=LIBVIRT_URI)
         vm, state = vagrant.status(vagrant_dir)
         logging.info("VM state: %s", state)
         if state == vagrant.MachineStateEnum.NOT_CREATED:
