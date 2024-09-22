@@ -1,0 +1,76 @@
+name: Run Plugins
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        type: string
+        required: true
+        description: 'Branch name to run plugins on'
+
+jobs:
+  build_matrix:
+    runs-on: self-hosted
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Cleanup
+        run: rm -rf *
+
+      - run: |
+          if [ -z "${{ inputs.branch_name }}" ]; then
+            echo "Missing branch name"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+            submodules: 'recursive'
+            token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+        with:
+            pat_token: ${{ secrets.PAT_TOKEN }}
+  
+      - name: Build Matrix
+        id: set-matrix
+        shell: poetry run python {0}
+        run: |
+          import os
+          import json
+          from neogit.model.neo import Branch
+
+          branch_name = '${{ inputs.branch_name }}'
+          try:
+            branch = Branch.nodes.get(name=branch_name)
+          except Branch.DoesNotExist:
+            print(f'Branch {branch_name} does not exist !')
+            exit(1)
+          else:
+            def iter_commits():
+              commit = branch.tracks.single()
+              while commit:
+                yield commit
+                commit = commit.previous.single()
+            # build matrix
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as o:
+              matrix = {
+                'commit': [{"name": commit.name, "hash": commit.hash} for commit in iter_commits()]
+              }
+              o.write(f'matrix={json.dumps(matrix)}')
+  
+  run_plugins:
+    needs: build_matrix
+    runs-on: self-hosted
+    strategy:
+      matrix: ${{ fromJson(needs.build_matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: echo commit
+        run: echo ${{ matrix.commit.name }} ${{ matrix.commit.hash }}
