@@ -1,5 +1,5 @@
 from .ctxt import prepare_vagrantfile
-from .lib_virt import get_qcow_path
+from .lib_virt import get_qcow_path, pool_refresh
 from .vagrant import (
     MachineStateEnum,
     box_add,
@@ -33,6 +33,7 @@ __all__ = [
     "snapshot_list",
     "snapshot_restore",
     "get_qcow_path",
+    "pool_refresh",
     "winrm_config",
     "snapshot_push",
     "snapshot_pop",

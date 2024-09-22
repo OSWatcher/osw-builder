@@ -52,21 +52,17 @@ unit_test = "pytest"
 
 
 [tool.black]
-exclude = '''
-/(
-    vendor
-)/
-'''
 line-length = 120
+extend-exclude = "^/.venv"
 
 [tool.isort]
 profile = "black"
 line_length = 120
-skip = ["vendor", "osw_builder/packer-templates"]
+skip = ["osw_builder/packer-templates", ".venv"]
 
 [tool.pytest.ini_options]
-norecursedirs = ["vendor"]
+norecursedirs = [".venv"]
 
 [tool.mypy]
 # exclude vendor folder
-exclude = ["vendor"]
+exclude = [".venv"]
