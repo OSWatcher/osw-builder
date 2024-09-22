@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+  pull_request:
 
 jobs:
   build-and-push:
@@ -31,8 +32,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          push: true
+          # only push if not pull request
+          push: ${{ !github.event_name == 'pull_request' }}
           tags: ghcr.io/${{ env.LOWER_OWNER }}/builder:latest
-          file: ./Dockerfile
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.PAT_TOKEN }}
