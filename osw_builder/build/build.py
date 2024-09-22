@@ -88,12 +88,12 @@ def configure_autounattend(
 @contextmanager
 def ensure_cleanup_output():
     try:
-        logging.info("Build: cleaning up")
+        logging.info("Build: pre cleaning up")
         with suppress(FileNotFoundError):
             shutil.rmtree(OUTPUT_QEMU_DIR)
         yield
     except BaseException:
-        logging.info("Build: cleaning up")
+        logging.info("Build: error cleaning up")
         with suppress(FileNotFoundError):
             shutil.rmtree(OUTPUT_QEMU_DIR)
         raise
@@ -130,7 +130,7 @@ def build_image(
 
 
 def fake_run_packer(varfile_path: str, autounattend_path: str, packer_args: list[str], network: bool = True):
-    logging.debug("Fake Packer run")
+    logging.info("Fake Packer run (Force image download)")
     with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl", delete=False) as tmp_f_fake:
         with open(varfile_path) as original_varfile:
             for line in original_varfile:
@@ -176,6 +176,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
 
         logging.debug("Running packer with command line: %s", cmdline)
         with open("packer-build.log", "a") as packer_log_f:
+            logging.info("Running Packer")
             container = dk_client.containers.run(
                 PACKER_TEMPLATES_IMAGE,
                 remove=True,
