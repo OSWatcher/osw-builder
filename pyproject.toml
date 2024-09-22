@@ -52,11 +52,6 @@ unit_test = "pytest"
 
 
 [tool.black]
-exclude = '''
-/(
-    vendor
-)/
-'''
 line-length = 120
 extend-exclude = "^/.venv"
 
