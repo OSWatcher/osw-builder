@@ -1,21 +1,37 @@
+# syntax=docker/dockerfile:1
+# forces BuildKit to fetch and use the latest syntax features 1.x.x
+
 # Use the official Python image as a base
 FROM python:3.10-slim
 
 ARG PACKER_VERSION=1.8.6
 ARG POETRY_VERSION=1.8.2
 
+SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-c"]
+
 # Create and set the working directory
 WORKDIR /app
 
 # Copy the pyproject.toml and poetry.lock (if available) to the working directory
 COPY pyproject.toml poetry.lock* ./
-COPY vendor /app/vendor
 
 # Install Poetry
 RUN pip install poetry==${POETRY_VERSION}
 
 # Configure Poetry to create virtualenvs in the project directory
 RUN poetry config virtualenvs.in-project true
+# configure poetry to use github token
+RUN --mount=type=secret,id=GIT_AUTH_TOKEN,env=GIT_AUTH_TOKEN <<EOF
+# ensure not empty
+if [ -z "$GIT_AUTH_TOKEN" ]; then
+    echo "GIT_AUTH_TOKEN is not set"
+    exit 1
+fi
+poetry config repositories.neogit "https://github.com/OSWatcher/neogit.git"
+poetry config repositories.pywinupdate "https://github.com/OSWatcher/pywinupdate.git"
+poetry config http-basic.neogit "wenzel" $GIT_AUTH_TOKEN
+poetry config http-basic.pywinupdate "wenzel" $GIT_AUTH_TOKEN
+EOF
 
 # install libs dependencies
 RUN apt-get update && apt-get install -y \
