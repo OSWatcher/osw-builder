@@ -152,6 +152,10 @@ def capture_os(os_name, args):
                     logging.warning("Blacklisted update found, skipping")
                     continue
                 kb_name = f"KB-{update.kb[0]}"
+                # update somehow already exists in snapshot list ?
+                if any(Snapshot.from_raw_tag(snap.Tag).name == kb_name for snap in snap_list):
+                    logging.warning("Found existing snapshot for candidate update %s. Skipping", kb_name)
+                    continue
                 logging.info("[%s][%s] %s", index + 1, kb_name, update.title)
                 try:
                     with vagrant.up_down_ctxt(vagrant_dir):
