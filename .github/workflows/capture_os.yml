@@ -49,11 +49,11 @@ jobs:
         with:
           name: ${{ inputs.os_name }}-${{ github.run_attempt }}-packer-build.log
           path: packer-build.log
-        if: ${{ hashFiles('packer-build.log') != '' }}
+        if: ${{ !env.ACT && hashFiles('packer-build.log') != '' }}
 
       - name: Upload vagrant.log
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.os_name }}-${{ github.run_attempt }}-vagrant.log
           path: vagrant.log
-        if: ${{ hashFiles('vagrant.log') != '' }}
+        if: ${{ !env.ACT && hashFiles('vagrant.log') != ''}}
