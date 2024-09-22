@@ -16,6 +16,12 @@ jobs:
       - name: Cleanup
         run: rm -rf *
 
+      - run: |
+          if [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
+            echo "Missing GHCR token"
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
