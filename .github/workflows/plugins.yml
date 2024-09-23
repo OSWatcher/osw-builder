@@ -72,5 +72,12 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.PAT_TOKEN }}
 
-      - name: echo commit
-        run: echo ${{ matrix.commit.name }} ${{ matrix.commit.hash }}
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          pat_token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Run plugins
+        run: poetry run runner ${{ matrix.commit.hash }} filetype
+        env:
+          ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
