@@ -29,8 +29,10 @@ if [ -z "$GIT_AUTH_TOKEN" ]; then
 fi
 poetry config repositories.neogit "https://github.com/OSWatcher/neogit.git"
 poetry config repositories.pywinupdate "https://github.com/OSWatcher/pywinupdate.git"
+poetry config repositories.plugins "https://github.com/OSWatcher/grapheos-plugins.git"
 poetry config http-basic.neogit "wenzel" $GIT_AUTH_TOKEN
 poetry config http-basic.pywinupdate "wenzel" $GIT_AUTH_TOKEN
+poetry config http-basic.plugins "wenzel" $GIT_AUTH_TOKEN
 EOF
 
 # install libs dependencies

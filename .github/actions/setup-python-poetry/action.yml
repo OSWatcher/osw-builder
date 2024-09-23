@@ -43,13 +43,17 @@ runs:
         virtualenvs-in-project: true
         virtualenvs-path: .venv
         installer-parallel: true
+        # disable keyring as we get weird DBus errors during install
+        keyring.enabled: false
 
     - name: Configure Github token
       run: |
         poetry config repositories.neogit "https://github.com/OSWatcher/neogit.git"
         poetry config repositories.pywinupdate "https://github.com/OSWatcher/pywinupdate.git"
+        poetry config repositories.plugins "https://github.com/OSWatcher/grapheos-plugins.git"
         poetry config http-basic.neogit "wenzel" ${{ inputs.pat_token }}
         poetry config http-basic.pywinupdate "wenzel" ${{ inputs.pat_token }}
+        poetry config http-basic.plugins "wenzel" ${{ inputs.pat_token }}
       shell: bash
 
     # disabled: very slow

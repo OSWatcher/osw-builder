@@ -62,3 +62,19 @@ jobs:
     with:
       os_name: ${{ matrix.os_name }}
     secrets: inherit
+
+  plugins_main_branch:
+    needs: [capture]
+    uses: ./.github/workflows/plugins.yml
+    with:
+      branch_name: ${{ inputs.branch }}
+    secrets: inherit
+
+  plugins_os_branch:
+    needs: [capture, build_matrix]
+    uses: ./.github/workflows/plugins.yml
+    strategy:
+      matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
+    with:
+      branch_name: ${{ matrix.os_name }}
+    secrets: inherit
