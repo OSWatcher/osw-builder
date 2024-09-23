@@ -43,6 +43,8 @@ runs:
         virtualenvs-in-project: true
         virtualenvs-path: .venv
         installer-parallel: true
+        # disable keyring as we get weird DBus errors during install
+        keyring.enabled: false
 
     - name: Configure Github token
       run: |
