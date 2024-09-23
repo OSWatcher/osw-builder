@@ -65,6 +65,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix: ${{ fromJson(needs.build_matrix.outputs.matrix) }}
+      max-parallel: 3
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
