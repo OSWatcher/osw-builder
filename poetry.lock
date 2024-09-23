@@ -1265,7 +1265,7 @@ volatility3 = "^2.5.2"
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
 reference = "HEAD"
-resolved_reference = "e0118b1b9d5a86e133f9a3aceaf79f4c601a2f3b"
+resolved_reference = "ee74c2b505800abf43413f30e15c69e59e94f905"
 
 [[package]]
 name = "poethepoet"
