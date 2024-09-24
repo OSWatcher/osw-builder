@@ -21,6 +21,16 @@ runs:
       if: ${{ inputs.pat_token == '' }}
       shell: bash
 
+    - name: Acquire Lock
+      run: |
+        LOCK_FILE="/tmp/github_action_lock"
+        while ! mkdir "$LOCK_FILE" 2>/dev/null; do
+          echo "Waiting for lock..."
+          sleep $[ ( $RANDOM % 10 )  + 1 ]s
+        done
+        echo "Lock acquired"
+      shell: bash
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -63,6 +73,13 @@ runs:
     #     path: .venv
     #     key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
     #   if: ${{ !env.ACT }}
+
+    - name: Release Lock
+      if: always()
+      run: |
+        rm -rf "/tmp/github_action_lock"
+        echo "Lock released"
+      shell: bash
 
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
