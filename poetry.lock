@@ -1114,7 +1114,7 @@ types-PyYAML = "^6.0.0"
 type = "git"
 url = "https://github.com/OSWatcher/neogit.git"
 reference = "HEAD"
-resolved_reference = "2d757f6c9ed448dacce4bd8c9100bf881e85957d"
+resolved_reference = "9d1bfaf5026fc3dd9a3d0c8a5122a62cc4ff573c"
 
 [[package]]
 name = "neomodel"
@@ -1255,6 +1255,7 @@ dynaconf = "^3.2.5"
 ipdb = "^0.13.13"
 jsonschema = "^4.21.1"
 lief = "0.13.2"
+neogit = {git = "https://github.com/OSWatcher/neogit.git"}
 poethepoet = "^0.26.1"
 pypeln = "^0.4.9"
 python-magic = "^0.4.27"
@@ -1265,7 +1266,7 @@ volatility3 = "^2.5.2"
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
 reference = "HEAD"
-resolved_reference = "ee74c2b505800abf43413f30e15c69e59e94f905"
+resolved_reference = "941ff1113711e786ce2c6fa6e518e47485f74904"
 
 [[package]]
 name = "poethepoet"
