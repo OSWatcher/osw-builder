@@ -71,7 +71,7 @@ jobs:
     secrets: inherit
 
   plugins_os_branch:
-    needs: [capture, build_matrix]
+    needs: [capture, build_matrix, plugins_main_branch]
     uses: ./.github/workflows/plugins.yml
     strategy:
       matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
