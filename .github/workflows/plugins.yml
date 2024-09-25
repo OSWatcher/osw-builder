@@ -79,7 +79,12 @@ jobs:
         with:
           pat_token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Run plugins
+      - name: Run filetype plugin
         run: poetry run runner ${{ matrix.commit.hash }} filetype
+        env:
+          ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
+
+      - name: Run winreg plugin
+        run: poetry run runner ${{ matrix.commit.hash }} winreg
         env:
           ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
