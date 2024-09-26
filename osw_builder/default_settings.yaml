@@ -3,9 +3,12 @@ keys:
   win10_pro: &key_pro "VK7JG-NPHTM-C97JM-9MPGT-3V66T"
   1511_pro: &key_1511_pro "W269N-WFGWX-YVC9B-4J6C9-T83GX"
 image_names:
-  win10_pro: &win10_pro "Windows 10 Pro"
+  - win10_pro: &win10_pro "Windows 10 Pro"
+  - win11_pro: &win11_pro "Windows 11 Pro"-
 template: &win10_template "windows.pkr.hcl"
-varfile: &win10_varfile "win10.pkrvars.hcl"
+varfile:
+  - &win10_varfile "win10.pkrvars.hcl"
+  - &win11_varfile "win11.pkrvars.hcl"
 extra_firstlogin_cmds:
   &win10_extra_firstlogin_cmds # disable automated Windows Updates (ask to download and ask to install)
   - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
@@ -210,6 +213,18 @@ images:
     image_name: *win10_pro
     template: *win10_template
     varfile: *win10_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+
+  # Windows 11
+
+  - name: &win11_23h2_22631_2861 "win11-23h2-22631.2861"
+    description: "Windows 11 23H2 (March 2023 Update, 22631)"
+    source: "https://storage.grapheos.app/images/win11/Win11_English_23H2_22631.2861_x64v2.iso"
+    sha1: "cd5e995387669b2ff2c58c23894900f1d238a103"
+    key: *key_pro
+    image_name: *win11_pro
+    template: *win10_template
+    varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
   # - name: "ubuntu-server-LTS"
