@@ -28,7 +28,7 @@ def get_packer_templates_dir():
 
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
-PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH = "/packer/answer_files/10/Autounattend.xml"
+PACKER_DOCKER_AUTOUNATTEND_PATH = "/packer/Autounattend.xml"
 PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 WINDOWS_TEMPLATE = "windows.pkr.hcl"
 
@@ -130,8 +130,7 @@ def build_image(
         tmp_autounattend = ex.enter_context(Autounattend(auto_path))
         if tmp_autounattend:
             configure_autounattend(tmp_autounattend, config_entry, extra_firstlogin_cmds)
-            # autounattend = "/packer/answer_files/10/Autounattend.xml"
-            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH
+            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_PATH
         # /tmp/tmp0v1z7z1v.pkrvars.hcl
         tmp_varfile_path = ex.enter_context(write_temp_varfile(varfile_data))
         # force packer cache, need network for that
@@ -167,8 +166,8 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
         volumes = {
             packer_home_cache: {"bind": "/cache", "mode": "rw"},
             PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
-            varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
-            autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
+            varfile: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
+            autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_PATH, "mode": "ro"},
         }
         # Get the group IDs for 'kvm' and 'sudo'
         kvm_group_id = grp.getgrnam("kvm").gr_gid
@@ -181,7 +180,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
             "-var-file",
             "docker.pkrvars.hcl",
             "-var-file",
-            "win10.pkrvars.hcl",
+            "vars.pkrvars.hcl",
         ]
 
         var_packer_args = []
