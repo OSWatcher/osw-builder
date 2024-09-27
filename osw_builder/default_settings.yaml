@@ -221,7 +221,7 @@ images:
     source: "https://storage.grapheos.app/images/win11/Win11_English_21H1_22000_194_x64.iso"
     sha1: "849971ba1ddef294be2a79233edcf56b4e6991b0"
     key: *key_pro
-    image_name: *win11_pro
+    image_name:
     template: *win10_template
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
@@ -231,7 +231,7 @@ images:
     source: "https://storage.grapheos.app/images/win11/Win11_English_21H1_22000_318_x64.iso"
     sha1: "9cbbb18b244511bf1d4c68a33fe6ee35d2eda2ae"
     key: *key_pro
-    image_name: *win11_pro
+    image_name:
     template: *win10_template
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
