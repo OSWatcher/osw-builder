@@ -87,11 +87,46 @@ class Autounattend(AbstractContextManager):
         return image_name.text
 
     @image_name.setter
-    def image_name(self, value):
+    def image_name(self, value=None):
         """Sets the Metadata/Value value"""
-        image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
-        if image_name is None:
-            raise ElementNotFoundError("Cannot find Value element")
+        if value is None:
+            # no need to insert anything
+            return
+        try:
+            image_name = self.image_name
+        except ElementNotFoundError:
+            # search for OSImage
+            # and insert this under OSImage
+            # <InstallFrom>
+            #     <MetaData wcm:action="add">
+            #         <Key>/IMAGE/NAME</Key>
+            #         <Value>Windows 11 Pro</Value>
+            #     </MetaData>
+            # </InstallFrom>
+
+            # search for OSImage
+            os_image = self.tree.find(".//ns:OSImage", namespaces=self.nsmap)
+            if os_image is None:
+                raise ElementNotFoundError("Cannot find OSImage element")
+
+            # create and insert InstallFrom element
+            install_from = ET.SubElement(os_image, "InstallFrom")
+
+            # create and insert MetaData element
+            metadata = ET.SubElement(install_from, "MetaData")
+            metadata.set("wcm:action", "add")
+
+            # create and insert Key element
+            key = ET.SubElement(metadata, "Key")
+            key.text = "/IMAGE/NAME"
+
+            # create and insert Value element
+            value_elem = ET.SubElement(metadata, "Value")
+            value_elem.text = value
+
+            # set image_name to the newly created Value element
+            image_name = value_elem
+            return
         image_name.text = value
 
     def tostring(self, pretty_print=True):
