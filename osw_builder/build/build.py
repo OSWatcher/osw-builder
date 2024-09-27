@@ -1,4 +1,5 @@
 import grp
+import json
 import logging
 import os
 import shutil
@@ -64,7 +65,17 @@ def write_temp_varfile(varfile_data: dict) -> Generator[str, None, None]:
     """write the varfile data to a temporary file in HCL2 like format and return the path"""
     with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl", delete=False) as tmp_f:
         for key, value in varfile_data.items():
-            tmp_f.write(f'{key} = "{value}"\n' if isinstance(value, str) else f"{key} = {value}\n")
+            if isinstance(value, str):
+                tmp_f.write(f'{key} = "{value}"\n')
+            # Boolean are Integers in Python
+            # check this first
+            elif isinstance(value, bool):
+                tmp_f.write(f'{key} = {str(value).lower()}\n')
+            elif isinstance(value, int):
+                tmp_f.write(f'{key} = {value}\n')
+            elif isinstance(value, list):
+                s = json.dumps(value)
+                tmp_f.write(f'{key} = {s}\n')
         tmp_f.flush()
         yield tmp_f.name
 
