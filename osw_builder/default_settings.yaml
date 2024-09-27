@@ -202,10 +202,10 @@ images:
 
   # 22h1 doesn't exist
 
-  - name: &win10_22h2_19045_2965 "win10-22h2-19045.2965"
+  - name: &win10_22h2_19045_2965 "win10-22h2-19045.2006"
     description: "Windows 10 22H2 (March 2022 Update, 19045)"
-    source: "https://storage.grapheos.app/images/win10/Win10_21H2_English_x64.iso"
-    sha1: "30ff3cc3cdc05abf47489742e2e1b810d0003968"
+    source: "https://storage.grapheos.app/images/win10/win_10_22h2_19045_2006_x64.iso"
+    sha1: "416dc59cdcc3cf19c277ebcedd51218608492c62"
     key: *key_pro
     image_name: *win10_pro
     template: *win10_template
