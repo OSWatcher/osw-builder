@@ -96,7 +96,9 @@ def capture_os(os_name, args):
                 logging.info("Defining VM")
                 vagrant.define(vagrant_dir)
                 vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
-
+        # TODO: hack win11: add EFI loader
+        if "win11" in box_name:
+            vagrant.set_loader_efi(vagrant_dir)
         # get the qcow path
         qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
         logging.debug("Qcow path: %s", qcow_path)
