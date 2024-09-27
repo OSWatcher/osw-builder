@@ -75,6 +75,7 @@ jobs:
     uses: ./.github/workflows/plugins.yml
     strategy:
       matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
+      max-parallel: 1
     with:
       branch_name: ${{ matrix.os_name }}
     secrets: inherit
