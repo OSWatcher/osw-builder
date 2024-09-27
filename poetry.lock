@@ -2007,7 +2007,7 @@ pywinrm = "^0.4.3"
 type = "git"
 url = "https://github.com/OSWatcher/pywinupdate.git"
 reference = "HEAD"
-resolved_reference = "824047e1923b500dac8c74e66df227147b1cf5b0"
+resolved_reference = "663ad6c181135596e26ce68035e182993fd090c1"
 
 [[package]]
 name = "xmltodict"
