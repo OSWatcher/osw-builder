@@ -145,6 +145,12 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
     with ensure_cleanup_output():
         dk_client = docker.from_env()
         dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
+
+        # Pull the latest image
+        if network:
+            logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
+            dk_client.images.pull(PACKER_TEMPLATES_IMAGE)
+
         packer_home_cache = Path.home() / ".cache" / "packer"
         packer_home_cache.mkdir(parents=True, exist_ok=True)
         volumes = {
