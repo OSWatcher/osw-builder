@@ -38,6 +38,7 @@ PLACEHOLDER_VALUE = "# PLACEHOLDER"
 LIBVIRT_LOADER_FAIL = "libvirt.loader = '/nonexistent'"
 LIBVIRT_USER_LOADER_FAIL_ERR = "could not load PC BIOS '/nonexistent'"
 LIBVIRT_SYSTEM_LOADER_FAIL_ERR = "Path '/nonexistent' is not accessible"
+LIBVIRT_LOADER_EFI = "libvirt.loader = '/usr/share/OVMF/OVMF_CODE.fd'"
 LOG_FILE = "vagrant.log"
 
 
@@ -289,6 +290,18 @@ def loader_fail_ctxt(cwd: Path):
             # write it back
             with open(cwd / "Vagrantfile", "w") as f:
                 f.write(content)
+
+
+def set_loader_efi(cwd: Path):
+    # revert back to original
+    with open(cwd / "Vagrantfile", "r") as f:
+        content = f.read()
+        # replace LIBVIRT_LOADER_FAIL
+        print("Setting loader to EFI !")
+        content = content.replace(PLACEHOLDER_VALUE, LIBVIRT_LOADER_EFI)
+        # write it back
+        with open(cwd / "Vagrantfile", "w") as f:
+            f.write(content)
 
 
 @contextmanager
