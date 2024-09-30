@@ -236,6 +236,16 @@ images:
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
+  - name: &win11_22h2_22621_384 "win11-22h2-22621.384"
+    description: "Windows 11 22H2 (March 2022 Update, 22621)"
+    source: "https://storage.grapheos.app/images/win11/Win11_22H2_English_22621_384_x64.iso"
+    sha1: "89499520ad5396c3aefc3c75f64c2653638d87bb"
+    key: *key_pro
+    image_name:
+    template: *win10_template
+    varfile: *win11_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+
   - name: &win11_23h2_22631_2861 "win11-23h2-22631.2861"
     description: "Windows 11 23H2 (March 2023 Update, 22631)"
     source: "https://storage.grapheos.app/images/win11/Win11_English_23H2_22631.2861_x64v2.iso"
