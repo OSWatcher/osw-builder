@@ -1,4 +1,5 @@
 import grp
+import json
 import logging
 import os
 import shutil
@@ -27,7 +28,7 @@ def get_packer_templates_dir():
 
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
-PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH = "/packer/answer_files/10/Autounattend.xml"
+PACKER_DOCKER_AUTOUNATTEND_PATH = "/packer/Autounattend.xml"
 PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 WINDOWS_TEMPLATE = "windows.pkr.hcl"
 
@@ -64,7 +65,17 @@ def write_temp_varfile(varfile_data: dict) -> Generator[str, None, None]:
     """write the varfile data to a temporary file in HCL2 like format and return the path"""
     with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl", delete=False) as tmp_f:
         for key, value in varfile_data.items():
-            tmp_f.write(f'{key} = "{value}"\n' if isinstance(value, str) else f"{key} = {value}\n")
+            if isinstance(value, str):
+                tmp_f.write(f'{key} = "{value}"\n')
+            # Boolean are Integers in Python
+            # check this first
+            elif isinstance(value, bool):
+                tmp_f.write(f'{key} = {str(value).lower()}\n')
+            elif isinstance(value, int):
+                tmp_f.write(f'{key} = {value}\n')
+            elif isinstance(value, list):
+                s = json.dumps(value)
+                tmp_f.write(f'{key} = {s}\n')
         tmp_f.flush()
         yield tmp_f.name
 
@@ -106,6 +117,7 @@ def build_image(
     config_entry: dict,
     extra_firstlogin_cmds: Optional[list[str]],
     packer_args: list[str] = None,
+    network: bool = False,
 ) -> Generator[Path, None, None]:
     logging.info("Building image")
     sha1digest = validate_source_and_compute_sha1(config_entry)
@@ -119,14 +131,13 @@ def build_image(
         tmp_autounattend = ex.enter_context(Autounattend(auto_path))
         if tmp_autounattend:
             configure_autounattend(tmp_autounattend, config_entry, extra_firstlogin_cmds)
-            # autounattend = "/packer/answer_files/10/Autounattend.xml"
-            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH
+            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_PATH
         # /tmp/tmp0v1z7z1v.pkrvars.hcl
         tmp_varfile_path = ex.enter_context(write_temp_varfile(varfile_data))
         # force packer cache, need network for that
         fake_run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, network=True)
         # enforce no network for now
-        yield run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=False)
+        yield run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=network)
 
 
 def fake_run_packer(varfile_path: str, autounattend_path: str, network: bool = True):
@@ -145,13 +156,19 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
     with ensure_cleanup_output():
         dk_client = docker.from_env()
         dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
+
+        # Pull the latest image
+        if network:
+            logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
+            dk_client.images.pull(PACKER_TEMPLATES_IMAGE)
+
         packer_home_cache = Path.home() / ".cache" / "packer"
         packer_home_cache.mkdir(parents=True, exist_ok=True)
         volumes = {
             packer_home_cache: {"bind": "/cache", "mode": "rw"},
             PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
-            varfile: {"bind": "/packer/win10.pkrvars.hcl", "mode": "ro"},
-            autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_WIN10_PATH, "mode": "ro"},
+            varfile: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
+            autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_PATH, "mode": "ro"},
         }
         # Get the group IDs for 'kvm' and 'sudo'
         kvm_group_id = grp.getgrnam("kvm").gr_gid
@@ -164,7 +181,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
             "-var-file",
             "docker.pkrvars.hcl",
             "-var-file",
-            "win10.pkrvars.hcl",
+            "vars.pkrvars.hcl",
         ]
 
         var_packer_args = []
