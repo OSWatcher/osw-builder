@@ -78,7 +78,9 @@ def capture_os(os_name, args):
 
     with ExitStack() as ex:
         if not vagrant.box_exists(box_name):
-            image = ex.enter_context(build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args))
+            # TODO: win11 hack
+            network = True if "win11" in box_name else False
+            image = ex.enter_context(build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args, network=network))
             vagrant.box_add(image, name=box_name)
 
         # prepare vagrant env
