@@ -3,9 +3,12 @@ keys:
   win10_pro: &key_pro "VK7JG-NPHTM-C97JM-9MPGT-3V66T"
   1511_pro: &key_1511_pro "W269N-WFGWX-YVC9B-4J6C9-T83GX"
 image_names:
-  win10_pro: &win10_pro "Windows 10 Pro"
+  - win10_pro: &win10_pro "Windows 10 Pro"
+  - win11_pro: &win11_pro "Windows 11 Pro"
 template: &win10_template "windows.pkr.hcl"
-varfile: &win10_varfile "win10.pkrvars.hcl"
+varfile:
+  - &win10_varfile "win10.pkrvars.hcl"
+  - &win11_varfile "win11.pkrvars.hcl"
 extra_firstlogin_cmds:
   &win10_extra_firstlogin_cmds # disable automated Windows Updates (ask to download and ask to install)
   - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
@@ -212,6 +215,47 @@ images:
     varfile: *win10_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
 
+  # Windows 11
+  - name: &win11_21h2_22000_194 "win11-21h2-22000.194"
+    description: "Windows 11 21H2 (October 2021 Update, 22000)"
+    source: "https://storage.grapheos.app/images/win11/Win11_English_21H1_22000_194_x64.iso"
+    sha1: "849971ba1ddef294be2a79233edcf56b4e6991b0"
+    key: *key_pro
+    image_name:
+    template: *win10_template
+    varfile: *win11_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+
+  - name: &win11_21h2_22000_318 "win11-21h2-22000.318"
+    description: "Windows 11 21H2 (October 2021 Update, 22000)"
+    source: "https://storage.grapheos.app/images/win11/Win11_English_21H1_22000_318_x64.iso"
+    sha1: "9cbbb18b244511bf1d4c68a33fe6ee35d2eda2ae"
+    key: *key_pro
+    image_name:
+    template: *win10_template
+    varfile: *win11_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+
+  - name: &win11_22h2_22621_384 "win11-22h2-22621.384"
+    description: "Windows 11 22H2 (March 2022 Update, 22621)"
+    source: "https://storage.grapheos.app/images/win11/Win11_22H2_English_22621_384_x64.iso"
+    sha1: "89499520ad5396c3aefc3c75f64c2653638d87bb"
+    key: *key_pro
+    image_name:
+    template: *win10_template
+    varfile: *win11_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+
+  - name: &win11_23h2_22631_2861 "win11-23h2-22631.2861"
+    description: "Windows 11 23H2 (March 2023 Update, 22631)"
+    source: "https://storage.grapheos.app/images/win11/Win11_English_23H2_22631.2861_x64v2.iso"
+    sha1: "cd5e995387669b2ff2c58c23894900f1d238a103"
+    key: *key_pro
+    image_name: *win11_pro
+    template: *win10_template
+    varfile: *win11_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+
   # - name: "ubuntu-server-LTS"
   #   template: "ubuntu.json"
   #   varfile: "ubuntu_1604_x64.json"
@@ -253,3 +297,7 @@ branches:
     - *win10_21h1_19043_928
     - *win10_21h2_19044_1288
     - *win10_22h2_19045_2965
+    - *win11_21h2_22000_194
+    - *win11_21h2_22000_318
+    - *win11_22h2_22621_384
+    - *win11_23h2_22631_2861

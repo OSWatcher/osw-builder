@@ -36,8 +36,11 @@ from .snapshot import Snapshot
 BUILD_SNAPSHOT = Snapshot("BUILD", "Build state")
 IDLE_SNAPSHOT = Snapshot("IDLE", "Idle state (10 min)")
 LIBVIRT_URI = "qemu:///session"
-BLACKLISTED_UPDATES = ["4462939", "2267602"]
+BLACKLISTED_UPDATES = ["4462939", "2267602", "5042099", "5012170"]
 # win10-rs2-1703.15063.0: 4462939
+# win11-22h2: "An update loop was detected, this could be caused by an update being rolled back during
+# a reboot or the Windows Update API incorrectly reporting a failed update as being successful.
+# Check the Windows Updates logs on the host to gather more information"
 # 2267602 causes issues but still returns as installed, so can be installed twice or more
 
 
@@ -76,7 +79,11 @@ def capture_os(os_name, args):
 
     with ExitStack() as ex:
         if not vagrant.box_exists(box_name):
-            image = ex.enter_context(build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args))
+            # TODO: win11 hack
+            network = True if "win11" in box_name else False
+            image = ex.enter_context(
+                build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args, network=network)
+            )
             vagrant.box_add(image, name=box_name)
 
         # prepare vagrant env
@@ -96,7 +103,9 @@ def capture_os(os_name, args):
                 logging.info("Defining VM")
                 vagrant.define(vagrant_dir)
                 vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
-
+        # TODO: hack win11: add EFI loader
+        if "win11" in box_name:
+            vagrant.set_loader_efi(vagrant_dir)
         # get the qcow path
         qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
         logging.debug("Qcow path: %s", qcow_path)
