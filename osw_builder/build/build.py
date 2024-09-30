@@ -117,6 +117,7 @@ def build_image(
     config_entry: dict,
     extra_firstlogin_cmds: Optional[list[str]],
     packer_args: list[str] = None,
+    network: bool = False,
 ) -> Generator[Path, None, None]:
     logging.info("Building image")
     sha1digest = validate_source_and_compute_sha1(config_entry)
@@ -136,7 +137,7 @@ def build_image(
         # force packer cache, need network for that
         fake_run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, network=True)
         # enforce no network for now
-        yield run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=False)
+        yield run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=network)
 
 
 def fake_run_packer(varfile_path: str, autounattend_path: str, network: bool = True):
