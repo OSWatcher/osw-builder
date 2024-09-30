@@ -36,8 +36,10 @@ from .snapshot import Snapshot
 BUILD_SNAPSHOT = Snapshot("BUILD", "Build state")
 IDLE_SNAPSHOT = Snapshot("IDLE", "Idle state (10 min)")
 LIBVIRT_URI = "qemu:///session"
-BLACKLISTED_UPDATES = ["4462939", "2267602"]
+BLACKLISTED_UPDATES = ["4462939", "2267602", "5042099", "5012170"]
 # win10-rs2-1703.15063.0: 4462939
+# win11-22h2: "An update loop was detected, this could be caused by an update being rolled back during
+# a reboot or the Windows Update API incorrectly reporting a failed update as being successful.Check the Windows Updates logs on the host to gather more information"
 # 2267602 causes issues but still returns as installed, so can be installed twice or more
 
 
