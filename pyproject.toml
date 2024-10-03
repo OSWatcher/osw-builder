@@ -17,7 +17,7 @@ libvirt-python = "^10.3.0"
 guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz" }
 neogit = { git = "https://github.com/OSWatcher/neogit.git" }
 winupdate = { git = "https://github.com/OSWatcher/pywinupdate.git" }
-plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git" }
+plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git", rev = "v0.2" }
 dynaconf = "^3.2.5"
 python-hcl2 = "^4.3.4"
 docker = "^7.1.0"
