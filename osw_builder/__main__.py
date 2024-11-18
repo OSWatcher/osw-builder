@@ -116,16 +116,17 @@ def capture_os(os_name, args):
         # use description from default_settings.yaml just for build snapshot
         build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description)
 
-        # create branch
+        apply_updates = entry.get("apply_updates", apply_updates)
+        if not apply_updates:
+            return
+
+        # ensure create OS branch
         branch_name = box_name
         with suppress(ValueError):
             create_branch(
                 branch_name,
                 build_commit,
             )
-
-        if not apply_updates:
-            return
 
         # loop through the snapshot list, and assert that the first one is the build snapshot
         snap_list = vagrant.snapshot_list(vagrant_dir, qcow_path)

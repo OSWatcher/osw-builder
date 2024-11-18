@@ -9,6 +9,7 @@ image_names:
   - win11_pro: &win11_pro "Windows 11 Pro"
 template: &win10_template "windows.pkr.hcl"
 varfile:
+  - &win7_varfile "win7.pkrvars.hcl"
   - &win8_varfile "win8.pkrvars.hcl"
   - &win10_varfile "win10.pkrvars.hcl"
   - &win11_varfile "win11.pkrvars.hcl"
@@ -26,6 +27,16 @@ extra_firstlogin_cmds:
 remove_domain: false
 storage_pool: "default"
 images:
+  - name: &win7_7600 "win7-7600"
+    description: "Windows 7 RTM Entreprise (7600)"
+    source: "https://storage.grapheos.app/images/win7/7600.16385.090713-1255_x64fre_enterprise_en-us_EVAL_Eval_Enterprise-GRMCENXEVAL_EN_DVD.iso"
+    sha1: "15ddabafa72071a06d5213b486a02d5b55cb7070"
+    image_name: "Windows 7 Enterprise"
+    template: *win10_template
+    varfile: *win7_varfile
+    extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    apply_updates: false
+
   - name: &win8_9200 "win8-9200"
     description: "Windows 8 RTM (9200)"
     source: "https://storage.grapheos.app/images/win8/6.2.9200.16384.WIN8_RTM.120725-1247_x64fre_client-Pro_en-us-HRM_CCSA_X64FRE_EN-US_DV5.iso"
@@ -292,6 +303,7 @@ images:
 
 branches:
   master:
+    - *win7_7600
     - *win8_9200
     - *win10_ts1_1507
     - *win10_ts2_1511_10586_0
