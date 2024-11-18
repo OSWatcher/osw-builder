@@ -35,6 +35,7 @@ images:
     template: *win10_template
     varfile: *win8_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    search_updates: false
 
   - name: &win10_ts1_1507 "win10-ts1-1507"
     description: "Windows 10 Threshold 1 (1507)"
