@@ -79,12 +79,12 @@ class Autounattend(AbstractContextManager):
         key.text = value
 
     @property
-    def image_name(self):
+    def image_name(self) -> ET.Element:
         """Retrieves the Matadata/Value"""
         image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
         if image_name is None:
             raise ElementNotFoundError("Cannot find Value element")
-        return image_name.text
+        return image_name
 
     @image_name.setter
     def image_name(self, value=None):
