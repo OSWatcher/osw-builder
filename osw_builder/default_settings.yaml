@@ -9,6 +9,7 @@ image_names:
   - win11_pro: &win11_pro "Windows 11 Pro"
 template: &win10_template "windows.pkr.hcl"
 varfile:
+  - &winxp_varfile "winxp.pkrvars.hcl"
   - &win7_varfile "win7.pkrvars.hcl"
   - &win8_varfile "win8.pkrvars.hcl"
   - &win10_varfile "win10.pkrvars.hcl"
@@ -27,6 +28,16 @@ extra_firstlogin_cmds:
 remove_domain: false
 storage_pool: "default"
 images:
+  - name: &winxp_sp3 "winxp-sp3"
+    description: "Windows XP SP3"
+    source: "https://storage.grapheos.app/images/winxp/PACKER_TEMPLATE_en_windows_xp_professional_sp3_Nov_2013_Incl_SATA_Drivers.iso"
+    sha1: "6947e45f7eb50c873043af4713aa7cd43027efa7"
+    image_name: "Windows XP Professional"
+    template: *win10_template
+    varfile: *winxp_varfile
+    network: true
+    search_updates: false
+
   - name: &win7_7600 "win7-7600"
     description: "Windows 7 RTM Entreprise (7600)"
     source: "https://storage.grapheos.app/images/win7/7600.16385.090713-1255_x64fre_enterprise_en-us_EVAL_Eval_Enterprise-GRMCENXEVAL_EN_DVD.iso"
@@ -250,6 +261,7 @@ images:
     template: *win10_template
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    network: true
 
   - name: &win11_21h2_22000_318 "win11-21h2-22000.318"
     description: "Windows 11 21H2 (October 2021 Update, 22000)"
@@ -260,6 +272,7 @@ images:
     template: *win10_template
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    network: true
 
   - name: &win11_22h2_22621_384 "win11-22h2-22621.384"
     description: "Windows 11 22H2 (March 2022 Update, 22621)"
@@ -270,6 +283,7 @@ images:
     template: *win10_template
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    network: true
 
   - name: &win11_23h2_22631_2861 "win11-23h2-22631.2861"
     description: "Windows 11 23H2 (March 2023 Update, 22631)"
@@ -280,6 +294,7 @@ images:
     template: *win10_template
     varfile: *win11_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    network: true
 
   # - name: "ubuntu-server-LTS"
   #   template: "ubuntu.json"
@@ -303,6 +318,7 @@ images:
 
 branches:
   master:
+    - *winxp_sp3
     - *win7_7600
     - *win8_9200
     - *win10_ts1_1507
