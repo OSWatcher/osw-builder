@@ -29,6 +29,7 @@ def get_packer_templates_dir():
 PACKER_TEMPLATES_DIR = get_packer_templates_dir()
 OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
 PACKER_DOCKER_AUTOUNATTEND_PATH = "/packer/Autounattend.xml"
+PACKER_DOCKER_AUTOUNATTEND_PATH_XP = "/packer/WINNT.SIF"
 PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 WINDOWS_TEMPLATE = "windows.pkr.hcl"
 
@@ -128,19 +129,28 @@ def build_image(
         auto_path = PACKER_TEMPLATES_DIR / varfile_data["autounattend"]
 
     with ExitStack() as ex:
-        tmp_autounattend = ex.enter_context(Autounattend(auto_path))
-        if tmp_autounattend:
+        autounattend_tmp_path = None
+        autounattend_docker_path = None
+        if auto_path.suffix == 'xml':
+            tmp_autounattend = ex.enter_context(Autounattend(auto_path))
             configure_autounattend(tmp_autounattend, config_entry, extra_firstlogin_cmds)
             varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_PATH
+            autounattend_tmp_path = tmp_autounattend.autounattend_tmp_path
+            autounattend_docker_path = PACKER_DOCKER_AUTOUNATTEND_PATH
+        else:
+            # winxp
+            autounattend_tmp_path = auto_path
+            varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_PATH_XP
+            autounattend_docker_path = PACKER_DOCKER_AUTOUNATTEND_PATH_XP
         # /tmp/tmp0v1z7z1v.pkrvars.hcl
         tmp_varfile_path = ex.enter_context(write_temp_varfile(varfile_data))
         # force packer cache, need network for that
-        fake_run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, network=True)
+        fake_run_packer(tmp_varfile_path, autounattend_tmp_path, autounattend_docker_path, network=True)
         # enforce no network for now
-        yield run_packer(tmp_varfile_path, tmp_autounattend.autounattend_tmp_path, packer_args, network=network)
+        yield run_packer(tmp_varfile_path, autounattend_tmp_path, autounattend_docker_path, packer_args, network=network)
 
 
-def fake_run_packer(varfile_path: str, autounattend_path: str, network: bool = True):
+def fake_run_packer(varfile_path: str, autounattend_path: str, autounattend_docker_path: str, network: bool = True):
     logging.info("Fake Packer run (Force image download)")
     with NamedTemporaryFile(mode="w", suffix=".pkrvars.hcl", delete=False) as tmp_f_fake:
         with open(varfile_path) as original_varfile:
@@ -149,10 +159,10 @@ def fake_run_packer(varfile_path: str, autounattend_path: str, network: bool = T
         tmp_f_fake.flush()
         with suppress(RuntimeError):
             # empty packer args, we don't want any cpu override here
-            run_packer(tmp_f_fake.name, autounattend_path, packer_args=[], network=network)
+            run_packer(tmp_f_fake.name, autounattend_path, autounattend_docker_path, packer_args=[], network=network)
 
 
-def run_packer(varfile: str, autounattend: str, packer_args: list[str], network: bool) -> Path:
+def run_packer(varfile: str, autounattend_host_path: str, autounattend_docker_path: str, packer_args: list[str], network: bool) -> Path:
     with ensure_cleanup_output():
         dk_client = docker.from_env()
         dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
@@ -168,7 +178,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
             packer_home_cache: {"bind": "/cache", "mode": "rw"},
             PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
             varfile: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
-            autounattend: {"bind": PACKER_DOCKER_AUTOUNATTEND_PATH, "mode": "ro"},
+            autounattend_host_path: {"bind": autounattend_docker_path, "mode": "ro"},
         }
         # Get the group IDs for 'kvm' and 'sudo'
         kvm_group_id = grp.getgrnam("kvm").gr_gid
