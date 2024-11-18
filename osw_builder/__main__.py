@@ -76,6 +76,7 @@ def capture_os(os_name, args):
     varfile = entry["varfile"]
     description = entry["description"]
     extra_firstlogin_cmds = entry["extra_firstlogin_cmds"]
+    search_updates = entry.get("search_updates", search_updates)
 
     with ExitStack() as ex:
         if not vagrant.box_exists(box_name):
