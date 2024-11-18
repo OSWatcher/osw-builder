@@ -190,7 +190,7 @@ def run_packer(varfile: str, autounattend: str, packer_args: list[str], network:
 
         cmdline.extend(var_packer_args)
 
-        cmdline.append("windows.pkr.hcl")
+        cmdline.append(WINDOWS_TEMPLATE)
 
         logging.debug("Running packer with command line: %s", cmdline)
         with open("packer-build.log", "a") as packer_log_f:
