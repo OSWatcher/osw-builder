@@ -35,7 +35,7 @@ images:
     template: *win10_template
     varfile: *win7_varfile
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
-    search_updates: false
+    apply_updates: false
 
   - name: &win8_9200 "win8-9200"
     description: "Windows 8 RTM (9200)"
