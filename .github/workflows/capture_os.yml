@@ -7,6 +7,11 @@ on:
         type: string
         required: true
         description: 'Name of the OS to capture'
+      before:
+        type: string
+        required: false
+        description: 'Commit to link the new commit to'
+
 
 jobs:
   capture:
@@ -37,7 +42,7 @@ jobs:
           pat_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Capture OS
-        run: poetry run osw-builder capture_os ${{ inputs.os_name }} --var cpus=4
+        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}"
         env:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer
