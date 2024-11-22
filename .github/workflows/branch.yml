@@ -47,9 +47,22 @@ jobs:
               only = '${{ github.event.inputs.only }}' or None
               if only:
                 os_list = [os for os in os_list if os == only]
+
+              # Reverse the os_list to start from the first commit
+              os_list = os_list[::-1]
+
+              # Create list of dictionaries with os_name and before parameter
+              matrix_entries = []
+              for i, os_name in enumerate(os_list):
+                  before = os_list[i-1] if i > 0 else None
+                  matrix_entries.append({
+                      'os_name': os_name,
+                      'before': before
+                  })
+
               with open(os.environ['GITHUB_OUTPUT'], 'a') as o:
                 matrix = {
-                  'os_name': os_list
+                  'include': matrix_entries
                 }
                 o.write(f'matrix={json.dumps(matrix)}')
 
@@ -61,6 +74,7 @@ jobs:
     uses: ./.github/workflows/capture_os.yml
     with:
       os_name: ${{ matrix.os_name }}
+      before: ${{ matrix.before }}
     secrets: inherit
 
   plugins_main_branch:
