@@ -241,7 +241,7 @@ images:
 
   # 22h1 doesn't exist
 
-  - name: &win10_22h2_19045_2965 "win10-22h2-19045.2006"
+  - name: &win10_22h2_19045_2006 "win10-22h2-19045.2006"
     description: "Windows 10 22H2 (March 2022 Update, 19045)"
     source: "https://storage.grapheos.app/images/win10/win_10_22h2_19045_2006_x64.iso"
     sha1: "416dc59cdcc3cf19c277ebcedd51218608492c62"
@@ -339,7 +339,7 @@ branches:
     - *win10_20h2_2009_19042_631
     - *win10_21h1_19043_928
     - *win10_21h2_19044_1288
-    - *win10_22h2_19045_2965
+    - *win10_22h2_19045_2006
     - *win11_21h2_22000_194
     - *win11_21h2_22000_318
     - *win11_22h2_22621_384
