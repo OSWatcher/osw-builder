@@ -16,7 +16,11 @@ on:
         required: false
         description: 'Search for updates'
         default: true
-
+      skip_compaction:
+        type: boolean
+        required: false
+        description: 'Skip compaction'
+        default: false
 
 jobs:
   capture:
@@ -48,7 +52,7 @@ jobs:
           minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Capture OS
-        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}" --search-updates="${{ inputs.search_updates }}"
+        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}" --search-updates="${{ inputs.search_updates }}" --var skip_compaction=${{ inputs.skip_compaction }}
         env:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer
