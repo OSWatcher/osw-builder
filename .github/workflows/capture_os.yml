@@ -11,6 +11,11 @@ on:
         type: string
         required: false
         description: 'Commit to link the new commit to'
+      search_updates:
+        type: boolean
+        required: false
+        description: 'Search for updates'
+        default: true
 
 
 jobs:
@@ -42,7 +47,7 @@ jobs:
           pat_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Capture OS
-        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}"
+        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}" --search-updates="${{ inputs.search_updates }}"
         env:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer
