@@ -89,6 +89,7 @@ runs:
       if: ${{ !env.ACT }}
       run: |
         echo "NEOGIT_OBJECT__PROVIDER=minio" >> $GITHUB_ENV
+        echo "NEOGIT_OBJECT__KEY=minioadmin" >> $GITHUB_ENV
         echo "NEOGIT_OBJECT__SECRET_KEY=${{ inputs.minio_secret }}" >> $GITHUB_ENV
         echo "NEOGIT_OBJECT__HOST=127.0.0.1" >> $GITHUB_ENV
         echo "NEOGIT_OBJECT__PORT=9000" >> $GITHUB_ENV
