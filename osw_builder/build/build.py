@@ -131,7 +131,7 @@ def build_image(
     with ExitStack() as ex:
         autounattend_tmp_path = None
         autounattend_docker_path = None
-        if auto_path.suffix == 'xml':
+        if auto_path.suffix == '.xml':
             tmp_autounattend = ex.enter_context(Autounattend(auto_path))
             configure_autounattend(tmp_autounattend, config_entry, extra_firstlogin_cmds)
             varfile_data["autounattend"] = PACKER_DOCKER_AUTOUNATTEND_PATH

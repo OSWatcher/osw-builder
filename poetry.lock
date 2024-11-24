@@ -743,22 +743,22 @@ colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "jedi"
-version = "0.19.1"
+version = "0.19.2"
 description = "An autocompletion tool for Python that can be used for text editors."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "jedi-0.19.1-py2.py3-none-any.whl", hash = "sha256:e983c654fe5c02867aef4cdfce5a2fbb4a50adc0af145f70504238f18ef5e7e0"},
-    {file = "jedi-0.19.1.tar.gz", hash = "sha256:cf0496f3651bc65d7174ac1b7d043eff454892c708a87d1b683e57b569927ffd"},
+    {file = "jedi-0.19.2-py2.py3-none-any.whl", hash = "sha256:a8ef22bde8490f57fe5c7681a3c83cb58874daf72b4784de3cce5b6ef6edb5b9"},
+    {file = "jedi-0.19.2.tar.gz", hash = "sha256:4770dc3de41bde3966b02eb84fbcf557fb33cce26ad23da12c742fb50ecb11f0"},
 ]
 
 [package.dependencies]
-parso = ">=0.8.3,<0.9.0"
+parso = ">=0.8.4,<0.9.0"
 
 [package.extras]
 docs = ["Jinja2 (==2.11.3)", "MarkupSafe (==1.1.1)", "Pygments (==2.8.1)", "alabaster (==0.7.12)", "babel (==2.9.1)", "chardet (==4.0.0)", "commonmark (==0.8.1)", "docutils (==0.17.1)", "future (==0.18.2)", "idna (==2.10)", "imagesize (==1.2.0)", "mock (==1.0.1)", "packaging (==20.9)", "pyparsing (==2.4.7)", "pytz (==2021.1)", "readthedocs-sphinx-ext (==2.1.4)", "recommonmark (==0.5.0)", "requests (==2.25.1)", "six (==1.15.0)", "snowballstemmer (==2.1.0)", "sphinx (==1.8.5)", "sphinx-rtd-theme (==0.4.3)", "sphinxcontrib-serializinghtml (==1.1.4)", "sphinxcontrib-websupport (==1.2.4)", "urllib3 (==1.26.4)"]
 qa = ["flake8 (==5.0.4)", "mypy (==0.971)", "types-setuptools (==67.2.0.1)"]
-testing = ["Django", "attrs", "colorama", "docopt", "pytest (<7.0.0)"]
+testing = ["Django", "attrs", "colorama", "docopt", "pytest (<9.0.0)"]
 
 [[package]]
 name = "jinja2"
@@ -1107,7 +1107,7 @@ pyarrow = ["pyarrow (>=1.0.0)"]
 
 [[package]]
 name = "neogit"
-version = "0.6.0"
+version = "0.9.0"
 description = "Git-like tool backed by Neo4j"
 optional = false
 python-versions = "^3.8.1"
@@ -1135,8 +1135,8 @@ types-PyYAML = "^6.0.0"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/neogit.git"
-reference = "v0.6"
-resolved_reference = "4d14d88f14920159f612f9354bab0fe4e6d35ef5"
+reference = "v0.9"
+resolved_reference = "29a0c31bfe6408fd4bf0b9f25f6e76e1b157e970"
 
 [[package]]
 name = "neomodel"
@@ -1263,7 +1263,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "plugins"
-version = "0.2.0"
+version = "0.5.0"
 description = ""
 optional = false
 python-versions = "^3.10"
@@ -1277,7 +1277,7 @@ dynaconf = "^3.2.5"
 ipdb = "^0.13.13"
 jsonschema = "^4.21.1"
 lief = "0.13.2"
-neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.6"}
+neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.9"}
 poethepoet = "^0.26.1"
 pypeln = "^0.4.9"
 python-magic = "^0.4.27"
@@ -1287,8 +1287,8 @@ volatility3 = "^2.5.2"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
-reference = "v0.2"
-resolved_reference = "24f8626730f6e6b35c686c41c4b14a7c38a8939b"
+reference = "v0.5"
+resolved_reference = "9716f50984284c5ef96b78636d2d348d19cd1b84"
 
 [[package]]
 name = "poethepoet"
@@ -1443,13 +1443,13 @@ dev = ["build", "flake8", "mypy", "pytest", "twine"]
 
 [[package]]
 name = "pyspnego"
-version = "0.11.1"
+version = "0.11.2"
 description = "Windows Negotiate Authentication Client and Server"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyspnego-0.11.1-py3-none-any.whl", hash = "sha256:129a4294f2c4d681d5875240ef87accc6f1d921e8983737fb0b59642b397951e"},
-    {file = "pyspnego-0.11.1.tar.gz", hash = "sha256:e92ed8b0a62765b9d6abbb86a48cf871228ddb97678598dc01c9c39a626823f6"},
+    {file = "pyspnego-0.11.2-py3-none-any.whl", hash = "sha256:74abc1fb51e59360eb5c5c9086e5962174f1072c7a50cf6da0bda9a4bcfdfbd4"},
+    {file = "pyspnego-0.11.2.tar.gz", hash = "sha256:994388d308fb06e4498365ce78d222bf4f3570b6df4ec95738431f61510c971b"},
 ]
 
 [package.dependencies]
@@ -1920,13 +1920,13 @@ files = [
 
 [[package]]
 name = "tomli"
-version = "2.0.2"
+version = "2.1.0"
 description = "A lil' TOML parser"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tomli-2.0.2-py3-none-any.whl", hash = "sha256:2ebe24485c53d303f690b0ec092806a085f07af5a5aa1464f3931eec36caaa38"},
-    {file = "tomli-2.0.2.tar.gz", hash = "sha256:d46d457a85337051c36524bc5349dd91b1877838e2979ac5ced3e710ed8a60ed"},
+    {file = "tomli-2.1.0-py3-none-any.whl", hash = "sha256:a5c57c3d1c56f5ccdf89f6523458f60ef716e210fc47c4cfb188c5ba473e0391"},
+    {file = "tomli-2.1.0.tar.gz", hash = "sha256:3f646cae2aec94e17d04973e4249548320197cfabdf130015d023de4b74d8ab8"},
 ]
 
 [[package]]
@@ -2046,4 +2046,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6fb99be9af7cbd4cb31d13e438610a7570734b45c359a3111c2b643e240d85cc"
+content-hash = "38d4e261b4acbdc456817a868500e91bea1fe6c79fbea42b2a10f432a6d7291b"

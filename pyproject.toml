@@ -15,9 +15,9 @@ docopt = "^0.6.2"
 pyyaml = "^6.0.1"
 libvirt-python = "^10.3.0"
 guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz" }
-neogit = { git = "https://github.com/OSWatcher/neogit.git", tag = "v0.6" }
+neogit = { git = "https://github.com/OSWatcher/neogit.git", tag = "v0.9" }
 winupdate = { git = "https://github.com/OSWatcher/pywinupdate.git" }
-plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git", rev = "v0.2" }
+plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git", rev = "v0.5" }
 dynaconf = "^3.2.5"
 python-hcl2 = "^4.3.4"
 docker = "^7.1.0"
