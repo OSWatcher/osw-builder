@@ -2,7 +2,7 @@
 
 """
 Usage:
-    builder.py capture_os <os_name> [options] [--var <packer_args>...]
+    builder.py capture_os <os_name> [options] [--var <packer_args>...] [--before=<commit>]
     builder.py (-h | --help)
 
 Arguments:
@@ -66,7 +66,9 @@ def capture_os(os_name, args):
     destroy = args["--destroy"]
     apply_updates = str2bool(args["--updates"])
     search_updates = str2bool(args["--search-updates"])
-
+    before = args.get("--before")
+    # Treat empty string as None
+    before = before if before else None
     try:
         entry = next((entry for entry in settings["images"] if entry["name"] == os_name))
     except StopIteration:
@@ -114,7 +116,7 @@ def capture_os(os_name, args):
         # restore build snapshot
         vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
         # use description from default_settings.yaml just for build snapshot
-        build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description)
+        build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description, before=before)
 
         apply_updates = entry.get("apply_updates", apply_updates)
         if not apply_updates:
