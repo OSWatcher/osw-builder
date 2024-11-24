@@ -52,6 +52,7 @@ jobs:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          ${{ !env.ACT && 'NEOGIT_OBJECT__PROVIDER' }}: ${{ !env.ACT && 'minio' }}
           ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Upload packer-build.log
