@@ -80,7 +80,7 @@ jobs:
     with:
       os_name: ${{ matrix.os_name }}
       before: ${{ matrix.before }}
-      search_updates: ${{ github.event.inputs.search_updates }}
+      search_updates: ${{ github.event.inputs.search_updates == true }}
     secrets: inherit
 
   plugins_main_branch:
