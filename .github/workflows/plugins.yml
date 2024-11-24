@@ -81,15 +81,10 @@ jobs:
         uses: ./.github/actions/setup-python-poetry
         with:
           pat_token: ${{ secrets.PAT_TOKEN }}
+          minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Run filetype plugin
         run: poetry run runner ${{ matrix.commit.hash }} filetype
-        env:
-          ${{ !env.ACT && 'NEOGIT_OBJECT__PROVIDER' }}: ${{ !env.ACT && 'minio' }}
-          ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Run winreg plugin
         run: poetry run runner ${{ matrix.commit.hash }} winreg
-        env:
-          ${{ !env.ACT && 'NEOGIT_OBJECT__PROVIDER' }}: ${{ !env.ACT && 'minio' }}
-          ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}

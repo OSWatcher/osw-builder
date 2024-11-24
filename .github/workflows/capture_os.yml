@@ -45,6 +45,7 @@ jobs:
         uses: ./.github/actions/setup-python-poetry
         with:
           pat_token: ${{ secrets.PAT_TOKEN }}
+          minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Capture OS
         run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}" --search-updates="${{ inputs.search_updates }}"
@@ -52,8 +53,6 @@ jobs:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          ${{ !env.ACT && 'NEOGIT_OBJECT__PROVIDER' }}: ${{ !env.ACT && 'minio' }}
-          ${{ !env.ACT && 'NEOGIT_OBJECT__SECRET_KEY' }}: ${{ !env.ACT && secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Upload packer-build.log
         uses: actions/upload-artifact@v4

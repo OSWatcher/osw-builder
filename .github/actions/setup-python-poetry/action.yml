@@ -13,6 +13,10 @@ inputs:
     description: "Poetry version to install"
     required: false
     default: "1.8.3"
+  minio_secret:
+    description: "Minio admin password"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -79,6 +83,14 @@ runs:
       run: |
         rm -rf "/tmp/github_action_lock"
         echo "Lock released"
+      shell: bash
+
+    - name: Configure production environment
+      if: ${{ !env.ACT }}
+      run: |
+        echo "NEOGIT_OBJECT__PROVIDER=minio" >> $GITHUB_ENV
+        echo "NEOGIT_OBJECT__HOST=127.0.0.1" >> $GITHUB_ENV
+        echo "NEOGIT_OBJECT__SECRET_KEY=${{ inputs.minio_secret }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Install dependencies
