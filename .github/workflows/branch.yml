@@ -14,10 +14,10 @@ on:
         description: 'Only capture specific OS'
         default: null
       search_updates:
-        type: boolean
+        type: string
         required: false
         description: 'Search for updates'
-        default: true
+        default: 'true'
 
 jobs:
   build_matrix:
@@ -80,7 +80,7 @@ jobs:
     with:
       os_name: ${{ matrix.os_name }}
       before: ${{ matrix.before }}
-      search_updates: ${{ github.event.inputs.search_updates == true }}
+      search_updates: ${{ github.event.inputs.search_updates }}
     secrets: inherit
 
   plugins_main_branch:
