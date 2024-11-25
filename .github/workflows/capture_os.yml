@@ -12,10 +12,10 @@ on:
         required: false
         description: 'Commit to link the new commit to'
       search_updates:
-        type: boolean
+        type: string
         required: false
         description: 'Search for updates'
-        default: true
+        default: 'true'
       skip_compaction:
         type: boolean
         required: false
