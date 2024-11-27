@@ -318,9 +318,9 @@ images:
 
 branches:
   master:
-    # - *winxp_sp3
-    # - *win7_7600
-    # - *win8_9200
+    - *winxp_sp3
+    - *win7_7600
+    - *win8_9200
     - *win10_ts1_1507
     - *win10_ts2_1511_10586_0
     - *win10_ts2_1511_10586_104
