@@ -51,6 +51,8 @@ jobs:
             def iter_commits():
               commit = branch.tracks.single()
               while commit:
+                if commit.name == '${{ inputs.branch_name }}':
+                  break
                 yield commit
                 # small hack to avoid reprocessing the same commit on the main branch
                 if commit.name == 'IDLE':
