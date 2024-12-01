@@ -68,6 +68,8 @@ jobs:
   run_plugins:
     needs: build_matrix
     runs-on: self-hosted
+    # check non empty matrix
+    if: ${{ fromJson(needs.build_matrix.outputs.matrix).commit[0] != null }}
     strategy:
       matrix: ${{ fromJson(needs.build_matrix.outputs.matrix) }}
       max-parallel: 20
