@@ -92,3 +92,6 @@ jobs:
 
       - name: Run winreg plugin
         run: poetry run runner ${{ matrix.commit.hash }} winreg
+
+      - name: Run symbols plugin
+        run: poetry run runner ${{ matrix.commit.hash }} symbols
