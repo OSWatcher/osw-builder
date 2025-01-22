@@ -9,6 +9,7 @@ from .vagrant import (
     ensure_destroyed,
     provision,
     set_loader_efi,
+    snapshot_libvirt_define,
     snapshot_list,
     snapshot_pop,
     snapshot_push,
@@ -39,4 +40,5 @@ __all__ = [
     "snapshot_push",
     "snapshot_pop",
     "set_loader_efi",
+    "snapshot_libvirt_define",
 ]
