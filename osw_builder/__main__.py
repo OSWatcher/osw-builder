@@ -89,9 +89,12 @@ def capture_os(os_name, args):
         if not vagrant.box_exists(box_name):
             # TODO: win11 hack
             network = entry.get("network", False)
-            image = ex.enter_context(
-                build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args, network=network)
-            )
+            if entry["source"].endswith(".box"):
+                image = entry["source"]
+            else:
+                image = ex.enter_context(
+                    build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args, network=network)
+                )
             vagrant.box_add(image, name=box_name)
 
         # prepare vagrant env
@@ -110,7 +113,29 @@ def capture_os(os_name, args):
             with vagrant.ensure_destroyed(vagrant_dir, only_on_error=True):
                 logging.info("Defining VM")
                 vagrant.define(vagrant_dir)
-                vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
+                # get the qcow path
+                qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
+                # WORKAROUND: if source is box, we must copy the box qcow origninal source
+                # and redefine all the internal snapshots in libvirt metadata
+                if entry["source"].endswith(".box"):
+                    logging.info("Copying box qcow to %s", qcow_path)
+                    source_qcow = Path.home() / ".vagrant.d" / "boxes" / box_name / "0" / "libvirt" / "box_0.img"
+                    shutil.copy(source_qcow, qcow_path)
+                    # redefine all the internal snapshots in libvirt metadata
+                    previous = None
+                    for snap in vagrant.snapshot_list(vagrant_dir, qcow_path):
+                        logging.info("Redefining snapshot %s in libvirt", snap.Tag)
+                        vagrant.snapshot_libvirt_define(box_name, snap.Tag, parent=previous)
+                        previous = snap.Tag
+                # ensure build snapshot existence
+                if not any(
+                    [
+                        snap
+                        for snap in vagrant.snapshot_list(vagrant_dir, qcow_path)
+                        if snap.Tag == BUILD_SNAPSHOT.to_raw_tag()
+                    ]
+                ):
+                    vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
         # TODO: hack win11: add EFI loader
         if "win11" in box_name:
             vagrant.set_loader_efi(vagrant_dir)
