@@ -1,10 +1,12 @@
 import logging
 import re
 import subprocess
+import tempfile
 from contextlib import contextmanager
+from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Generator, Tuple
+from typing import Generator, Optional, Tuple
 
 from attrs import define
 
@@ -193,6 +195,40 @@ def vagrant_snapshot_list(cwd: Path) -> list[QEMUSnapshot]:
     logging.debug("vagrant snapshot list")
     _, output = log_subprocess_call(["vagrant", "snapshot", "list"], cwd=cwd)
     return list(parse_vagrant_snapshot_list(output))
+
+
+def snapshot_libvirt_define(domain: str, snapshot: str, parent: Optional[str] = None):
+    """From an QEMU internal snapshot name, define it in libvirt metadata"""
+    # Get the full domain XML definition
+    _, domain_xml = log_subprocess_call(["virsh", "dumpxml", domain])
+
+    # define the XML
+    # Note: we use vda as the disk name as this is enforced in our packer-templates/vagrantfile.pkrtpl.hcl
+    xml = f"""
+    <domainsnapshot>
+        <name>{snapshot}</name>
+{domain_xml}
+        <state>shutoff</state>
+        <creationTime>{int(datetime.now().timestamp())}</creationTime>
+        <memory snapshot='no'/>
+        <disks>
+            <disk name='vda' snapshot='internal'/>
+        </disks>
+    """
+    # set parent if any
+    if parent:
+        xml += f"    <parent><name>{parent}</name></parent>\n"
+
+    xml += "</domainsnapshot>"
+
+    # Create temporary file and write XML
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".xml", delete=True) as tmp:
+        tmp.write(xml)
+        tmp.flush()
+
+        # Use virsh to create the snapshot from XML
+        cmdline = ["virsh", "snapshot-create", domain, tmp.name, "--redefine"]
+        log_subprocess_call(cmdline)
 
 
 def parse_qemu_img_snapshot_list(output: str) -> Generator[QEMUSnapshot, None, None]:
