@@ -28,6 +28,34 @@ extra_firstlogin_cmds:
 remove_domain: false
 storage_pool: "default"
 images:
+  - name: &win95 "win95"
+    description: "Windows 95 (4.00.950)"
+    source: "https://storage.grapheos.app/images/win95.box"
+    sha1: "dd978b5ee2d28c62f85aafe074fe04b5a87963f0"
+    idle: false
+    search_updates: false
+
+  - name: &win98 "win98"
+    description: "Windows 98 First Edition (4.10.1998)"
+    source: "https://storage.grapheos.app/images/win98.box"
+    sha1: "50370d4ec339347354b8b752a8f3c47f5ca5e399"
+    idle: false
+    search_updates: false
+
+  - name: &winME "winME"
+    description: "Windows Millenium (4.90.3000)"
+    source: "https://storage.grapheos.app/images/winME.box"
+    sha1: "ef209d2ab1bb0cff6a40daf00bbd0d56cd2d1aa6"
+    idle: false
+    search_updates: false
+
+  - name: &win2000 "win2000"
+    description: "Windows 2000 (5.00.2195)"
+    source: "https://storage.grapheos.app/images/win2000.box"
+    sha1: "4897115c1fe7ed15716013d3cbef574d8885ad10"
+    idle: false
+    search_updates: false
+
   - name: &winxp_sp3 "winxp-sp3"
     description: "Windows XP SP3"
     source: "https://storage.grapheos.app/images/winxp/PACKER_TEMPLATE_en_windows_xp_professional_sp3_Nov_2013_Incl_SATA_Drivers.iso"
@@ -318,6 +346,10 @@ images:
 
 branches:
   master:
+    - *win95
+    - *win98
+    - *winME
+    - *win2000
     - *winxp_sp3
     - *win7_7600
     - *win8_9200
