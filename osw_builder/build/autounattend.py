@@ -22,7 +22,7 @@ class Autounattend(AbstractContextManager):
         if isinstance(autounattend_path, str):
             self.autounattend_path = Path(self.autounattend_path)
         if not self.autounattend_path.exists():
-            raise ValueError(f"File {self.autounattend_path} does not exists")
+            raise ValueError(f"File {self.autounattend_path} does not exist")
 
         # avoid 'ns0' prefixes in the final XML
         # Windows installer will crash
@@ -80,7 +80,7 @@ class Autounattend(AbstractContextManager):
 
     @property
     def image_name(self) -> ET.Element:
-        """Retrieves the Matadata/Value"""
+        """Retrieves the Metadata/Value"""
         image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
         if image_name is None:
             raise ElementNotFoundError("Cannot find Value element")
