@@ -56,6 +56,7 @@ lint = ["_flake8", "_isort"]
 typecheck = "mypy ."
 ccode = ["fmt", "lint"]
 unit_test = "pytest"
+docs = "sphinx-build docs/source docs/build"
 
 
 [tool.black]
