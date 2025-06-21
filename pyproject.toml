@@ -61,7 +61,7 @@ docs = "sphinx-build docs/source docs/build"
 
 [tool.black]
 line-length = 120
-extend-exclude = "^/.venv"
+extend-exclude = "(^/.venv|^/docs/)"
 
 [tool.isort]
 profile = "black"
