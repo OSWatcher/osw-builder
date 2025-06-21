@@ -90,6 +90,7 @@ ENV/
 # IDE
 # intellij
 .idea/
+.vscode/
 
 # nox
 .nox
