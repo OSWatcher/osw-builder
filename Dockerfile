@@ -58,6 +58,25 @@ RUN PACKER_SHA256="57d0411e578aea62918d36ed186951139d5d49d44b76e5666d1fbf2427b38
     chmod +x packer
 
 #
+# Development stage (for CI testing)
+#
+FROM builder AS dev
+
+# Install development dependencies including test tools
+RUN --mount=type=secret,id=GIT_AUTH_TOKEN,env=GIT_AUTH_TOKEN <<EOF
+poetry install --with dev
+EOF
+
+# Install git for CI workflows that might need it
+RUN apt-get update && apt-get install -y \
+    git && \
+    apt-get autoremove && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Default command runs tests via poetry
+CMD ["poetry", "run", "poe", "unit_test"]
+
+#
 # Runtime stage
 #
 FROM python:3.11-slim AS runtime
