@@ -32,14 +32,7 @@ from winupdate.winupdate import UpdateNotInstalledError, WinUpdate
 from osw_builder import vagrant
 from osw_builder.build import build_image
 from osw_builder.capture import capture_neogit, create_branch
-from osw_builder.core.logic import (
-    create_update_policy,
-    create_vm_configuration,
-    get_default_idle_timeout,
-    should_skip_update,
-    validate_os_name_exists,
-)
-from osw_builder.core.models import MachineState
+from osw_builder.services.capture_service import CaptureService
 from osw_builder.settings import settings
 
 from .snapshot import Snapshot
@@ -47,14 +40,6 @@ from .snapshot import Snapshot
 BUILD_SNAPSHOT = Snapshot("BUILD", "Build state")
 IDLE_SNAPSHOT = Snapshot("IDLE", "Idle state (10 min)")
 LIBVIRT_URI = "qemu:///session"
-
-# Windows Update Policy - Known problematic updates
-# win10-rs2-1703.15063.0: 4462939
-# win11-22h2: "An update loop was detected, this could be caused by an update being rolled back during
-# a reboot or the Windows Update API incorrectly reporting a failed update as being successful.
-# Check the Windows Updates logs on the host to gather more information"
-# 2267602 causes issues but still returns as installed, so can be installed twice or more
-DEFAULT_UPDATE_POLICY = create_update_policy(["4462939", "2267602", "5042099", "5012170"])
 
 
 def str2bool(v):
@@ -84,12 +69,13 @@ def capture_os(os_name, args):
     # Treat empty string as None
     before = before if before else None
 
-    # Validate OS name exists
-    os_configs = {entry["name"]: entry for entry in settings["images"]}
-    if not validate_os_name_exists(os_name, os_configs):
-        raise RuntimeError(f"Could not find OS name: {os_name}")
+    # Create service from settings
+    capture_service = CaptureService.from_settings(settings)
 
-    entry = os_configs[os_name]
+    # Validate OS configuration
+    os_configs = {entry["name"]: entry for entry in settings["images"]}
+    capture_service.validate_os_configuration(os_name, os_configs)  # Validates OS exists
+    entry = os_configs[os_name]  # Keep for backward compatibility with existing code
 
     template = entry.get("template")
     varfile = entry.get("varfile")
@@ -182,11 +168,10 @@ def capture_os(os_name, args):
             if not snap_list:
                 logging.info("No IDLE snapshot found. Vagrant up VM")
                 # Create VM configuration for idle timeout
-                idle_timeout = get_default_idle_timeout() * 2  # 10 minutes (300s * 2)
-                vm_config = create_vm_configuration(box_name, MachineState.RUNNING, idle_timeout)
+                timeout_seconds, timeout_msg = capture_service.create_idle_vm_configuration(box_name)
                 with vagrant.up_down_ctxt(vagrant_dir):
-                    logging.info("Waiting for %d seconds", vm_config.idle_timeout_seconds)
-                    time.sleep(vm_config.idle_timeout_seconds)
+                    logging.info(timeout_msg)
+                    time.sleep(timeout_seconds)
                 vagrant.snapshot_save(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
             vagrant.snapshot_restore(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
             capture_neogit(qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description)
@@ -207,7 +192,7 @@ def capture_os(os_name, args):
             winrm_config = vagrant.winrm_config(vagrant_dir)
             win_update = WinUpdate(winrm_config.HostName, debug_lvl=1)
             for index, update in enumerate(win_update.search()):
-                if should_skip_update(update.kb[0], DEFAULT_UPDATE_POLICY):
+                if capture_service.should_skip_windows_update(update.kb[0]):
                     logging.warning("Blacklisted update %s found, skipping", update.kb[0])
                     continue
                 kb_name = f"KB-{update.kb[0]}"

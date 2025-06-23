@@ -27,6 +27,18 @@ extra_firstlogin_cmds:
 # whether we should remove the domain after once we ran our tools
 remove_domain: false
 storage_pool: "default"
+
+# Windows Update Policy - Known problematic updates
+# win10-rs2-1703.15063.0: 4462939
+# win11-22h2: "An update loop was detected, this could be caused by an update being rolled back during
+# a reboot or the Windows Update API incorrectly reporting a failed update as being successful.
+# Check the Windows Updates logs on the host to gather more information"
+# 2267602 causes issues but still returns as installed, so can be installed twice or more
+blacklisted_updates:
+  - "4462939"
+  - "2267602" 
+  - "5042099"
+  - "5012170"
 images:
   - name: &win95 "win95"
     description: "Windows 95 (4.00.950)"
