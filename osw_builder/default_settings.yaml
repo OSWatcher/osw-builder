@@ -7,13 +7,16 @@ image_names:
   - win8_pro: &image_name_win8_pro "Windows 8 Pro"
   - win10_pro: &win10_pro "Windows 10 Pro"
   - win11_pro: &win11_pro "Windows 11 Pro"
-template: &win10_template "windows.pkr.hcl"
+template:
+  - &win10_template "windows.pkr.hcl"
+  - &ubuntu_template "ubuntu.pkr.hcl"
 varfile:
   - &winxp_varfile "winxp.pkrvars.hcl"
   - &win7_varfile "win7.pkrvars.hcl"
   - &win8_varfile "win8.pkrvars.hcl"
   - &win10_varfile "win10.pkrvars.hcl"
   - &win11_varfile "win11.pkrvars.hcl"
+  - &ubuntu_varfile "ubuntu.pkrvars.hcl"
 extra_firstlogin_cmds:
   &win10_extra_firstlogin_cmds # disable automated Windows Updates (ask to download and ask to install)
   - 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /d 2 /t REG_DWORD /f'
@@ -324,25 +327,40 @@ images:
     extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
     network: true
 
-  # - name: "ubuntu-server-LTS"
-  #   template: "ubuntu.json"
-  #   varfile: "ubuntu_1604_x64.json"
-  #   images:
-  #     - name: "ubuntu-server-12.04"
-  #       source: "http://old-releases.ubuntu.com/releases/12.04.0/ubuntu-12.04-server-amd64.iso"
-  #       sha1: "f44b5f8fc9d56e8fd7599e9c1677a640dda85eda"
+  # Ubuntu
+  - name: &ubuntu_6.10 "ubuntu-6.10"
+    description: "Ubuntu 6.10"
+    source: "http://old-releases.ubuntu.com/releases/6.10/ubuntu-6.10-server-amd64.iso"
+    sha1: "72fb99ab2d9346199704aef5b37d8f6e5955a23d"
+    template: *ubuntu_template
+    varfile: *ubuntu_varfile
 
-  #     - name: "ubuntu-server-14.04"
-  #       source: "http://old-releases.ubuntu.com/releases/14.04.0/ubuntu-14.04-server-amd64.iso"
-  #       sha1: "4d94f6111b8fe47da94396180ce499d8c0bb44f3"
+  - name: &ubuntu_7.04 "ubuntu-7.04"
+    description: "Ubuntu 7.04"
+    source: "http://old-releases.ubuntu.com/releases/7.04/ubuntu-7.04-server-amd64.iso"
+    sha1: "575a4916bfb654269f3567341fa96dac2a80dc32"
+    template: *ubuntu_template
+    varfile: *ubuntu_varfile
 
-  #     - name: "ubuntu-server-16.04"
-  #       source: "http://old-releases.ubuntu.com/releases/16.04.0/ubuntu-16.04-server-amd64.iso"
-  #       sha1: "70db69379816b91eb01559212ae474a36ecec9ef"
+      # - name: "ubuntu-server-LTS"
+      #   template: "ubuntu.json"
+      #   varfile: "ubuntu_1604_x64.json"
+      #   images:
+      #     - name: "ubuntu-server-12.04"
+      #       source: "http://old-releases.ubuntu.com/releases/12.04.0/ubuntu-12.04-server-amd64.iso"
+      #       sha1: "f44b5f8fc9d56e8fd7599e9c1677a640dda85eda"
 
-  #     - name: "ubuntu-server-18.04"
-  #       source: "http://old-releases.ubuntu.com/releases/18.04.0/ubuntu-18.04-server-amd64.iso"
-  #       sha1: "73ae6579ef7c51d944a0be5c4c48f748bfd689df"
+      #     - name: "ubuntu-server-14.04"
+      #       source: "http://old-releases.ubuntu.com/releases/14.04.0/ubuntu-14.04-server-amd64.iso"
+      #       sha1: "4d94f6111b8fe47da94396180ce499d8c0bb44f3"
+
+      #     - name: "ubuntu-server-16.04"
+      #       source: "http://old-releases.ubuntu.com/releases/16.04.0/ubuntu-16.04-server-amd64.iso"
+      #       sha1: "70db69379816b91eb01559212ae474a36ecec9ef"
+
+      #     - name: "ubuntu-server-18.04"
+      #       source: "http://old-releases.ubuntu.com/releases/18.04.0/ubuntu-18.04-server-amd64.iso"
+      #       sha1: "73ae6579ef7c51d944a0be5c4c48f748bfd689df"
 
 branches:
   master:
