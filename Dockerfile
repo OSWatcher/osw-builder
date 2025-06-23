@@ -6,6 +6,7 @@ FROM python:3.10-slim
 
 ARG PACKER_VERSION=1.8.6
 ARG POETRY_VERSION=1.8.2
+ARG GIT_USERNAME=wenzel
 
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-c"]
 
@@ -30,18 +31,21 @@ fi
 poetry config repositories.neogit "https://github.com/OSWatcher/neogit.git"
 poetry config repositories.pywinupdate "https://github.com/OSWatcher/pywinupdate.git"
 poetry config repositories.plugins "https://github.com/OSWatcher/grapheos-plugins.git"
-poetry config http-basic.neogit "wenzel" $GIT_AUTH_TOKEN
-poetry config http-basic.pywinupdate "wenzel" $GIT_AUTH_TOKEN
-poetry config http-basic.plugins "wenzel" $GIT_AUTH_TOKEN
+poetry config http-basic.neogit "$GIT_USERNAME" $GIT_AUTH_TOKEN
+poetry config http-basic.pywinupdate "$GIT_USERNAME" $GIT_AUTH_TOKEN
+poetry config http-basic.plugins "$GIT_USERNAME" $GIT_AUTH_TOKEN
 EOF
 
 # install libs dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config libvirt-dev build-essential libguestfs-dev unzip && \
-    apt-get autoremove && apt-get clean
+    apt-get autoremove && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install Packer using the build-time argument
-RUN wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip && \
+# Install Packer using the build-time argument with checksum verification
+RUN PACKER_SHA256="f937521367401ad374690c6b5cc73649a98e435c2b0a36e6a0eabfe89e6f27dd" && \
+    wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip && \
+    echo "${PACKER_SHA256} packer_${PACKER_VERSION}_linux_amd64.zip" | sha256sum -c - && \
     unzip packer_${PACKER_VERSION}_linux_amd64.zip && \
     mv packer /usr/local/bin/ && \
     rm packer_${PACKER_VERSION}_linux_amd64.zip
