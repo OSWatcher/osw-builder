@@ -247,8 +247,11 @@ def parse_qemu_img_snapshot_list(output: str) -> Generator[QEMUSnapshot, None, N
     10        4019474          3.56 GiB 2024-06-23 17:31:24 00:32:51.087
     """
     for line in output.splitlines()[2:]:
+        line = line.strip()
+        if not line:
+            continue
         parts = re.split(r"\s{2,}", line)
-        if len(parts) < 4:
+        if len(parts) < 2:
             continue
 
         yield QEMUSnapshot(
