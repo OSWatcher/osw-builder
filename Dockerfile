@@ -59,11 +59,19 @@ COPY . .
 # Install the application itself
 RUN poetry install --only main
 
+# Create non-root user and change ownership
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser && \
+    chown -R appuser:appuser /app
+
 # Set environment variables to ensure output is sent straight to the terminal without buffering
 ENV PYTHONUNBUFFERED=1
 # Set PATH to include Poetry's virtualenv
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PACKER_CACHE_DIR="/packer_cache"
+
+# Switch to non-root user
+USER appuser
 
 # Command to run the application
 CMD ["poetry", "run", "osw-builder"]
