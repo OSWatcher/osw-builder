@@ -33,3 +33,25 @@ jobs:
         run: |
           poetry install --only dev
           poetry run poe ${{ matrix.check }}
+
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PAT_TOKEN}}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libvirt-dev build-essential libguestfs-dev
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          pat_token: ${{ secrets.PAT_TOKEN }}
+          python-version: '3.10'
+
+      - name: Run unit tests
+        run: poetry run poe unit_test
