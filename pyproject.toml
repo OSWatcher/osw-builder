@@ -32,6 +32,7 @@ isort = "^5.13.2"
 flake8-bugbear = "^24.4.26"
 black = "^24.4.2"
 pytest = "8.2.2"
+pytest-cov = "^6.2.1"
 ipdb = "^0.13.13"
 
 
@@ -56,7 +57,7 @@ _isort = "isort ."
 lint = ["_flake8", "_isort"]
 typecheck = "mypy ."
 ccode = ["fmt", "lint"]
-unit_test = "pytest"
+unit_test = "pytest --cov=osw_builder --cov-report=html --cov-report=term-missing"
 docs = "sphinx-build docs/source docs/build"
 
 
@@ -71,6 +72,23 @@ skip = ["osw_builder/packer-templates", ".venv"]
 
 [tool.pytest.ini_options]
 norecursedirs = [".venv"]
+
+[tool.coverage.run]
+source = ["osw_builder"]
+omit = [
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    ".venv/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:"
+]
 
 [tool.mypy]
 # exclude vendor folder
