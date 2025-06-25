@@ -235,3 +235,22 @@ def test_build_docker_volumes_multiple_response_files():
     result = build_docker_volumes(mock_response_file, "/tmp/vars.hcl", Path("/cache"))
     
     assert result[str(mock_response_file.tmp_path)]["bind"] == "/packer/preseed.cfg"
+
+
+@patch('osw_builder.image_builder.build.docker.from_env')
+def test_docker_packer_runner_missing_token(mock_docker_from_env):
+    """Test that missing GHCR_TOKEN raises helpful error."""
+    mock_client = MagicMock()
+    mock_docker_from_env.return_value = mock_client
+    
+    docker_config = {"image": "test:latest"}
+    
+    # Test without GHCR_TOKEN in environment
+    with patch.dict('os.environ', {}, clear=True):
+        with pytest.raises(RuntimeError, match="GHCR_TOKEN environment variable is required"):
+            with docker_packer_runner(docker_config, network=True):
+                pass
+    
+    # Verify no Docker operations were attempted
+    mock_client.login.assert_not_called()
+    mock_client.containers.run.assert_not_called()
