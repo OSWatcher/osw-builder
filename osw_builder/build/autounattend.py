@@ -1,28 +1,28 @@
 """A module to manipulate Windows Autounattend.xml configuration files"""
 
 import xml.etree.ElementTree as ET
-from contextlib import AbstractContextManager, suppress
+from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+
+from .response_files import ResponseFile
 
 
 class ElementNotFoundError(Exception):
     pass
 
 
-class Autounattend(AbstractContextManager):
+class WindowsAutounattend(ResponseFile):
     def __init__(self, autounattend_path: Union[None, str, Path]):
+        super().__init__(autounattend_path)
         if autounattend_path is None:
+            self.tree = None
+            self.nsmap = None
+            self.tmp_dir = None
+            self.tmp_autounattend = None
             return
-        if not isinstance(autounattend_path, (str, Path)):
-            raise ValueError("autounattend_path parameter is not a string nor a Path")
-        self.autounattend_path = autounattend_path
-        if isinstance(autounattend_path, str):
-            self.autounattend_path = Path(self.autounattend_path)
-        if not self.autounattend_path.exists():
-            raise ValueError(f"File {self.autounattend_path} does not exists")
 
         # avoid 'ns0' prefixes in the final XML
         # Windows installer will crash
@@ -31,7 +31,7 @@ class Autounattend(AbstractContextManager):
         ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
         ET.register_namespace("cpi", "urn:schemas-microsoft-com:cpi")
         # load XML
-        with open(self.autounattend_path, "rb") as f:
+        with open(self.response_file_path, "rb") as f:
             self.tree = ET.ElementTree(ET.fromstring(f.read()))
         self.nsmap: Dict[str, str] = {"ns": "urn:schemas-microsoft-com:unattend"}
         self.tmp_dir: Optional[TemporaryDirectory] = None
@@ -50,9 +50,24 @@ class Autounattend(AbstractContextManager):
         self.tmp_dir.cleanup()
 
     @property
-    def autounattend_tmp_path(self) -> Path:
+    def tmp_path(self) -> Path:
         """Return the new Autounattend.xml path"""
         return self.tmp_autounattend
+    
+    @property
+    def autounattend_tmp_path(self) -> Path:
+        """Return the new Autounattend.xml path (backward compatibility)"""
+        return self.tmp_autounattend
+    
+    @property 
+    def docker_path(self) -> str:
+        """Return the Docker container path for autounattend file"""
+        return "/packer/Autounattend.xml"
+    
+    @property
+    def varfile_key(self) -> str:
+        """Return the varfile key for autounattend files"""
+        return "autounattend"
 
     @property
     def product_key(self):
@@ -80,7 +95,7 @@ class Autounattend(AbstractContextManager):
 
     @property
     def image_name(self) -> ET.Element:
-        """Retrieves the Matadata/Value"""
+        """Retrieves the Metadata/Value"""
         image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
         if image_name is None:
             raise ElementNotFoundError("Cannot find Value element")
@@ -136,6 +151,17 @@ class Autounattend(AbstractContextManager):
     def write(self):
         """Writes the new Autounattend.xml"""
         self.tree.write(self.tmp_autounattend_f, encoding="utf-8", xml_declaration=True)
+    
+    def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
+        """Configure the autounattend file with the product key and image name from the config entry"""
+        if "key" in config_entry:
+            self.product_key = config_entry["key"]
+        if "image_name" in config_entry:
+            self.image_name = config_entry["image_name"]
+        if extra_commands:
+            for cmd in reversed(extra_commands):
+                self.prepend_cmd(cmd)
+        self.write()
 
     def prepend_cmd(self, cmd: str):
         first_logon_commands = self.tree.find(".//ns:FirstLogonCommands", namespaces=self.nsmap)
@@ -145,12 +171,20 @@ class Autounattend(AbstractContextManager):
         # deepcopy the first one
         # create SynchronousCommand element
         orig_sync_cmd = first_logon_commands.find("./ns:SynchronousCommand", namespaces=self.nsmap)
+        if orig_sync_cmd is None:
+            raise ElementNotFoundError("Cannot find SynchronousCommand element")
         sync_cmd = deepcopy(orig_sync_cmd)
         cmd_line = sync_cmd.find("./ns:CommandLine", self.nsmap)
+        if cmd_line is None:
+            raise ElementNotFoundError("Cannot find CommandLine element")
         cmd_line.text = cmd
         desc = sync_cmd.find("./ns:Description", self.nsmap)
+        if desc is None:
+            raise ElementNotFoundError("Cannot find Description element")
         desc.text = "Command added by osw-builder config"
         requires_user_input = sync_cmd.find("./ns:RequiresUserInput", namespaces=self.nsmap)
+        if requires_user_input is None:
+            raise ElementNotFoundError("Cannot find RequiresUserInput element")
         requires_user_input.text = "true"
         # insert element in first position
         first_logon_commands.insert(0, sync_cmd)
@@ -158,3 +192,7 @@ class Autounattend(AbstractContextManager):
         for index, child in enumerate(first_logon_commands):
             order = child.find("./ns:Order", self.nsmap)
             order.text = str(index + 1)
+
+
+# Backward compatibility alias
+Autounattend = WindowsAutounattend
