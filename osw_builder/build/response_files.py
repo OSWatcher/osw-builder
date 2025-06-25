@@ -69,7 +69,7 @@ def create_response_file(template: str, varfile: str, varfile_data: dict, packer
 
     # Auto-detect response file type based on template and varfile
     if template == "ubuntu.pkr.hcl":
-        response_file_path = packer_templates_dir / varfile_data["preseed"]
+        response_file_path = packer_templates_dir / "http" / "preseed.cfg"
         return UbuntuPreseed(response_file_path)
     
     elif template == "windows.pkr.hcl":
