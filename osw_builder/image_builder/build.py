@@ -182,6 +182,45 @@ def build_docker_config(volumes: dict, cmdline: list[str], network: bool) -> dic
     }
 
 
+@contextmanager
+def docker_packer_runner(docker_config: dict, network: bool) -> Generator[None, None, None]:
+    """Context manager for Docker container lifecycle management."""
+    dk_client = docker.from_env()
+    container = None
+    
+    try:
+        # Login to registry
+        dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
+        
+        # Pull the latest image if network is enabled
+        if network:
+            logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
+            dk_client.images.pull(PACKER_TEMPLATES_IMAGE)
+        
+        # Create and start container
+        logging.info("Running Packer")
+        container = dk_client.containers.run(**docker_config)
+        
+        # Stream logs to file
+        with open("packer-build.log", "a") as packer_log_f:
+            for line in container.logs(stream=True):
+                packer_log_f.write(line.decode())
+                packer_log_f.flush()
+        
+        # Wait for completion and check exit code
+        code = container.wait()
+        if code["StatusCode"] != 0:
+            raise RuntimeError("Packer failed")
+        
+        yield
+        
+    finally:
+        # Guaranteed cleanup
+        if container:
+            with suppress(docker.errors.NotFound, docker.errors.APIError):
+                container.remove(force=True)
+
+
 def fake_run_packer(template: str, varfile_data: dict, response_file: ResponseFile, network: bool = True):
     logging.info("Fake Packer run (Force image download)")
     # Create fake varfile with impossible CPU count to force download failure
@@ -197,14 +236,6 @@ def run_packer(
     template: str, varfile_data: dict, response_file: ResponseFile, packer_args: list[str], network: bool
 ) -> Path:
     with ensure_cleanup_output():
-        dk_client = docker.from_env()
-        dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
-
-        # Pull the latest image
-        if network:
-            logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
-            dk_client.images.pull(PACKER_TEMPLATES_IMAGE)
-
         packer_home_cache = Path.home() / ".cache" / "packer"
         packer_home_cache.mkdir(parents=True, exist_ok=True)
 
@@ -221,18 +252,7 @@ def run_packer(
             logging.debug("Volumes: %s", volumes)
             logging.debug("Running packer with command line: %s", cmdline)
 
-            with open("packer-build.log", "a") as packer_log_f:
-                logging.info("Running Packer")
-                container = dk_client.containers.run(**docker_config)
-                try:
-                    for line in container.logs(stream=True):
-                        packer_log_f.write(line.decode())
-                        packer_log_f.flush()
-                    code = container.wait()
-                    if code["StatusCode"] != 0:
-                        raise RuntimeError("Packer failed")
-                finally:
-                    with suppress(docker.errors.NotFound, docker.errors.APIError):
-                        container.remove(force=True)
-            # return the fist file ending with .box in the output directory
-            return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
+            # Use Docker context manager for container lifecycle
+            with docker_packer_runner(docker_config, network):
+                # return the first file ending with .box in the output directory
+                return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
