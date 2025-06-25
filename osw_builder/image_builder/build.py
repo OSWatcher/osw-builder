@@ -73,15 +73,14 @@ def write_temp_varfile(varfile_data: dict) -> Generator[str, None, None]:
             # Boolean are Integers in Python
             # check this first
             elif isinstance(value, bool):
-                tmp_f.write(f'{key} = {str(value).lower()}\n')
+                tmp_f.write(f"{key} = {str(value).lower()}\n")
             elif isinstance(value, int):
-                tmp_f.write(f'{key} = {value}\n')
+                tmp_f.write(f"{key} = {value}\n")
             elif isinstance(value, list):
                 s = json.dumps(value)
-                tmp_f.write(f'{key} = {s}\n')
+                tmp_f.write(f"{key} = {s}\n")
         tmp_f.flush()
         yield tmp_f.name
-
 
 
 @contextmanager
@@ -115,13 +114,13 @@ def build_image(
         # Create appropriate response file handler based on template and varfile
         # Examples:
         # - template="windows.pkr.hcl", varfile="win10.pkrvars.hcl" -> WindowsAutounattend
-        # - template="windows.pkr.hcl", varfile="winxp.pkrvars.hcl" -> WindowsXPSif  
+        # - template="windows.pkr.hcl", varfile="winxp.pkrvars.hcl" -> WindowsXPSif
         # - template="ubuntu.pkr.hcl", varfile="ubuntu.pkrvars.hcl" -> UbuntuPreseed
         response_file = ex.enter_context(create_response_file(template, varfile, varfile_data, PACKER_TEMPLATES_DIR))
-        
+
         # Configure response file with product keys, hostnames, etc.
         response_file.configure(config_entry, extra_firstlogin_cmds)
-        
+
         # force packer cache, need network for that
         fake_run_packer(template, varfile_data, response_file, network=True)
         # enforce no network for now
@@ -133,13 +132,15 @@ def fake_run_packer(template: str, varfile_data: dict, response_file: ResponseFi
     # Create fake varfile with impossible CPU count to force download failure
     fake_varfile_data = varfile_data.copy()
     fake_varfile_data["cpus"] = 999999
-    
+
     with suppress(RuntimeError):
         # empty packer args, we don't want any cpu override here
         run_packer(template, fake_varfile_data, response_file, packer_args=[], network=network)
 
 
-def run_packer(template: str, varfile_data: dict, response_file: ResponseFile, packer_args: list[str], network: bool) -> Path:
+def run_packer(
+    template: str, varfile_data: dict, response_file: ResponseFile, packer_args: list[str], network: bool
+) -> Path:
     with ensure_cleanup_output():
         dk_client = docker.from_env()
         dk_client.login(username="oswatcher", password=os.environ["GHCR_TOKEN"], registry="ghcr.io")
@@ -151,10 +152,10 @@ def run_packer(template: str, varfile_data: dict, response_file: ResponseFile, p
 
         packer_home_cache = Path.home() / ".cache" / "packer"
         packer_home_cache.mkdir(parents=True, exist_ok=True)
-        
+
         # Update varfile_data with response file Docker path
         response_file.update_varfile_data(varfile_data)
-        
+
         # Create temporary varfile
         with write_temp_varfile(varfile_data) as tmp_varfile_path:
             volumes = {
@@ -162,10 +163,10 @@ def run_packer(template: str, varfile_data: dict, response_file: ResponseFile, p
                 PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
                 tmp_varfile_path: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
             }
-            
+
             # Add response file volume
             volumes[str(response_file.tmp_path)] = {"bind": response_file.docker_path, "mode": "ro"}
-            
+
             # Get the group IDs for 'kvm' and 'sudo'
             kvm_group_id = grp.getgrnam("kvm").gr_gid
             sudo_group_id = grp.getgrnam("sudo").gr_gid

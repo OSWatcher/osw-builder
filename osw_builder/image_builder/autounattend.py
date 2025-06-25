@@ -53,17 +53,17 @@ class WindowsAutounattend(ResponseFile):
     def tmp_path(self) -> Path:
         """Return the new Autounattend.xml path"""
         return self.tmp_autounattend
-    
+
     @property
     def autounattend_tmp_path(self) -> Path:
         """Return the new Autounattend.xml path (backward compatibility)"""
         return self.tmp_autounattend
-    
-    @property 
+
+    @property
     def docker_path(self) -> str:
         """Return the Docker container path for autounattend file"""
         return "/packer/Autounattend.xml"
-    
+
     @property
     def varfile_key(self) -> str:
         """Return the varfile key for autounattend files"""
@@ -111,7 +111,7 @@ class WindowsAutounattend(ResponseFile):
             image_name = self.image_name
         except ElementNotFoundError:
             # search for OSImage
-            # and insert this under OSImage
+            # and insert this under OSImage
             # <InstallFrom>
             #     <MetaData wcm:action="add">
             #         <Key>/IMAGE/NAME</Key>
@@ -151,7 +151,7 @@ class WindowsAutounattend(ResponseFile):
     def write(self):
         """Writes the new Autounattend.xml"""
         self.tree.write(self.tmp_autounattend_f, encoding="utf-8", xml_declaration=True)
-    
+
     def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
         """Configure the autounattend file with the product key and image name from the config entry"""
         if "key" in config_entry:
