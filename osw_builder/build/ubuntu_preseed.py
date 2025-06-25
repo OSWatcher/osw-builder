@@ -47,6 +47,9 @@ class UbuntuPreseed(ResponseFile):
         """Return the varfile key for preseed files"""
         return "preseed"
     
+    def update_varfile_data(self, varfile_data: dict) -> None:
+        varfile_data["http_directory"] = "./"
+    
     def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
         """Configure the preseed file - just copy original for now"""
         self.write()
