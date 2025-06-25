@@ -15,7 +15,6 @@ import hcl2
 
 import osw_builder as root_package
 
-from .autounattend import Autounattend
 from .response_files import ResponseFile, create_response_file
 from .utils import compute_sha1sum
 
@@ -127,6 +126,62 @@ def build_image(
         yield run_packer(template, varfile_data, response_file, packer_args, network=network)
 
 
+def build_packer_cmdline(template: str, packer_args: list[str]) -> list[str]:
+    """Build Packer command line arguments - pure function."""
+    cmdline = [
+        "build",
+        "-only",
+        "qemu.vm",
+        "-var-file",
+        "docker.pkrvars.hcl",
+        "-var-file",
+        "vars.pkrvars.hcl",
+    ]
+
+    # Add packer variable arguments
+    for arg in packer_args:
+        cmdline.extend(["-var", arg])
+
+    # Add template
+    cmdline.append(template)
+
+    return cmdline
+
+
+def build_docker_volumes(response_file: ResponseFile, tmp_varfile_path: str, packer_home_cache: Path) -> dict:
+    """Build Docker volume configuration - pure function."""
+    volumes = {
+        str(packer_home_cache): {"bind": "/cache", "mode": "rw"},
+        str(PACKER_TEMPLATES_DIR): {"bind": "/output_parent", "mode": "rw"},
+        tmp_varfile_path: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
+    }
+
+    # Add response file volume
+    volumes[str(response_file.tmp_path)] = {"bind": response_file.docker_path, "mode": "ro"}
+
+    return volumes
+
+
+def build_docker_config(volumes: dict, cmdline: list[str], network: bool) -> dict:
+    """Build Docker container run configuration - pure function."""
+    # Get the group IDs for 'kvm' and 'sudo'
+    kvm_group_id = grp.getgrnam("kvm").gr_gid
+    sudo_group_id = grp.getgrnam("sudo").gr_gid
+
+    return {
+        "image": PACKER_TEMPLATES_IMAGE,
+        "remove": True,
+        "volumes": volumes,
+        "devices": ["/dev/kvm"],
+        "ports": {"5900/tcp": 5900},
+        "user": f"{os.getuid()}:{os.getgid()}",
+        "group_add": [sudo_group_id, kvm_group_id],
+        "network_disabled": not network,
+        "detach": True,
+        "command": cmdline,
+    }
+
+
 def fake_run_packer(template: str, varfile_data: dict, response_file: ResponseFile, network: bool = True):
     logging.info("Fake Packer run (Force image download)")
     # Create fake varfile with impossible CPU count to force download failure
@@ -158,52 +213,17 @@ def run_packer(
 
         # Create temporary varfile
         with write_temp_varfile(varfile_data) as tmp_varfile_path:
-            volumes = {
-                packer_home_cache: {"bind": "/cache", "mode": "rw"},
-                PACKER_TEMPLATES_DIR: {"bind": "/output_parent", "mode": "rw"},
-                tmp_varfile_path: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
-            }
+            # Build configuration using pure functions
+            cmdline = build_packer_cmdline(template, packer_args)
+            volumes = build_docker_volumes(response_file, tmp_varfile_path, packer_home_cache)
+            docker_config = build_docker_config(volumes, cmdline, network)
 
-            # Add response file volume
-            volumes[str(response_file.tmp_path)] = {"bind": response_file.docker_path, "mode": "ro"}
-
-            # Get the group IDs for 'kvm' and 'sudo'
-            kvm_group_id = grp.getgrnam("kvm").gr_gid
-            sudo_group_id = grp.getgrnam("sudo").gr_gid
             logging.debug("Volumes: %s", volumes)
-            cmdline = [
-                "build",
-                "-only",
-                "qemu.vm",
-                "-var-file",
-                "docker.pkrvars.hcl",
-                "-var-file",
-                "vars.pkrvars.hcl",
-            ]
-
-            var_packer_args = []
-            for arg in packer_args:
-                var_packer_args.extend(["-var", arg])
-
-            cmdline.extend(var_packer_args)
-
-            cmdline.append(template)
-
             logging.debug("Running packer with command line: %s", cmdline)
+
             with open("packer-build.log", "a") as packer_log_f:
                 logging.info("Running Packer")
-                container = dk_client.containers.run(
-                    PACKER_TEMPLATES_IMAGE,
-                    remove=True,
-                    volumes=volumes,
-                    devices=["/dev/kvm"],
-                    ports={"5900/tcp": 5900},
-                    user=f"{os.getuid()}:{os.getgid()}",
-                    group_add=[sudo_group_id, kvm_group_id],
-                    network_disabled=not network,
-                    detach=True,
-                    command=cmdline,
-                )
+                container = dk_client.containers.run(**docker_config)
                 try:
                     for line in container.logs(stream=True):
                         packer_log_f.write(line.decode())
