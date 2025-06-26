@@ -30,8 +30,8 @@ from docopt import docopt
 from winupdate.winupdate import UpdateNotInstalledError, WinUpdate
 
 from osw_builder import vagrant
-from osw_builder.build import build_image
 from osw_builder.capture import capture_neogit, create_branch
+from osw_builder.image_builder import build_image
 from osw_builder.settings import settings
 
 from .snapshot import Snapshot
