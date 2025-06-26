@@ -187,7 +187,7 @@ def docker_packer_runner(docker_config: dict, network: bool) -> Generator[None, 
     """Context manager for Docker container lifecycle management."""
     dk_client = docker.from_env()
     container = None
-    
+
     # Check for required environment variable
     ghcr_token = os.environ.get("GHCR_TOKEN")
     if not ghcr_token:
@@ -195,33 +195,33 @@ def docker_packer_runner(docker_config: dict, network: bool) -> Generator[None, 
             "GHCR_TOKEN environment variable is required for Docker registry authentication. "
             "Please set GHCR_TOKEN to your GitHub Container Registry token."
         )
-    
+
     try:
         # Login to registry
         dk_client.login(username="oswatcher", password=ghcr_token, registry="ghcr.io")
-        
+
         # Pull the latest image if network is enabled
         if network:
             logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
             dk_client.images.pull(PACKER_TEMPLATES_IMAGE)
-        
+
         # Create and start container
         logging.info("Running Packer")
         container = dk_client.containers.run(**docker_config)
-        
+
         # Stream logs to file
         with open("packer-build.log", "a") as packer_log_f:
             for line in container.logs(stream=True):
                 packer_log_f.write(line.decode())
                 packer_log_f.flush()
-        
+
         # Wait for completion and check exit code
         code = container.wait()
         if code["StatusCode"] != 0:
             raise RuntimeError("Packer failed")
-        
+
         yield
-        
+
     finally:
         # Guaranteed cleanup
         if container:
