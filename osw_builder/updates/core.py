@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Dict, NamedTuple, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 
 class OSType(Enum):
@@ -20,6 +20,13 @@ class ConnectionInfo(NamedTuple):
     port: int
     auth_data: Dict[str, str]
 
+
+@dataclass(frozen=True)
+class PlaybookConfig:
+    """Configuration for an Ansible playbook."""
+    name: str
+    content: List[Dict[str, Any]]
+    
 
 @dataclass(frozen=True)
 class Update:
@@ -90,3 +97,64 @@ def build_ansible_inventory(connection_info: ConnectionInfo, os_type: OSType) ->
             }
         }
     }
+
+
+def create_search_playbook(os_type: OSType) -> PlaybookConfig:
+    """Create Ansible playbook for searching system updates.
+    
+    Args:
+        os_type: Operating system type
+        
+    Returns:
+        PlaybookConfig with OS-specific update search playbook
+        
+    Raises:
+        ValueError: If OS type is not supported
+    """
+    match os_type:
+        case OSType.WINDOWS:
+            content = [{
+                "hosts": "all",
+                "tasks": [{
+                    "name": "Search for Windows updates",
+                    "win_updates": {
+                        "state": "searched",
+                        "category_names": [
+                            "CriticalUpdates",
+                            "SecurityUpdates", 
+                            "UpdateRollups"
+                        ]
+                    },
+                    "register": "windows_updates"
+                }]
+            }]
+            return PlaybookConfig(name="windows_search.yml", content=content)
+            
+        case OSType.UBUNTU:
+            content = [{
+                "hosts": "all",
+                "tasks": [
+                    {
+                        "name": "Update apt cache",
+                        "apt": {"update_cache": True},
+                        "become": True
+                    },
+                    {
+                        "name": "Check for upgradable packages", 
+                        "shell": "apt list --upgradable 2>/dev/null | grep -v '^Listing' | wc -l",
+                        "register": "upgradable_count"
+                    },
+                    {
+                        "name": "Get upgradable package list",
+                        "shell": "apt list --upgradable 2>/dev/null | grep -v '^Listing'",
+                        "register": "upgradable_packages",
+                        "when": "upgradable_count.stdout|int > 0"
+                    }
+                ]
+            }]
+            return PlaybookConfig(name="ubuntu_search.yml", content=content)
+            
+        case OSType.UNKNOWN:
+            raise ValueError("Cannot create search playbook for unknown OS type")
+        case _:
+            raise ValueError(f"Unsupported OS type: {os_type}")
