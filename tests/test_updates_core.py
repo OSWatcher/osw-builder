@@ -2,7 +2,7 @@
 
 import pytest
 
-from osw_builder.updates.core import OSType, ConnectionInfo, detect_os_type, build_ansible_inventory
+from osw_builder.updates.core import OSType, ConnectionInfo, PlaybookConfig, detect_os_type, build_ansible_inventory, create_search_playbook
 
 
 def test_detect_os_type_ubuntu():
@@ -114,3 +114,58 @@ def test_build_ansible_inventory_unknown():
     }
     
     assert inventory == expected
+
+
+def test_create_search_playbook_windows():
+    """Test Windows search playbook generation."""
+    playbook = create_search_playbook(OSType.WINDOWS)
+    
+    assert playbook.name == "windows_search.yml"
+    assert len(playbook.content) == 1
+    
+    play = playbook.content[0]
+    assert play["hosts"] == "all"
+    assert len(play["tasks"]) == 1
+    
+    task = play["tasks"][0]
+    assert task["name"] == "Search for Windows updates"
+    assert task["register"] == "windows_updates"
+    assert task["win_updates"]["state"] == "searched"
+    assert "CriticalUpdates" in task["win_updates"]["category_names"]
+    assert "SecurityUpdates" in task["win_updates"]["category_names"]
+
+
+def test_create_search_playbook_ubuntu():
+    """Test Ubuntu search playbook generation."""
+    playbook = create_search_playbook(OSType.UBUNTU)
+    
+    assert playbook.name == "ubuntu_search.yml"
+    assert len(playbook.content) == 1
+    
+    play = playbook.content[0]
+    assert play["hosts"] == "all"
+    assert len(play["tasks"]) == 3
+    
+    # Check update cache task
+    cache_task = play["tasks"][0]
+    assert cache_task["name"] == "Update apt cache"
+    assert cache_task["apt"]["update_cache"] is True
+    assert cache_task["become"] is True
+    
+    # Check count task
+    count_task = play["tasks"][1]
+    assert count_task["name"] == "Check for upgradable packages"
+    assert "wc -l" in count_task["shell"]
+    assert count_task["register"] == "upgradable_count"
+    
+    # Check list task
+    list_task = play["tasks"][2]
+    assert list_task["name"] == "Get upgradable package list"
+    assert list_task["register"] == "upgradable_packages"
+    assert list_task["when"] == "upgradable_count.stdout|int > 0"
+
+
+def test_create_search_playbook_unknown():
+    """Test that unknown OS type raises ValueError."""
+    with pytest.raises(ValueError, match="Cannot create search playbook for unknown OS type"):
+        create_search_playbook(OSType.UNKNOWN)
