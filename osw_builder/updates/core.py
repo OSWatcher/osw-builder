@@ -158,3 +158,85 @@ def create_search_playbook(os_type: OSType) -> PlaybookConfig:
             raise ValueError("Cannot create search playbook for unknown OS type")
         case _:
             raise ValueError(f"Unsupported OS type: {os_type}")
+
+
+def parse_windows_updates(ansible_facts: Dict[str, Any]) -> List[Update]:
+    """Parse Windows update results from Ansible win_updates module.
+    
+    Args:
+        ansible_facts: Results from win_updates Ansible module with structure:
+                      {"updates": {"uuid": {"id", "title", "kb", ...}}}
+        
+    Returns:
+        List of Update objects for each available Windows update
+    """
+    updates = []
+    
+    # Extract updates dict from ansible results
+    updates_dict = ansible_facts.get("updates", {})
+    
+    for uuid, update_info in updates_dict.items():
+        # Get KB list and create identifier
+        kb_list = update_info.get("kb", [])
+        title = update_info.get("title", "Unknown Update")
+        
+        # Create KB identifier
+        if kb_list:
+            kb_id = f"KB-{kb_list[0]}"  # Use first KB number
+        else:
+            # Fallback to UUID
+            kb_id = f"UPDATE-{uuid[:8]}"
+        
+        update = Update(
+            id=uuid,  # Use UUID as unique identifier
+            name=kb_id,  # Use KB for display name
+            description=title,
+            os_type=OSType.WINDOWS
+        )
+        updates.append(update)
+    
+    return updates
+
+
+def parse_ubuntu_updates(ansible_facts: Dict[str, Any]) -> List[Update]:
+    """Parse Ubuntu update results from Ansible apt tasks.
+    
+    Args:
+        ansible_facts: Results from apt-related Ansible tasks
+        
+    Returns:
+        List containing single Update object for all available Ubuntu updates
+    """
+    from datetime import datetime
+    
+    # Extract package count and list from ansible facts
+    upgradable_count = ansible_facts.get("upgradable_count", {}).get("stdout", "0")
+    upgradable_packages = ansible_facts.get("upgradable_packages", {}).get("stdout", "")
+    
+    count = int(upgradable_count) if upgradable_count.isdigit() else 0
+    
+    if count == 0:
+        return []
+    
+    # Create single update for all packages with current date
+    date_str = datetime.now().strftime("%Y-%m-%d")
+    update_id = f"apt-updates-{date_str}"
+    
+    # Create description with package count and some package names
+    package_lines = upgradable_packages.strip().split('\n')[:5]  # First 5 packages
+    package_names = [line.split('/')[0] for line in package_lines if '/' in line]
+    
+    description = f"{count} packages available for update"
+    if package_names:
+        description += f": {', '.join(package_names)}"
+        if len(package_lines) > 5:
+            description += "..."
+    
+    update = Update(
+        id=update_id,
+        name=update_id,
+        description=description,
+        os_type=OSType.UBUNTU
+    )
+    
+    return [update]
