@@ -2,7 +2,7 @@
 
 import pytest
 
-from osw_builder.updates.core import OSType, ConnectionInfo, PlaybookConfig, detect_os_type, build_ansible_inventory, create_search_playbook
+from osw_builder.updates.core import OSType, ConnectionInfo, PlaybookConfig, Update, detect_os_type, build_ansible_inventory, create_search_playbook, parse_windows_updates, parse_ubuntu_updates
 
 
 def test_detect_os_type_ubuntu():
@@ -169,3 +169,91 @@ def test_create_search_playbook_unknown():
     """Test that unknown OS type raises ValueError."""
     with pytest.raises(ValueError, match="Cannot create search playbook for unknown OS type"):
         create_search_playbook(OSType.UNKNOWN)
+
+
+def test_parse_windows_updates():
+    """Test parsing Windows update results from Ansible facts."""
+    ansible_facts = {
+        "updates": {
+            "uuid-1234-5678": {
+                "id": "uuid-1234-5678",
+                "title": "Security Update for Windows (KB4534273)",
+                "kb": ["4534273"],
+                "categories": ["SecurityUpdates"]
+            },
+            "uuid-abcd-efgh": {
+                "id": "uuid-abcd-efgh", 
+                "title": "Critical Update for Windows",
+                "kb": [],
+                "categories": ["CriticalUpdates"]
+            }
+        }
+    }
+    
+    updates = parse_windows_updates(ansible_facts)
+    
+    assert len(updates) == 2
+    
+    # First update with KB
+    update1 = updates[0]
+    assert update1.id == "uuid-1234-5678"
+    assert update1.name == "KB-4534273"
+    assert update1.description == "Security Update for Windows (KB4534273)"
+    assert update1.os_type == OSType.WINDOWS
+    
+    # Second update without KB
+    update2 = updates[1]
+    assert update2.id == "uuid-abcd-efgh"
+    assert update2.name == "UPDATE-uuid-abc"  # Truncated UUID fallback
+    assert update2.description == "Critical Update for Windows"
+    assert update2.os_type == OSType.WINDOWS
+
+
+def test_parse_windows_updates_empty():
+    """Test parsing empty Windows update results."""
+    ansible_facts = {"updates": {}}
+    updates = parse_windows_updates(ansible_facts)
+    assert updates == []
+
+
+def test_parse_ubuntu_updates():
+    """Test parsing Ubuntu update results from Ansible facts."""
+    ansible_facts = {
+        "upgradable_count": {"stdout": "15"},
+        "upgradable_packages": {
+            "stdout": "apt/focal-updates 2.0.9 amd64 [upgradable from: 2.0.6]\nvim/focal-updates 8.2.0716-3ubuntu0.1 amd64 [upgradable from: 8.2.0716-3ubuntu0.0]\ncurl/focal-updates 7.68.0-1ubuntu2.18 amd64 [upgradable from: 7.68.0-1ubuntu2.16]"
+        }
+    }
+    
+    updates = parse_ubuntu_updates(ansible_facts)
+    
+    assert len(updates) == 1
+    
+    update = updates[0]
+    assert update.id.startswith("apt-updates-")
+    assert update.name.startswith("apt-updates-")
+    assert "15 packages available for update" in update.description
+    assert "apt, vim, curl" in update.description
+    assert update.os_type == OSType.UBUNTU
+
+
+def test_parse_ubuntu_updates_no_updates():
+    """Test parsing Ubuntu results when no updates available."""
+    ansible_facts = {
+        "upgradable_count": {"stdout": "0"},
+        "upgradable_packages": {"stdout": ""}
+    }
+    
+    updates = parse_ubuntu_updates(ansible_facts)
+    assert updates == []
+
+
+def test_parse_ubuntu_updates_malformed():
+    """Test parsing Ubuntu results with malformed data."""
+    ansible_facts = {
+        "upgradable_count": {"stdout": "invalid"},
+        "upgradable_packages": {"stdout": ""}
+    }
+    
+    updates = parse_ubuntu_updates(ansible_facts)
+    assert updates == []
