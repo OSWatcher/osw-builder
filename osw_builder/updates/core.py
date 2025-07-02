@@ -109,6 +109,22 @@ UBUNTU_LIST_TASK = "get_upgradable_packages"
 UBUNTU_INSTALL_TASK = "install_ubuntu_updates"
 
 
+def validate_windows_install_result(ansible_facts: Dict[str, Any]) -> bool:
+    """Validate that Windows update installation was successful.
+    
+    Args:
+        ansible_facts: Results from win_updates Ansible module
+        
+    Returns:
+        True if installation was successful, False otherwise
+    """
+    installed_count = ansible_facts.get("installed_update_count", 0)
+    failed_count = ansible_facts.get("failed_update_count", 0)
+    
+    # Consider successful if at least one update was installed and no failures
+    return installed_count >= 1 and failed_count == 0
+
+
 def create_search_playbook(os_type: OSType) -> PlaybookConfig:
     """Create Ansible playbook for searching system updates.
 
@@ -264,16 +280,20 @@ def parse_windows_updates(ansible_facts: Dict[str, Any]) -> List[Update]:
         kb_list = update_info.get("kb", [])
         title = update_info.get("title", "Unknown Update")
 
+        # Validate KB list - every Windows update should have a KB number
+        if not kb_list or not isinstance(kb_list, list) or len(kb_list) == 0:
+            raise ValueError(f"Windows update {uuid} missing KB list: {update_info}")
+        
+        kb_number = kb_list[0]
+        if not kb_number or not isinstance(kb_number, str):
+            raise ValueError(f"Windows update {uuid} has invalid KB number: {kb_number}")
+
         # Create KB identifier
-        if kb_list:
-            kb_id = f"KB-{kb_list[0]}"  # Use first KB number
-        else:
-            # Fallback to UUID
-            kb_id = f"UPDATE-{uuid[:8]}"
+        kb_id = f"KB-{kb_number}"
 
         update = Update(
-            id=uuid,  # Use UUID as unique identifier
-            name=kb_id,  # Use KB for display name
+            id=kb_number,   # Use KB number as primary ID (e.g., "4023057")
+            name=kb_id,     # Use KB for display name (e.g., "KB-4023057")
             description=title,
             os_type=OSType.WINDOWS,
         )
@@ -343,8 +363,8 @@ def parse_ansible_events(events, os_type: OSType) -> Dict[str, Any]:
             event_data = event.get("event_data", {})
             task_name = event_data.get("task", "")
 
-            # Look for OS-specific search tasks by name
-            if os_type == OSType.WINDOWS and task_name == WINDOWS_SEARCH_TASK:
+            # Look for OS-specific tasks by name
+            if os_type == OSType.WINDOWS and task_name in (WINDOWS_SEARCH_TASK, WINDOWS_INSTALL_TASK):
                 res = event_data.get("res", {})
                 if res:
                     facts.update(res)
