@@ -149,7 +149,7 @@ def test_create_search_playbook_ubuntu():
     # Check list task
     list_task = play["tasks"][2]
     assert list_task["name"] == UBUNTU_LIST_TASK
-    assert list_task["when"] == f"{UBUNTU_COUNT_TASK}.stdout|int > 0"
+    assert list_task["when"] == "apt_list_upgradable_count.stdout|int > 0"
 
 
 def test_create_search_playbook_unknown():
