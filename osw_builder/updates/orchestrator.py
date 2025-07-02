@@ -11,6 +11,7 @@ from .core import (
     create_search_playbook,
     parse_ubuntu_updates,
     parse_windows_updates,
+    validate_windows_install_result,
 )
 from .io_layer import get_vagrant_connection_info, run_ansible_playbook
 
@@ -79,4 +80,12 @@ def install_update(vagrant_dir: Path, os_type: OSType, update: Update) -> bool:
     result = run_ansible_playbook(inventory, playbook_config.content, os_type)
 
     # Check if installation was successful
-    return result["status"] == "successful"
+    if result["status"] != "successful":
+        return False
+    
+    # For Windows, also validate that updates were actually installed
+    if os_type == OSType.WINDOWS:
+        return validate_windows_install_result(result["facts"])
+    
+    # For Ubuntu, assume success if Ansible succeeded
+    return True
