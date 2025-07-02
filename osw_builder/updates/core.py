@@ -103,8 +103,10 @@ def build_ansible_inventory(connection_info: ConnectionInfo, os_type: OSType) ->
 
 # Task name constants for consistent parsing
 WINDOWS_SEARCH_TASK = "search_windows_updates"
+WINDOWS_INSTALL_TASK = "apply_windows_update"
 UBUNTU_COUNT_TASK = "check_upgradable_packages"
 UBUNTU_LIST_TASK = "get_upgradable_packages"
+UBUNTU_INSTALL_TASK = "install_ubuntu_updates"
 
 
 def create_search_playbook(os_type: OSType) -> PlaybookConfig:
@@ -129,7 +131,19 @@ def create_search_playbook(os_type: OSType) -> PlaybookConfig:
                             "name": WINDOWS_SEARCH_TASK,
                             "win_updates": {
                                 "state": "searched",
-                                "category_names": ["CriticalUpdates", "SecurityUpdates", "UpdateRollups"],
+                                "category_names": [
+                                    # default categories
+                                    "CriticalUpdates",
+                                    "SecurityUpdates",
+                                    "UpdateRollups",
+                                    # additional categories
+                                    "Updates",
+                                    "Windows 10",
+                                    "Windows 10 LTSB",
+                                    # - "Upgrades"
+                                    "Definition Updates",
+                                    "Microsoft Defender Antivirus",
+                                ],
                             },
                         }
                     ],
@@ -161,7 +175,73 @@ def create_search_playbook(os_type: OSType) -> PlaybookConfig:
         case OSType.UNKNOWN:
             raise ValueError("Cannot create search playbook for unknown OS type")
         case _:
-            raise ValueError(f"Unsupported OS typUBUNTU_COUNT_TASKe: {os_type}")
+            raise ValueError(f"Unsupported OS type: {os_type}")
+
+
+def create_install_playbook(os_type: OSType, update: Update) -> PlaybookConfig:
+    """Create Ansible playbook for installing a specific update.
+
+    Args:
+        os_type: Operating system type
+        update: Update object to install
+
+    Returns:
+        PlaybookConfig with OS-specific update installation playbook
+
+    Raises:
+        ValueError: If OS type is not supported
+    """
+    match os_type:
+        case OSType.WINDOWS:
+            content = [
+                {
+                    "hosts": "all",
+                    "tasks": [
+                        {
+                            "name": WINDOWS_INSTALL_TASK,
+                            "win_updates": {
+                                "state": "installed",
+                                "reboot": True,
+                                "category_names": [
+                                    # default categories
+                                    "CriticalUpdates",
+                                    "SecurityUpdates", 
+                                    "UpdateRollups",
+                                    # additional categories
+                                    "Updates",
+                                    "Windows 10",
+                                    "Windows 10 LTSB",
+                                    # - "Upgrades"
+                                    "Definition Updates",
+                                    "Microsoft Defender Antivirus",
+                                ],
+                                "accept_list": [update.id],
+                            },
+                        }
+                    ],
+                }
+            ]
+            return PlaybookConfig(name="windows_install.yml", content=content)
+
+        case OSType.UBUNTU:
+            content = [
+                {
+                    "hosts": "all",
+                    "tasks": [
+                        {
+                            "name": UBUNTU_INSTALL_TASK,
+                            "apt": {"update_cache": True, "upgrade": "dist"},
+                            "become": True,
+                        },
+                    ],
+                }
+            ]
+            return PlaybookConfig(name="ubuntu_install.yml", content=content)
+
+        case OSType.UNKNOWN:
+            raise ValueError("Cannot create install playbook for unknown OS type")
+        case _:
+            raise ValueError(f"Unsupported OS type: {os_type}")
 
 
 def parse_windows_updates(ansible_facts: Dict[str, Any]) -> List[Update]:

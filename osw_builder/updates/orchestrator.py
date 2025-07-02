@@ -7,6 +7,7 @@ from .core import (
     OSType,
     Update,
     build_ansible_inventory,
+    create_install_playbook,
     create_search_playbook,
     parse_ubuntu_updates,
     parse_windows_updates,
@@ -48,3 +49,34 @@ def search_updates(vagrant_dir: Path, os_type: OSType) -> List[Update]:
             return parse_ubuntu_updates(result["facts"])
         case _:
             raise ValueError(f"Unsupported OS type for parsing: {os_type}")
+
+
+def install_update(vagrant_dir: Path, os_type: OSType, update: Update) -> bool:
+    """Install a specific system update.
+
+    Args:
+        vagrant_dir: Path to Vagrant directory
+        os_type: Operating system type
+        update: Update object to install
+
+    Returns:
+        True if installation succeeded, False otherwise
+
+    Raises:
+        ValueError: If OS type is unsupported
+        RuntimeError: If Ansible execution fails
+    """
+    # Get connection information
+    connection_info = get_vagrant_connection_info(vagrant_dir, os_type)
+
+    # Build Ansible inventory
+    inventory = build_ansible_inventory(connection_info, os_type)
+
+    # Create install playbook
+    playbook_config = create_install_playbook(os_type, update)
+
+    # Run Ansible playbook
+    result = run_ansible_playbook(inventory, playbook_config.content, os_type)
+
+    # Check if installation was successful
+    return result["status"] == "successful"
