@@ -32,7 +32,7 @@ def get_vagrant_connection_info(vagrant_dir: Path, os_type: OSType) -> Connectio
             )
         case OSType.UBUNTU:
             config = ssh_config(vagrant_dir)
-            auth_data = {"identity_file": config.IdentityFile}
+            auth_data = {"password": "vagrant"}  # Use standard vagrant password
             return ConnectionInfo(
                 host=config.Host, hostname=config.HostName, user=config.User, port=config.Port, auth_data=auth_data
             )

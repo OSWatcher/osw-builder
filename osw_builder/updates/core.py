@@ -92,7 +92,7 @@ def build_ansible_inventory(connection_info: ConnectionInfo, os_type: OSType) ->
             base_config.update(
                 {
                     "ansible_connection": "ssh",
-                    "ansible_ssh_private_key_file": connection_info.auth_data.get("identity_file", ""),
+                    "ansible_password": connection_info.auth_data.get("password", "vagrant"),
                 }
             )
         case OSType.UNKNOWN:
@@ -205,7 +205,7 @@ def create_install_playbook(os_type: OSType, update: Update) -> PlaybookConfig:
                                 "category_names": [
                                     # default categories
                                     "CriticalUpdates",
-                                    "SecurityUpdates", 
+                                    "SecurityUpdates",
                                     "UpdateRollups",
                                     # additional categories
                                     "Updates",
