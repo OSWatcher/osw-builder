@@ -58,7 +58,13 @@ def run_ansible_playbook(
     Raises:
         RuntimeError: If playbook execution fails
     """
-    result = ansible_runner.run(inventory=inventory_dict, playbook=playbook_content, quiet=True, verbosity=0)
+    result = ansible_runner.run(
+        inventory=inventory_dict, 
+        playbook=playbook_content, 
+        quiet=False, 
+        verbosity=2,
+        envvars={"ANSIBLE_STDOUT_CALLBACK": "yaml"}
+    )
 
     if result.status != "successful":
         logging.error("Ansible playbook failed with status: %s", result.status)
