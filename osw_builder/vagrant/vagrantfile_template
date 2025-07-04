@@ -3,6 +3,9 @@ Vagrant.configure("2") do |config|
     # change name "default" in libvirt to the box name
     config.vm.define "{box_name}"
 
+    # ubuntu 20.04 takes 4min to boot (initramfs unpacking extremely slow, TODO)
+    config.vm.boot_timeout = 600
+
     config.vm.provider :libvirt do |libvirt|
         libvirt.uri = "qemu:///session"
         libvirt.cpus = 4
