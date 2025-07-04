@@ -82,10 +82,10 @@ def install_update(vagrant_dir: Path, os_type: OSType, update: Update) -> bool:
     # Check if installation was successful
     if result["status"] != "successful":
         return False
-    
+
     # For Windows, also validate that updates were actually installed
     if os_type == OSType.WINDOWS:
         return validate_windows_install_result(result["facts"])
-    
+
     # For Ubuntu, assume success if Ansible succeeded
     return True
