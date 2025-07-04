@@ -111,16 +111,16 @@ UBUNTU_INSTALL_TASK = "install_ubuntu_updates"
 
 def validate_windows_install_result(ansible_facts: Dict[str, Any]) -> bool:
     """Validate that Windows update installation was successful.
-    
+
     Args:
         ansible_facts: Results from win_updates Ansible module
-        
+
     Returns:
         True if installation was successful, False otherwise
     """
     installed_count = ansible_facts.get("installed_update_count", 0)
     failed_count = ansible_facts.get("failed_update_count", 0)
-    
+
     # Consider successful if at least one update was installed and no failures
     return installed_count >= 1 and failed_count == 0
 
@@ -283,7 +283,7 @@ def parse_windows_updates(ansible_facts: Dict[str, Any]) -> List[Update]:
         # Validate KB list - every Windows update should have a KB number
         if not kb_list or not isinstance(kb_list, list) or len(kb_list) == 0:
             raise ValueError(f"Windows update {uuid} missing KB list: {update_info}")
-        
+
         kb_number = kb_list[0]
         if not kb_number or not isinstance(kb_number, str):
             raise ValueError(f"Windows update {uuid} has invalid KB number: {kb_number}")
@@ -292,8 +292,8 @@ def parse_windows_updates(ansible_facts: Dict[str, Any]) -> List[Update]:
         kb_id = f"KB-{kb_number}"
 
         update = Update(
-            id=kb_number,   # Use KB number as primary ID (e.g., "4023057")
-            name=kb_id,     # Use KB for display name (e.g., "KB-4023057")
+            id=kb_number,  # Use KB number as primary ID (e.g., "4023057")
+            name=kb_id,  # Use KB for display name (e.g., "KB-4023057")
             description=title,
             os_type=OSType.WINDOWS,
         )
