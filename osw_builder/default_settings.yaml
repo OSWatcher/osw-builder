@@ -334,6 +334,7 @@ images:
     sha1: "72fb99ab2d9346199704aef5b37d8f6e5955a23d"
     template: *ubuntu_template
     varfile: *ubuntu_varfile
+    network: true
 
   - name: &ubuntu_7.04 "ubuntu-7.04"
     description: "Ubuntu 7.04"
