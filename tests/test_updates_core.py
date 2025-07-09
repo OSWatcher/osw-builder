@@ -3,11 +3,11 @@
 import pytest
 
 from osw_builder.updates.core import (
-    ConnectionInfo,
-    OSType,
     UBUNTU_COUNT_TASK,
     UBUNTU_LIST_TASK,
     WINDOWS_SEARCH_TASK,
+    ConnectionInfo,
+    OSType,
     build_ansible_inventory,
     create_search_playbook,
     detect_os_type,
