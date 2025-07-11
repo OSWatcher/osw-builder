@@ -45,7 +45,7 @@ class UbuntuPreseed(ResponseFile):
     @property
     def varfile_key(self) -> str:
         """Return the varfile key for preseed files"""
-        return "preseed"
+        return "answerfile_path"
 
     def update_varfile_data(self, varfile_data: dict) -> None:
         varfile_data["http_directory"] = "./"
