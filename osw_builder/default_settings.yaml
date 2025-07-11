@@ -81,7 +81,7 @@ images:
 
   - name: &win8_9200 "win8-9200"
     description: "Windows 8 RTM (9200)"
-    source: "http://192.168.1.31:9000/images/win8/6.2.9200.16384.WIN8_RTM.120725-1247_x64fre_client-Pro_en-us-HRM_CCSA_X64FRE_EN-US_DV5.iso"
+    source: "https://storage.grapheos.app/images/win8/6.2.9200.16384.WIN8_RTM.120725-1247_x64fre_client-Pro_en-us-HRM_CCSA_X64FRE_EN-US_DV5.iso"
     sha1: "e63c1d3733532abc7ab28f3d61526e361e80271a"
     key: *key_win8_pro
     image_name: *image_name_win8_pro
@@ -202,7 +202,7 @@ images:
 
   - name: &win10_19h1_1903_18362_30 "win10-19H1-1903.18362.30"
     description: "Windows 10 19H1 (May 2019 Update, 1903)"
-    source: "http://192.168.1.31:9000/images/win10/Win10_1903_V1_English_x64.iso"
+    source: "https://storage.grapheos.app/images/win10/Win10_1903_V1_English_x64.iso"
     sha1: "344ca92459c23663d5f857c72a7c030f85f19be8"
     key: *key_pro
     image_name: *win10_pro
