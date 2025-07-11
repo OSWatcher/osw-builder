@@ -1,5 +1,4 @@
 import base64
-from typing import Optional
 
 from attrs import define
 
@@ -7,7 +6,7 @@ from attrs import define
 @define(auto_attribs=True)
 class Snapshot:
     name: str
-    description: Optional[str]
+    description: str
 
     @classmethod
     def from_raw_tag(self, tag: str) -> "Snapshot":
