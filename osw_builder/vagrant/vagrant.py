@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Generator, Optional, Tuple, cast, IO
+from typing import IO, Generator, Optional, Tuple, cast
 
 from attrs import define
 
@@ -317,11 +317,21 @@ def parse_winrm_config(output: str) -> WinRMConfig:
             config[key] = value
 
     # Ensure required fields are present
-    required_fields = ["Host", "HostName", "User", "Password", "Port", "RDPHostName", "RDPPort", "RDPUser", "RDPPassword"]
+    required_fields = [
+        "Host",
+        "HostName",
+        "User",
+        "Password",
+        "Port",
+        "RDPHostName",
+        "RDPPort",
+        "RDPUser",
+        "RDPPassword",
+    ]
     for field in required_fields:
         if field not in config:
             raise ValueError(f"Missing required WinRM config field: {field}")
-    
+
     return WinRMConfig(
         Host=config["Host"],
         HostName=config["HostName"],
@@ -356,7 +366,7 @@ def parse_ssh_config(output: str) -> SSHConfig:
     for field in required_fields:
         if field not in config:
             raise ValueError(f"Missing required SSH config field: {field}")
-    
+
     return SSHConfig(
         Host=config["Host"],
         HostName=config["HostName"],
