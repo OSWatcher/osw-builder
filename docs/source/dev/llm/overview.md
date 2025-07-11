@@ -7,26 +7,29 @@ OSW-Builder is a tool for building Virtual Machine images for testing and malwar
 Use poethepoet (poe) tasks for common development operations:
 
 ```bash
-# Run all tests with coverage
-poetry run poe unit_test
-
-# Run linting and formatting checks
-poetry run poe lint
-
-# Run type checking
-poetry run poe typecheck
-
-# Format code
-poetry run poe fmt
-
-# Run all code quality checks
+# CRITICAL: Run comprehensive code quality checks before any commit
 poetry run poe ccode
+
+# Individual task commands (if needed)
+poetry run poe fmt         # Format code
+poetry run poe lint        # Run linting checks  
+poetry run poe typecheck   # Run type checking
+poetry run poe unit_test   # Run tests with coverage
 
 # Manual pytest commands (if needed)
 python -m pytest
 python -m pytest osw_builder/image_builder/test_utils.py -v
 python -m pytest osw_builder/image_builder/test_utils.py --cov=osw_builder.image_builder.build --cov-report=term-missing
 ```
+
+### MANDATORY: Code Quality Validation
+**ALWAYS run `poetry run poe ccode` before committing any changes.** This comprehensive task includes:
+- Code formatting (black)
+- Linting (flake8, isort)
+- Type checking (mypy)
+- Unit tests with coverage
+
+Do not commit code that fails any of these checks.
 
 ## Architecture: Image Builder Module
 
@@ -70,17 +73,14 @@ These functions have no side effects and are easy to unit test:
 
 ### Testing New Code
 ```bash
-# Test your changes (use poe tasks)
-poetry run poe unit_test
+# CRITICAL: Always run comprehensive code quality checks
+poetry run poe ccode
 
-# Run type checking
-poetry run poe typecheck
-
-# Run linting
-poetry run poe lint
-
-# Format code
-poetry run poe fmt
+# Individual commands (if needed for debugging)
+poetry run poe fmt         # Format code
+poetry run poe lint        # Run linting  
+poetry run poe typecheck   # Run type checking
+poetry run poe unit_test   # Run tests with coverage
 
 # Manual pytest commands (if needed)
 python -m pytest osw_builder/image_builder/test_utils.py -v
