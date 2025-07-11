@@ -102,7 +102,7 @@ def build_image(
     varfile: str,
     config_entry: dict,
     extra_firstlogin_cmds: Optional[list[str]],
-    packer_args: list[str] = None,
+    packer_args: Optional[list[str]] = None,
     network: bool = False,
 ) -> Generator[Path, None, None]:
     logging.info("Building image")
