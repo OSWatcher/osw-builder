@@ -102,7 +102,7 @@ def build_image(
     varfile: str,
     config_entry: dict,
     extra_firstlogin_cmds: Optional[list[str]],
-    packer_args: list[str] = None,
+    packer_args: Optional[list[str]] = None,
     network: bool = False,
 ) -> Generator[Path, None, None]:
     logging.info("Building image")
@@ -123,7 +123,7 @@ def build_image(
         # force packer cache, need network for that
         fake_run_packer(template, varfile_data, response_file, network=True)
         # enforce no network for now
-        yield run_packer(template, varfile_data, response_file, packer_args, network=network)
+        yield run_packer(template, varfile_data, response_file, packer_args or [], network=network)
 
 
 def build_packer_cmdline(template: str, packer_args: list[str]) -> list[str]:

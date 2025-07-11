@@ -34,6 +34,9 @@ black = "^24.4.2"
 pytest = "8.2.2"
 pytest-cov = "^6.2.1"
 ipdb = "^0.13.13"
+types-docopt = "^0.6.11.20241107"
+types-docker = "^7.1.0.20250705"
+types-appdirs = "^1.4.3.5"
 
 
 [tool.poetry.group.docs.dependencies]
@@ -56,7 +59,7 @@ _flake8 = "flake8 --show-source --statistics ."
 _isort = "isort ."
 lint = ["_flake8", "_isort"]
 typecheck = "mypy ."
-ccode = ["fmt", "lint"]
+ccode = ["fmt", "lint", "typecheck", "unit_test"]
 unit_test = "pytest --cov=osw_builder --cov-report=term-missing"
 docs = "sphinx-build docs/source docs/build"
 
@@ -93,3 +96,14 @@ exclude_lines = [
 [tool.mypy]
 # exclude vendor folder
 exclude = [".venv"]
+# ignore missing type stubs for these libraries
+[[tool.mypy.overrides]]
+module = [
+    "dynaconf.*",
+    "guestfs.*",
+    "ansible_runner.*",
+    "neogit.service.*",
+    "libvirt.*",
+    "hcl2.*"
+]
+ignore_missing_imports = true

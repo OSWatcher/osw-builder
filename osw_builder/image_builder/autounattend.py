@@ -5,7 +5,7 @@ from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 
 from .response_files import ResponseFile
 
@@ -31,15 +31,17 @@ class WindowsAutounattend(ResponseFile):
         ET.register_namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance")
         ET.register_namespace("cpi", "urn:schemas-microsoft-com:cpi")
         # load XML
+        if self.response_file_path is None:
+            raise ValueError("response_file_path cannot be None at this point")
         with open(self.response_file_path, "rb") as f:
             self.tree = ET.ElementTree(ET.fromstring(f.read()))
-        self.nsmap: Dict[str, str] = {"ns": "urn:schemas-microsoft-com:unattend"}
-        self.tmp_dir: Optional[TemporaryDirectory] = None
-        self.tmp_autounattend: Optional[Any] = None
+        self.nsmap = {"ns": "urn:schemas-microsoft-com:unattend"}
+        self.tmp_dir = None
+        self.tmp_autounattend = None
 
     def __enter__(self):
         self.tmp_dir = TemporaryDirectory()
-        self.tmp_autounattend: Path = Path(self.tmp_dir.name) / "Autounattend.xml"
+        self.tmp_autounattend = Path(self.tmp_dir.name) / "Autounattend.xml"
         self.tmp_autounattend_f = open(self.tmp_autounattend, "wb")
         return self
 
@@ -52,11 +54,15 @@ class WindowsAutounattend(ResponseFile):
     @property
     def tmp_path(self) -> Path:
         """Return the new Autounattend.xml path"""
+        if self.tmp_autounattend is None:
+            raise RuntimeError("Context manager not entered - tmp_autounattend is None")
         return self.tmp_autounattend
 
     @property
     def autounattend_tmp_path(self) -> Path:
         """Return the new Autounattend.xml path (backward compatibility)"""
+        if self.tmp_autounattend is None:
+            raise RuntimeError("Context manager not entered - tmp_autounattend is None")
         return self.tmp_autounattend
 
     @property
@@ -96,6 +102,8 @@ class WindowsAutounattend(ResponseFile):
     @property
     def image_name(self) -> ET.Element:
         """Retrieves the Metadata/Value"""
+        if self.tree is None:
+            raise RuntimeError("Tree is None - ensure autounattend_path was provided")
         image_name = self.tree.find(".//ns:MetaData/ns:Value", namespaces=self.nsmap)
         if image_name is None:
             raise ElementNotFoundError("Cannot find Value element")
@@ -164,6 +172,8 @@ class WindowsAutounattend(ResponseFile):
         self.write()
 
     def prepend_cmd(self, cmd: str):
+        if self.tree is None:
+            raise RuntimeError("Tree is None - ensure autounattend_path was provided")
         first_logon_commands = self.tree.find(".//ns:FirstLogonCommands", namespaces=self.nsmap)
         if first_logon_commands is None:
             raise ElementNotFoundError("Cannot find FirstLogonCommands element")
@@ -191,6 +201,8 @@ class WindowsAutounattend(ResponseFile):
         # update order
         for index, child in enumerate(first_logon_commands):
             order = child.find("./ns:Order", self.nsmap)
+            if order is None:
+                raise ElementNotFoundError("Cannot find Order element")
             order.text = str(index + 1)
 
 

@@ -35,6 +35,8 @@ class UbuntuPreseed(ResponseFile):
     @property
     def tmp_path(self) -> Path:
         """Return the temporary preseed file path"""
+        if self.tmp_preseed is None:
+            raise RuntimeError("Context manager not entered - tmp_preseed is None")
         return self.tmp_preseed
 
     @property
