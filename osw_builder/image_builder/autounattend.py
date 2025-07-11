@@ -36,12 +36,12 @@ class WindowsAutounattend(ResponseFile):
         with open(self.response_file_path, "rb") as f:
             self.tree = ET.ElementTree(ET.fromstring(f.read()))
         self.nsmap = {"ns": "urn:schemas-microsoft-com:unattend"}
-        self.tmp_dir: Optional[TemporaryDirectory] = None
-        self.tmp_autounattend: Optional[Path] = None
+        self.tmp_dir = None
+        self.tmp_autounattend = None
 
     def __enter__(self):
         self.tmp_dir = TemporaryDirectory()
-        self.tmp_autounattend: Path = Path(self.tmp_dir.name) / "Autounattend.xml"
+        self.tmp_autounattend = Path(self.tmp_dir.name) / "Autounattend.xml"
         self.tmp_autounattend_f = open(self.tmp_autounattend, "wb")
         return self
 
@@ -201,6 +201,8 @@ class WindowsAutounattend(ResponseFile):
         # update order
         for index, child in enumerate(first_logon_commands):
             order = child.find("./ns:Order", self.nsmap)
+            if order is None:
+                raise ElementNotFoundError("Cannot find Order element")
             order.text = str(index + 1)
 
 
