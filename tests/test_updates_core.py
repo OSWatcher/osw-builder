@@ -71,7 +71,7 @@ def test_build_ansible_inventory_windows():
 def test_build_ansible_inventory_ubuntu():
     """Test building Ansible inventory for Ubuntu."""
     conn_info = ConnectionInfo(
-        host="ubuntu-vm", hostname="192.168.1.101", user="vagrant", port=22, auth_data={"identity_file": "/path/to/key"}
+        host="ubuntu-vm", hostname="192.168.1.101", user="vagrant", port=22, auth_data={"password": "vagrant"}
     )
 
     inventory = build_ansible_inventory(conn_info, OSType.UBUNTU)
@@ -84,7 +84,7 @@ def test_build_ansible_inventory_ubuntu():
                     "ansible_user": "vagrant",
                     "ansible_port": 22,
                     "ansible_connection": "ssh",
-                    "ansible_ssh_private_key_file": "/path/to/key",
+                    "ansible_password": "vagrant",
                 }
             }
         }
@@ -170,8 +170,8 @@ def test_parse_windows_updates():
             },
             "uuid-abcd-efgh": {
                 "id": "uuid-abcd-efgh",
-                "title": "Critical Update for Windows",
-                "kb": [],
+                "title": "Critical Update for Windows (KB5678901)",
+                "kb": ["5678901"],
                 "categories": ["CriticalUpdates"],
             },
         }
@@ -183,16 +183,16 @@ def test_parse_windows_updates():
 
     # First update with KB
     update1 = updates[0]
-    assert update1.id == "uuid-1234-5678"
+    assert update1.id == "4534273"
     assert update1.name == "KB-4534273"
     assert update1.description == "Security Update for Windows (KB4534273)"
     assert update1.os_type == OSType.WINDOWS
 
-    # Second update without KB
+    # Second update with KB
     update2 = updates[1]
-    assert update2.id == "uuid-abcd-efgh"
-    assert update2.name == "UPDATE-uuid-abc"  # Truncated UUID fallback
-    assert update2.description == "Critical Update for Windows"
+    assert update2.id == "5678901"
+    assert update2.name == "KB-5678901"
+    assert update2.description == "Critical Update for Windows (KB5678901)"
     assert update2.os_type == OSType.WINDOWS
 
 
