@@ -13,7 +13,7 @@ jobs:
   checks:
     strategy:
       matrix:
-        check: ['fmt-check', 'lint']
+        check: ['fmt-check', 'lint', 'typecheck']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
