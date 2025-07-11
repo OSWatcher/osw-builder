@@ -113,7 +113,7 @@ def capture_os(os_name, args):
             # ensure atomicity
             with vagrant.ensure_destroyed(vagrant_dir, only_on_error=True):
                 logging.info("Defining VM")
-                vagrant.define(vagrant_dir)
+                vagrant.define_vm(vagrant_dir)
                 # get the qcow path
                 qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
                 # WORKAROUND: if source is box, we must copy the box qcow origninal source

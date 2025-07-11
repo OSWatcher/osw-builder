@@ -123,7 +123,7 @@ def build_image(
         # force packer cache, need network for that
         fake_run_packer(template, varfile_data, response_file, network=True)
         # enforce no network for now
-        yield run_packer(template, varfile_data, response_file, packer_args, network=network)
+        yield run_packer(template, varfile_data, response_file, packer_args or [], network=network)
 
 
 def build_packer_cmdline(template: str, packer_args: list[str]) -> list[str]:
