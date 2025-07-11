@@ -35,6 +35,8 @@ class WindowsXPSif(ResponseFile):
     @property
     def tmp_path(self) -> Path:
         """Return the temporary SIF file path"""
+        if self.tmp_sif is None:
+            raise RuntimeError("Context manager not entered - tmp_sif is None")
         return self.tmp_sif
 
     @property

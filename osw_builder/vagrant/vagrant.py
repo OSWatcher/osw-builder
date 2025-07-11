@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Generator, Optional, Tuple
+from typing import IO, Generator, Optional, Tuple, cast
 
 from attrs import define
 
@@ -53,11 +53,14 @@ LIBVIRT_LOADER_EFI = "libvirt.loader = '/usr/share/OVMF/OVMF_CODE.fd'"
 LOG_FILE = "vagrant.log"
 
 
-def log_subprocess_call(cmdline: list[str], cwd: Path = None, check: bool = True):
+def log_subprocess_call(cmdline: list[str], cwd: Optional[Path] = None, check: bool = True):
     with open(LOG_FILE, "a") as log:
+        # stdout=PIPE guarantees process.stdout is not None
         process = subprocess.Popen(cmdline, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         output = ""
-        for line in process.stdout:
+        # Type cast to inform mypy that stdout is guaranteed to be non-None
+        stdout = cast(IO[str], process.stdout)
+        for line in stdout:
             log.write(line)
             # force flush on every line to see progress live when tail -f vagrant.log
             log.flush()
@@ -68,7 +71,7 @@ def log_subprocess_call(cmdline: list[str], cwd: Path = None, check: bool = True
         return return_code, output
 
 
-def box_add(box_path: Path, name: str = None):
+def box_add(box_path: Path, name: Optional[str] = None):
     cmdline = ["vagrant", "box", "add"]
     if name:
         cmdline.extend(["--name", name])
@@ -124,7 +127,7 @@ def provision(cwd: Path):
     log_subprocess_call(["vagrant", "provision"], cwd=cwd)
 
 
-def define(cwd: Path):
+def define_vm(cwd: Path):
     """Define the VM in the provider without starting it"""
     with loader_fail_ctxt(cwd):
         try:
@@ -179,6 +182,8 @@ def parse_status(output: str) -> Tuple[str, MachineStateEnum]:
             if state == "not created":
                 return vm, MachineStateEnum.NOT_CREATED
             raise
+    # If no valid status line found
+    raise ValueError(f"Could not parse vagrant status output: {output}")
 
 
 def snapshot_list(cwd: Path, qcow_path: Path) -> list[QEMUSnapshot]:
@@ -269,14 +274,14 @@ def parse_qemu_img_snapshot_list(output: str) -> Generator[QEMUSnapshot, None, N
         )
 
 
-def parse_vagrant_snapshot_list(output: str) -> Generator[str, None, None]:
-    for line in output.splitlines()[1:]:
+def parse_vagrant_snapshot_list(output: str) -> Generator[QEMUSnapshot, None, None]:
+    for i, line in enumerate(output.splitlines()[1:], 1):
         line = line.strip()
         if not line:
             continue
         # sample line
         # build
-        yield line
+        yield QEMUSnapshot(ID=i, Tag=line)
 
 
 def winrm_config(cwd: Path) -> WinRMConfig:
@@ -311,16 +316,32 @@ def parse_winrm_config(output: str) -> WinRMConfig:
             key, value = line.strip().split(None, 1)
             config[key] = value
 
+    # Ensure required fields are present
+    required_fields = [
+        "Host",
+        "HostName",
+        "User",
+        "Password",
+        "Port",
+        "RDPHostName",
+        "RDPPort",
+        "RDPUser",
+        "RDPPassword",
+    ]
+    for field in required_fields:
+        if field not in config:
+            raise ValueError(f"Missing required WinRM config field: {field}")
+
     return WinRMConfig(
-        Host=config.get("Host"),
-        HostName=config.get("HostName"),
-        User=config.get("User"),
-        Password=config.get("Password"),
-        Port=int(config.get("Port")),
-        RDPHostName=config.get("RDPHostName"),
-        RDPPort=int(config.get("RDPPort")),
-        RDPUser=config.get("RDPUser"),
-        RDPPassword=config.get("RDPPassword"),
+        Host=config["Host"],
+        HostName=config["HostName"],
+        User=config["User"],
+        Password=config["Password"],
+        Port=int(config["Port"]),
+        RDPHostName=config["RDPHostName"],
+        RDPPort=int(config["RDPPort"]),
+        RDPUser=config["RDPUser"],
+        RDPPassword=config["RDPPassword"],
     )
 
 
@@ -340,12 +361,18 @@ def parse_ssh_config(output: str) -> SSHConfig:
             key, value = line.strip().split(None, 1)
             config[key] = value
 
+    # Ensure required fields are present
+    required_fields = ["Host", "HostName", "User", "Port", "IdentityFile"]
+    for field in required_fields:
+        if field not in config:
+            raise ValueError(f"Missing required SSH config field: {field}")
+
     return SSHConfig(
-        Host=config.get("Host"),
-        HostName=config.get("HostName"),
-        User=config.get("User"),
-        Port=int(config.get("Port")),
-        IdentityFile=config.get("IdentityFile"),
+        Host=config["Host"],
+        HostName=config["HostName"],
+        User=config["User"],
+        Port=int(config["Port"]),
+        IdentityFile=config["IdentityFile"],
     )
 
 

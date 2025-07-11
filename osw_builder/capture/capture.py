@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Optional
 
 from neogit.service import Neogit
 
@@ -9,11 +10,11 @@ from .guest_filesystem import LibguestFSMnt
 def capture_neogit(
     qcow_path: Path,
     vm_name: str,
-    branch_name: str = None,
+    branch_name: Optional[str] = None,
     unique: bool = False,
     debug: bool = False,
-    desc: str = None,
-    before: str = None,
+    desc: Optional[str] = None,
+    before: Optional[str] = None,
 ):
     with LibguestFSMnt(qcow_path, local=True, readonly=True) as local_mnt:
         logging.debug("Local mountpoint: %s", local_mnt)
