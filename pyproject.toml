@@ -59,7 +59,7 @@ _flake8 = "flake8 --show-source --statistics ."
 _isort = "isort ."
 lint = ["_flake8", "_isort"]
 typecheck = "mypy ."
-ccode = ["fmt", "lint", "typecheck"]
+ccode = ["fmt", "lint", "typecheck", "unit_test"]
 unit_test = "pytest --cov=osw_builder --cov-report=term-missing"
 docs = "sphinx-build docs/source docs/build"
 
