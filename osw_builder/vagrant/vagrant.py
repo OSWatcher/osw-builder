@@ -25,6 +25,15 @@ class WinRMConfig:
 
 
 @define(auto_attribs=True)
+class SSHConfig:
+    Host: str
+    HostName: str
+    User: str
+    Port: int
+    IdentityFile: str
+
+
+@define(auto_attribs=True)
 class QEMUSnapshot:
     ID: int
     Tag: str
@@ -276,6 +285,12 @@ def winrm_config(cwd: Path) -> WinRMConfig:
     return parse_winrm_config(output)
 
 
+def ssh_config(cwd: Path) -> SSHConfig:
+    logging.debug("vagrant ssh-config")
+    _, output = log_subprocess_call(["vagrant", "ssh-config"], cwd=cwd)
+    return parse_ssh_config(output)
+
+
 def parse_winrm_config(output: str) -> WinRMConfig:
     """sample output:
     Host win10-ts1-1507
@@ -306,6 +321,31 @@ def parse_winrm_config(output: str) -> WinRMConfig:
         RDPPort=int(config.get("RDPPort")),
         RDPUser=config.get("RDPUser"),
         RDPPassword=config.get("RDPPassword"),
+    )
+
+
+def parse_ssh_config(output: str) -> SSHConfig:
+    """sample output:
+    Host default
+        HostName 192.168.121.173
+        User vagrant
+        Port 22
+        IdentityFile /home/user/.vagrant.d/insecure_private_key
+    """
+    config = {}
+    lines = output.strip().split("\n")
+
+    for line in lines:
+        if line.strip():
+            key, value = line.strip().split(None, 1)
+            config[key] = value
+
+    return SSHConfig(
+        Host=config.get("Host"),
+        HostName=config.get("HostName"),
+        User=config.get("User"),
+        Port=int(config.get("Port")),
+        IdentityFile=config.get("IdentityFile"),
     )
 
 
