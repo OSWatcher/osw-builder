@@ -27,12 +27,13 @@ from contextlib import ExitStack, suppress
 from pathlib import Path
 
 from docopt import docopt
-from winupdate.winupdate import UpdateNotInstalledError, WinUpdate
 
 from osw_builder import vagrant
 from osw_builder.capture import capture_neogit, create_branch
 from osw_builder.image_builder import build_image
 from osw_builder.settings import settings
+from osw_builder.updates.core import OSType, detect_os_type
+from osw_builder.updates.orchestrator import install_update, search_updates
 
 from .snapshot import Snapshot
 
@@ -68,7 +69,7 @@ def capture_os(os_name, args):
     packer_args = args["--var"]
     destroy = args["--destroy"]
     apply_updates = str2bool(args["--updates"])
-    search_updates = str2bool(args["--search-updates"])
+    search_updates_flag = str2bool(args["--search-updates"])
     idle = str2bool(args["--idle"])
     before = args.get("--before")
     # Treat empty string as None
@@ -82,7 +83,7 @@ def capture_os(os_name, args):
     varfile = entry.get("varfile")
     description = entry["description"]
     extra_firstlogin_cmds = entry.get("extra_firstlogin_cmds")
-    search_updates = entry.get("search_updates", search_updates)
+    search_updates_flag = entry.get("search_updates", search_updates_flag)
     idle = entry.get("idle", idle)
 
     with ExitStack() as ex:
@@ -149,8 +150,7 @@ def capture_os(os_name, args):
         vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
         # use description from default_settings.yaml just for build snapshot
         build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description, before=before)
-        # pop it
-        snap_list.pop(0)
+        snap_list.pop(0)  # remove build snapshot from the list
 
         # ensure create OS branch
         branch_name = box_name
@@ -167,56 +167,101 @@ def capture_os(os_name, args):
         # should we capture IDLE state ?
         if idle:
             if not snap_list:
-                logging.info("No IDLE snapshot found. Vagrant up VM")
+                logging.info("No IDLE snapshot found. Creating one...")
                 with vagrant.up_down_ctxt(vagrant_dir):
                     # 10 min
                     logging.info("Waiting for 10 minutes")
                     time.sleep(10 * 60)
                 vagrant.snapshot_save(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
+
             vagrant.snapshot_restore(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
             capture_neogit(qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description)
 
-        # iterate after 'build' and 'IDLE' snapshot
         for raw_snap in snap_list:
             vagrant.snapshot_restore(vagrant_dir, raw_snap.Tag)
             snap = Snapshot.from_raw_tag(raw_snap.Tag)
             capture_neogit(qcow_path, snap.name, branch_name, unique=True, desc=snap.description)
 
-        if not search_updates:
+        if not search_updates_flag:
             return
-        # take last snapshot
-        previous_raw_snap = snap_list[-1].Tag
-        # apply latest winupdates
+
+        # OS-agnostic update management
+        os_type = detect_os_type(template)
+        logging.info("Starting OS-agnostic update search and installation")
+
+        # Take the most recent snapshot before updates
+        if snap_list:
+            previous_raw_snap = snap_list[-1].Tag
+        elif idle:
+            previous_raw_snap = IDLE_SNAPSHOT.to_raw_tag()
+        else:
+            previous_raw_snap = BUILD_SNAPSHOT.to_raw_tag()
+
+        # First, search for available updates
         with vagrant.up_down_ctxt(vagrant_dir):
-            logging.info("Searching for Windows Updates")
-            winrm_config = vagrant.winrm_config(vagrant_dir)
-            win_update = WinUpdate(winrm_config.HostName, debug_lvl=1)
-            for index, update in enumerate(win_update.search()):
-                if update.kb[0] in BLACKLISTED_UPDATES:
-                    logging.warning("Blacklisted update found, skipping")
+            try:
+                available_updates = search_updates(vagrant_dir, os_type)
+                logging.info("Found %d available updates:", len(available_updates))
+                for i, update in enumerate(available_updates):
+                    logging.info("  [%d] %s: %s", i + 1, update.name, update.description)
+
+                if not available_updates:
+                    logging.info("No updates available")
+                    return
+            except Exception as e:
+                logging.error("Failed to search for updates: %s", e, exc_info=True)
+                return
+
+        # Install each update with full vagrant cycle
+        for index, update in enumerate(available_updates):
+            # Check blacklist for Windows updates
+            if os_type == OSType.WINDOWS:
+                kb_match = None
+                if update.name.startswith("KB-"):
+                    kb_match = update.name[3:]  # Remove "KB-" prefix
+                if kb_match and kb_match in BLACKLISTED_UPDATES:
+                    logging.warning("Blacklisted update found, skipping: %s", update.name)
                     continue
-                kb_name = f"KB-{update.kb[0]}"
-                # update somehow already exists in snapshot list ?
-                if any(Snapshot.from_raw_tag(snap.Tag).name == kb_name for snap in snap_list):
-                    logging.warning("Found existing snapshot for candidate update %s. Skipping", kb_name)
-                    continue
-                logging.info("[%s][%s] %s", index + 1, kb_name, update.title)
-                try:
-                    with vagrant.up_down_ctxt(vagrant_dir):
-                        win_update.apply_update(update.id, update.kb[0])
-                except UpdateNotInstalledError:
-                    logging.warning("Update not installed")
-                    # restore previous snapshot
-                    vagrant.snapshot_restore(vagrant_dir, previous_raw_snap)
-                else:
-                    # SUCCESS !
-                    snap = Snapshot(kb_name, update.title)
-                    raw_tag = snap.to_raw_tag()
-                    # take snapshot
-                    vagrant.snapshot_save(vagrant_dir, raw_tag)
-                    # update previous
-                    previous_raw_snap = raw_tag
-                    capture_neogit(qcow_path, kb_name, branch_name, unique=True, desc=update.title)
+
+            # For Ubuntu, use date-based naming; for Windows, use update name
+            if os_type == OSType.UBUNTU:
+                from datetime import datetime
+
+                date_str = datetime.now().strftime("%Y-%m-%d")
+                snapshot_name = f"ubuntu-updates-{date_str}"
+            else:
+                snapshot_name = update.name
+
+            logging.info("[%d/%d] Installing update: %s", index + 1, len(available_updates), update.name)
+
+            try:
+                # Full vagrant cycle: up -> install -> halt -> snapshot
+                with vagrant.up_down_ctxt(vagrant_dir):
+                    success = install_update(vagrant_dir, os_type, update)
+                    if success:
+                        logging.info("✅ Update %s installed successfully", update.name)
+                    else:
+                        logging.warning("❌ Update %s installation failed", update.name)
+                        continue
+
+                # Create snapshot after successful installation and halt
+                snap = Snapshot(snapshot_name, update.description)
+                vagrant.snapshot_save(vagrant_dir, snap.to_raw_tag())
+                logging.info("📸 Snapshot created: %s", snapshot_name)
+
+                # Capture git commit
+                capture_neogit(qcow_path, snapshot_name, branch_name, unique=True, desc=update.description)
+
+                # Update previous snapshot reference for next iteration
+                previous_raw_snap = snap.to_raw_tag()
+
+            except Exception as e:
+                logging.error("Failed to install update %s: %s", update.name, e, exc_info=True)
+                # Restore previous snapshot on error
+                vagrant.snapshot_restore(vagrant_dir, previous_raw_snap)
+
+        logging.info("All updates installation complete")
+        return
 
 
 def main(args):

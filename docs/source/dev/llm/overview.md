@@ -4,19 +4,28 @@
 OSW-Builder is a tool for building Virtual Machine images for testing and malware analysis, supporting Windows (XP/10/11) and Ubuntu systems using Packer and Docker.
 
 ## Key Commands for Testing
+Use poethepoet (poe) tasks for common development operations:
+
 ```bash
-# Run all tests
+# Run all tests with coverage
+poetry run poe unit_test
+
+# Run linting and formatting checks
+poetry run poe lint
+
+# Run type checking
+poetry run poe typecheck
+
+# Format code
+poetry run poe fmt
+
+# Run all code quality checks
+poetry run poe ccode
+
+# Manual pytest commands (if needed)
 python -m pytest
-
-# Run specific module tests  
 python -m pytest osw_builder/image_builder/test_utils.py -v
-
-# Run tests with coverage
 python -m pytest osw_builder/image_builder/test_utils.py --cov=osw_builder.image_builder.build --cov-report=term-missing
-
-# Run linting (if available)
-python -m ruff check osw_builder/
-python -m black --check osw_builder/
 ```
 
 ## Architecture: Image Builder Module
@@ -61,13 +70,21 @@ These functions have no side effects and are easy to unit test:
 
 ### Testing New Code
 ```bash
-# Test your changes
+# Test your changes (use poe tasks)
+poetry run poe unit_test
+
+# Run type checking
+poetry run poe typecheck
+
+# Run linting
+poetry run poe lint
+
+# Format code
+poetry run poe fmt
+
+# Manual pytest commands (if needed)
 python -m pytest osw_builder/image_builder/test_utils.py -v
-
-# Check coverage
 python -m pytest osw_builder/image_builder/test_utils.py --cov=osw_builder.image_builder.build
-
-# Run all tests to ensure no regressions
 python -m pytest osw_builder/
 ```
 

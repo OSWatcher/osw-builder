@@ -16,13 +16,13 @@ pyyaml = "^6.0.1"
 libvirt-python = "^10.3.0"
 guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz" }
 neogit = { git = "https://github.com/OSWatcher/neogit.git", tag = "v0.10.1" }
-winupdate = { git = "https://github.com/OSWatcher/pywinupdate.git" }
 plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git", rev = "v0.7" }
 dynaconf = "^3.2.5"
 python-hcl2 = "^4.3.4"
 docker = "^7.1.0"
 appdirs = "^1.4.4"
 attrs = "^23.2.0"
+ansible-runner = "^2.4.0"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.26.1"
@@ -57,7 +57,7 @@ _isort = "isort ."
 lint = ["_flake8", "_isort"]
 typecheck = "mypy ."
 ccode = ["fmt", "lint"]
-unit_test = "pytest --cov=osw_builder --cov-report=html --cov-report=term-missing"
+unit_test = "pytest --cov=osw_builder --cov-report=term-missing"
 docs = "sphinx-build docs/source docs/build"
 
 
