@@ -30,6 +30,9 @@ class BuildConfig:
         """Export BuildConfig as Packer command line arguments."""
         cmdline = ["build", "-only", "qemu.vm"]
 
+        # Add docker varfile first (essential for Docker environment)
+        cmdline.extend(["-var-file", "docker.pkrvars.hcl"])
+
         # Add varfiles from BuildConfig
         for varfile in self.varfiles:
             cmdline.extend(["-var-file", varfile])
@@ -37,6 +40,8 @@ class BuildConfig:
         # Add runtime variables (iso_url, sha1)
         cmdline.extend(["-var", f"iso_url={iso_url}"])
         cmdline.extend(["-var", f"iso_checksum={sha1}"])
+        cmdline.extend(["-var", f"iso_checksum_type=sha1"])
+        cmdline.extend(["-var", f"vm_name={self.template.replace('.pkr.hcl', '')}"])
 
         # Add BuildConfig variables
         for key, value in self.vars.items():

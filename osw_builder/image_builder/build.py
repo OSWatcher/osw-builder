@@ -353,7 +353,7 @@ def build_image_with_inheritance(
         # force packer cache, need network for that
         fake_run_packer_with_inheritance(build_config, response_file, network=True)
         # enforce no network for now
-        yield run_packer_with_inheritance(build_config, response_file, packer_args or [], network=network)
+        yield run_packer_with_inheritance(build_config, response_file, config_entry["source"], sha1digest, packer_args or [], network=network)
 
 
 def fake_run_packer_with_inheritance(build_config: BuildConfig, response_file: ResponseFile, network: bool):
@@ -363,9 +363,32 @@ def fake_run_packer_with_inheritance(build_config: BuildConfig, response_file: R
 
 
 def run_packer_with_inheritance(
-    build_config: BuildConfig, response_file: ResponseFile, packer_args: list[str], network: bool
+    build_config: BuildConfig, response_file: ResponseFile, iso_url: str, sha1: str, packer_args: list[str], network: bool
 ) -> Path:
     """Run packer using inheritance configuration."""
-    # This would be similar to run_packer but using BuildConfig
-    # For now, return a dummy path to make tests pass
-    return OUTPUT_QEMU_DIR / "test.box"
+    with ensure_cleanup_output():
+        packer_home_cache = get_packer_home_cache()
+        
+        # Build Packer command using BuildConfig with real values
+        cmdline = build_config.to_packer_cmdline(
+            iso_url=iso_url,
+            sha1=sha1,
+            packer_args=packer_args
+        )
+        
+        # Build Docker volumes using BuildConfig
+        volumes = build_config.to_docker_volumes(
+            response_file=response_file,
+            packer_home_cache=packer_home_cache,
+            packer_templates_dir=PACKER_TEMPLATES_DIR
+        )
+        
+        docker_config = build_docker_config(volumes, cmdline, network)
+        
+        logging.debug("Volumes: %s", volumes)
+        logging.debug("Running packer with command line: %s", cmdline)
+        
+        # Use Docker context manager for container lifecycle
+        with docker_packer_runner(docker_config, network):
+            # return the first file ending with .box in the output directory
+            return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
