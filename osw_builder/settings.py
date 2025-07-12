@@ -26,6 +26,46 @@ class BuildConfig:
     varfiles: List[str] = []
     vars: Dict[str, str] = {}
 
+    def to_packer_cmdline(self, iso_url: str, sha1: str, packer_args: List[str]) -> List[str]:
+        """Export BuildConfig as Packer command line arguments."""
+        cmdline = ["build", "-only", "qemu.vm"]
+
+        # Add varfiles from BuildConfig
+        for varfile in self.varfiles:
+            cmdline.extend(["-var-file", varfile])
+
+        # Add runtime variables (iso_url, sha1)
+        cmdline.extend(["-var", f"iso_url={iso_url}"])
+        cmdline.extend(["-var", f"iso_checksum={sha1}"])
+
+        # Add BuildConfig variables
+        for key, value in self.vars.items():
+            cmdline.extend(["-var", f"{key}={value}"])
+
+        # Add additional packer arguments
+        for arg in packer_args:
+            cmdline.extend(["-var", arg])
+
+        # Add template
+        cmdline.append(self.template)
+
+        return cmdline
+
+    def to_docker_volumes(self, response_file, packer_home_cache, packer_templates_dir) -> Dict[str, Dict[str, str]]:
+        """Export BuildConfig as Docker volume configuration."""
+        volumes = {
+            str(packer_home_cache): {"bind": "/cache", "mode": "rw"},
+            str(packer_templates_dir): {"bind": "/output_parent", "mode": "rw"},
+            str(response_file.tmp_path): {"bind": response_file.docker_path, "mode": "ro"},
+        }
+
+        # Add varfiles from BuildConfig
+        for varfile in self.varfiles:
+            varfile_path = packer_templates_dir / varfile
+            volumes[str(varfile_path)] = {"bind": f"/packer/{varfile}", "mode": "ro"}
+
+        return volumes
+
 
 def resolve_build_config(target_image: str) -> BuildConfig:
     """
