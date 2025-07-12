@@ -30,7 +30,7 @@ from docopt import docopt
 
 from osw_builder import vagrant
 from osw_builder.capture import capture_neogit, create_branch
-from osw_builder.image_builder import build_image
+from osw_builder.image_builder.build import build_image_with_inheritance
 from osw_builder.settings import settings
 from osw_builder.updates.core import OSType, detect_os_type
 from osw_builder.updates.orchestrator import install_update, search_updates
@@ -79,8 +79,6 @@ def capture_os(os_name, args):
     except StopIteration:
         raise RuntimeError("Could not find OS name")
 
-    template = entry.get("template")
-    varfile = entry.get("varfile")
     description = entry["description"]
     extra_firstlogin_cmds = entry.get("extra_firstlogin_cmds")
     search_updates_flag = entry.get("search_updates", search_updates_flag)
@@ -94,7 +92,7 @@ def capture_os(os_name, args):
                 image = entry["source"]
             else:
                 image = ex.enter_context(
-                    build_image(template, varfile, entry, extra_firstlogin_cmds, packer_args, network=network)
+                    build_image_with_inheritance(os_name, entry, extra_firstlogin_cmds, packer_args, network=network)
                 )
             vagrant.box_add(image, name=box_name)
 

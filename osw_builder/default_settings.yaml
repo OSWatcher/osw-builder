@@ -332,190 +332,137 @@ images:
     description: "Ubuntu 6.10 (Edgy Eft)"
     source: "http://old-releases.ubuntu.com/releases/6.10/ubuntu-6.10-server-amd64.iso"
     sha1: "72fb99ab2d9346199704aef5b37d8f6e5955a23d"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
+    network: true
 
   - name: &ubuntu_7_04 "ubuntu-7.04"
     description: "Ubuntu 7.04 (Feisty Fawn)"
     source: "http://old-releases.ubuntu.com/releases/7.04/ubuntu-7.04-server-amd64.iso"
     sha1: "575a4916bfb654269f3567341fa96dac2a80dc32"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_7_10 "ubuntu-7.10"
     description: "Ubuntu 7.10 (Gutsy Gibbon)"
     source: "http://old-releases.ubuntu.com/releases/7.10/ubuntu-7.10-server-amd64.iso"
     sha1: "65e3cc179660584dbde5ff43a2d81dca356a134f"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_8_04 "ubuntu-8.04"
     description: "Ubuntu 8.04 LTS (Hardy Heron)"
     source: "https://old-releases.ubuntu.com/releases/hardy/ubuntu-8.04.4-server-amd64.iso"
     sha1: "d96f01292dd6f586f8d8b99b92e80bf3d8b6e9e8"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_8_10 "ubuntu-8.10"
     description: "Ubuntu 8.10 (Intrepid Ibex)"
     source: "http://old-releases.ubuntu.com/releases/intrepid/ubuntu-8.10-server-amd64.iso"
     sha1: "81b930e0cbb39c2cc87155c62a83527634cce151"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_9_04 "ubuntu-9.04"
     description: "Ubuntu 9.04 (Jaunty Jackalope)"
     source: "http://old-releases.ubuntu.com/releases/jaunty/ubuntu-9.04-server-amd64.iso"
     sha1: "65b703f86460930438aada5e2452bf5b544cc6da"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_9_10 "ubuntu-9.10"
     description: "Ubuntu 9.10 (Karmic Koala)"
     source: "http://old-releases.ubuntu.com/releases/karmic/ubuntu-9.10-server-amd64.iso"
     sha1: "f077498d6a88820905d296177863ca3b5a32f529"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_10_04 "ubuntu-10.04"
     description: "Ubuntu 10.04 LTS (Lucid Lynx)"
     source: "http://old-releases.ubuntu.com/releases/lucid/ubuntu-10.04.4-server-amd64.iso"
     sha1: "796e80702d65f2ee96e88874a1ab437e24df9cd6"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_10_10 "ubuntu-10.10"
     description: "Ubuntu 10.10 (Maverick Meerkat)"
     source: "https://old-releases.ubuntu.com/releases/maverick/ubuntu-10.10-server-amd64.iso"
     sha1: "7c6e52397ce6b33c303e7bf6e3df475ceb92b8b9"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_11_04 "ubuntu-11.04"
     description: "Ubuntu 11.04 (Natty Narwhal)"
     source: "https://old-releases.ubuntu.com/releases/natty/ubuntu-11.04-server-amd64.iso"
     sha1: "e7dcdafa411a348ce0048e9ed7d86c0f9a8edefc"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_11_10 "ubuntu-11.10"
     description: "Ubuntu 11.10 (Oneiric Ocelot)"
     source: "https://old-releases.ubuntu.com/releases/oneiric/ubuntu-11.10-server-amd64.iso"
     sha1: "73ed5ca50bd8bb9dcdd7ddbae0d32aaa3f1530f8"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_12_04 "ubuntu-12.04"
     description: "Ubuntu 12.04 LTS (Precise Pangolin)"
     source: "http://old-releases.ubuntu.com/releases/precise/ubuntu-12.04.4-server-amd64.iso"
     sha1: "b802bb065df98c0530d782eb94778c2da19e10d6"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_12_10 "ubuntu-12.10"
     description: "Ubuntu 12.10 (Quantal Quetzal)"
     source: "http://old-releases.ubuntu.com/releases/quantal/ubuntu-12.10-server-amd64.iso"
     sha1: "e2a48af008ff3c4db6a8235151a1e90ea600fceb"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_13_04 "ubuntu-13.04"
     description: "Ubuntu 13.04 (Raring Ringtail)"
     source: "http://old-releases.ubuntu.com/releases/raring/ubuntu-13.04-server-amd64.iso"
     sha1: "2af1c223f586f59237212bb9c06ad774673c8952"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_13_10 "ubuntu-13.10"
     description: "Ubuntu 13.10 (Saucy Salamander)"
     source: "http://old-releases.ubuntu.com/releases/saucy/ubuntu-13.10-server-amd64.iso"
     sha1: "5dd72c694c3a7e06a3b4dd651ca26cfc70985004"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_14_04 "ubuntu-14.04"
     description: "Ubuntu 14.04 LTS (Trusty Tahr)"
     source: "https://old-releases.ubuntu.com/releases/trusty/ubuntu-14.04.1-server-amd64+mac.iso"
     sha1: "9112413482556f46b7241d4e4226b8c243fc774c"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_14_10 "ubuntu-14.10"
     description: "Ubuntu 14.10 (Utopic Unicorn)"
     source: "http://old-releases.ubuntu.com/releases/utopic/ubuntu-14.10.6-server-amd64.iso"
     sha1: "0c1ebea31c3523cfe9a4ffed8bcf6c7d23dfb97b"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_15_04 "ubuntu-15.04"
     description: "Ubuntu 15.04 (Vivid Vervet)"
     source: "https://old-releases.ubuntu.com/releases/15.04/ubuntu-15.04-server-amd64.iso"
     sha1: "d10248965c2c749df6bcce9f2f90f16a2e75e843"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_15_10 "ubuntu-15.10"
     description: "Ubuntu 15.10 (Wily Werewolf)"
     source: "https://old-releases.ubuntu.com/releases/wily/ubuntu-15.10.1-server-amd64.iso"
     sha1: "478446f33e336a98d5868c0b353d0d347e8a7262"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_16_04 "ubuntu-16.04"
     description: "Ubuntu 16.04 LTS (Xenial Xerus)"
     source: "http://old-releases.ubuntu.com/releases/xenial/ubuntu-16.04.6-server-amd64.iso"
     sha1: "056b7c15efc15bbbf40bf1a9ff1a3531fcbf70a2"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_16_10 "ubuntu-16.10"
     description: "Ubuntu 16.10 (Yakkety Yak)"
     source: "https://old-releases.ubuntu.com/releases/16.10/ubuntu-16.10-server-amd64.iso"
     sha1: "1da9ddc1d848a3f545de820ea9b4cd5a6c649b8c"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_17_04 "ubuntu-17.04"
     description: "Ubuntu 17.04 (Zesty Zapus)"
     source: "https://old-releases.ubuntu.com/releases/zesty/ubuntu-17.04-server-amd64.iso"
     sha1: "61479ab49395ac7374c1d0e2226267d997653715"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_17_10 "ubuntu-17.10"
     description: "Ubuntu 17.10 (Artful Aardvark)"
     source: "https://old-releases.ubuntu.com/releases/17.10/ubuntu-17.10.1-server-amd64.iso"
     sha1: "accda0a0f00449e803b28850b3287c2349054553"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_18_04 "ubuntu-18.04"
     description: "Ubuntu 18.04 LTS (Bionic Beaver)"
     source: "https://releases.ubuntu.com/18.04/ubuntu-18.04.6-live-server-amd64.iso"
     sha1: "ed8ce026c93a74747e758b2b12492569c7660740"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_18_10 "ubuntu-18.10"
     description: "Ubuntu 18.10 (Cosmic Cuttlefish)"
     source: "https://old-releases.ubuntu.com/releases/18.10/ubuntu-18.10-live-server-amd64.iso"
     sha1: "97dc434a27bfcea151179ffc94ee7745f10efe5e"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_19_04 "ubuntu-19.04"
     description: "Ubuntu 19.04 (Disco Dingo)"
     source: "https://old-releases.ubuntu.com/releases/19.04/ubuntu-19.04-live-server-amd64.iso"
     sha1: "544ba93f0e0a92c642c3585894da1a59693cc278"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
   - name: &ubuntu_20_04 "ubuntu-20.04"
     description: "Ubuntu 20.04 LTS (Focal Fossa)"
     source: "https://releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
     sha1: "8fb2fc63a10bff266a3ee2d2cc236dbb5feb7965"
-    template: *ubuntu_template
-    varfile: *ubuntu_varfile
 
 branches:
   master:
@@ -551,12 +498,26 @@ branches:
     - *win11_23h2_22631_2861
 
   ubuntu-server:
-    - *ubuntu_6_10
+    # Legacy preseed era (6.10-15.10) - Sets initial defaults
+    - name: *ubuntu_6_10
+      build_config:
+        template: "ubuntu.pkr.hcl"
+        varfiles:
+          - "ubuntu.pkrvars/preseed.pkrvars.hcl"
+        vars:
+          boot_command_prefix: "<F6>"
+          answerfile_path: "./answer_files/ubuntu/preseed.cfg"
     - *ubuntu_7_04
     - *ubuntu_7_10
-    - *ubuntu_8_04
+    - name: *ubuntu_8_04
+      build_config:
+        vars:
+          boot_command_prefix: "<ESC><F6>"
     - *ubuntu_8_10
-    - *ubuntu_9_04
+    - name: *ubuntu_9_04
+      build_config:
+        vars:
+          boot_command_prefix: "<ESC><F6><ESC>"
     - *ubuntu_9_10
     - *ubuntu_10_04
     - *ubuntu_10_10
@@ -574,7 +535,13 @@ branches:
     - *ubuntu_16_10
     - *ubuntu_17_04
     - *ubuntu_17_10
-    - *ubuntu_18_04
+    # Modern autoinstall era (18.04+) - Switches to autoinstall  
+    - name: *ubuntu_18_04
+      build_config:
+        varfiles:
+          - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
+        vars:
+          answerfile_path: "./answer_files/ubuntu/"
     - *ubuntu_18_10
     - *ubuntu_19_04
     - *ubuntu_20_04
