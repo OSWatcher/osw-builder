@@ -283,6 +283,7 @@ def get_packer_home_cache() -> Path:
 def create_response_file_from_answerfile_path(answerfile_path: str, packer_templates_dir: Path) -> ResponseFile:
     """Create response file from explicit answerfile_path."""
     from .autounattend import WindowsAutounattend
+    from .ubuntu_autoinstall import UbuntuAutoinstall
     from .ubuntu_preseed import UbuntuPreseed
     from .winxp_sif import WindowsXPSif
 
@@ -291,6 +292,11 @@ def create_response_file_from_answerfile_path(answerfile_path: str, packer_templ
         response_file_path = packer_templates_dir / answerfile_path[2:]
     else:
         response_file_path = packer_templates_dir / answerfile_path
+
+    # Check if path is a directory (autoinstall) or file (preseed/autounattend/winxp)
+    if response_file_path.is_dir():
+        # Directory indicates Ubuntu autoinstall with user-data/meta-data files
+        return UbuntuAutoinstall(response_file_path)
 
     # Determine response file type based on file extension
     file_extension = response_file_path.suffix.lower()
@@ -353,7 +359,9 @@ def build_image_with_inheritance(
         # force packer cache, need network for that
         fake_run_packer_with_inheritance(build_config, response_file, network=True)
         # enforce no network for now
-        yield run_packer_with_inheritance(build_config, response_file, config_entry["source"], sha1digest, packer_args or [], network=network)
+        yield run_packer_with_inheritance(
+            build_config, response_file, config_entry["source"], sha1digest, packer_args or [], network=network
+        )
 
 
 def fake_run_packer_with_inheritance(build_config: BuildConfig, response_file: ResponseFile, network: bool):
@@ -363,31 +371,30 @@ def fake_run_packer_with_inheritance(build_config: BuildConfig, response_file: R
 
 
 def run_packer_with_inheritance(
-    build_config: BuildConfig, response_file: ResponseFile, iso_url: str, sha1: str, packer_args: list[str], network: bool
+    build_config: BuildConfig,
+    response_file: ResponseFile,
+    iso_url: str,
+    sha1: str,
+    packer_args: list[str],
+    network: bool,
 ) -> Path:
     """Run packer using inheritance configuration."""
     with ensure_cleanup_output():
         packer_home_cache = get_packer_home_cache()
-        
+
         # Build Packer command using BuildConfig with real values
-        cmdline = build_config.to_packer_cmdline(
-            iso_url=iso_url,
-            sha1=sha1,
-            packer_args=packer_args
-        )
-        
+        cmdline = build_config.to_packer_cmdline(iso_url=iso_url, sha1=sha1, packer_args=packer_args)
+
         # Build Docker volumes using BuildConfig
         volumes = build_config.to_docker_volumes(
-            response_file=response_file,
-            packer_home_cache=packer_home_cache,
-            packer_templates_dir=PACKER_TEMPLATES_DIR
+            response_file=response_file, packer_home_cache=packer_home_cache, packer_templates_dir=PACKER_TEMPLATES_DIR
         )
-        
+
         docker_config = build_docker_config(volumes, cmdline, network)
-        
+
         logging.debug("Volumes: %s", volumes)
         logging.debug("Running packer with command line: %s", cmdline)
-        
+
         # Use Docker context manager for container lifecycle
         with docker_packer_runner(docker_config, network):
             # return the first file ending with .box in the output directory

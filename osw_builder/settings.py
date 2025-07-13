@@ -40,7 +40,7 @@ class BuildConfig:
         # Add runtime variables (iso_url, sha1)
         cmdline.extend(["-var", f"iso_url={iso_url}"])
         cmdline.extend(["-var", f"iso_checksum={sha1}"])
-        cmdline.extend(["-var", f"iso_checksum_type=sha1"])
+        cmdline.extend(["-var", "iso_checksum_type=sha1"])
         cmdline.extend(["-var", f"vm_name={self.template.replace('.pkr.hcl', '')}"])
 
         # Add BuildConfig variables
