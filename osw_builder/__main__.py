@@ -16,6 +16,7 @@ Options:
     --updates=<UP_ANSWER>               Apply branch updates [Default: yes]
     --search-updates=<SEARCH_ANSWER>    Search for updates [Default: yes]
     --idle=<IDLE_ANSWER>                Capture IDLE state [Default: yes]
+    --network                           Enable network access during build
     --var <packer_args>...              Extra packer arguments
 """
 
@@ -71,6 +72,7 @@ def capture_os(os_name, args):
     apply_updates = str2bool(args["--updates"])
     search_updates_flag = str2bool(args["--search-updates"])
     idle = str2bool(args["--idle"])
+    network_flag = args["--network"]
     before = args.get("--before")
     # Treat empty string as None
     before = before if before else None
@@ -87,7 +89,8 @@ def capture_os(os_name, args):
     with ExitStack() as ex:
         if not vagrant.box_exists(box_name):
             # TODO: win11 hack
-            network = entry.get("network", False)
+            # Use command line network flag if provided, otherwise fall back to config entry
+            network = network_flag if network_flag else entry.get("network", False)
             if entry["source"].endswith(".box"):
                 image = entry["source"]
             else:
