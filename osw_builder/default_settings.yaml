@@ -544,4 +544,8 @@ branches:
           answerfile_path: "./answer_files/ubuntu/"
     - *ubuntu_18_10
     - *ubuntu_19_04
-    - *ubuntu_20_04
+    - name: *ubuntu_20_04
+      build_config:
+        vars:
+          boot_wait: 2s
+          boot_command_prefix: "<ESC><ESC><F6><ESC>"
