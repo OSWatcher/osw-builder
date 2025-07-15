@@ -332,7 +332,6 @@ images:
     description: "Ubuntu 6.10 (Edgy Eft)"
     source: "http://old-releases.ubuntu.com/releases/6.10/ubuntu-6.10-server-amd64.iso"
     sha1: "72fb99ab2d9346199704aef5b37d8f6e5955a23d"
-    network: true
 
   - name: &ubuntu_7_04 "ubuntu-7.04"
     description: "Ubuntu 7.04 (Feisty Fawn)"
