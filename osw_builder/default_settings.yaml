@@ -535,17 +535,18 @@ branches:
     - *ubuntu_16_10
     - *ubuntu_17_04
     - *ubuntu_17_10
+    # TODO
     # Modern autoinstall era (18.04+) - Switches to autoinstall  
-    - name: *ubuntu_18_04
-      build_config:
-        varfiles:
-          - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
-        vars:
-          answerfile_path: "./answer_files/ubuntu/"
-    - *ubuntu_18_10
-    - *ubuntu_19_04
-    - name: *ubuntu_20_04
-      build_config:
-        vars:
-          boot_wait: 2s
-          boot_command_prefix: "<ESC><ESC><F6><ESC>"
+    # - name: *ubuntu_18_04
+    #   build_config:
+    #     varfiles:
+    #       - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
+    #     vars:
+    #       answerfile_path: "./answer_files/ubuntu/"
+    # - *ubuntu_18_10
+    # - *ubuntu_19_04
+    # - name: *ubuntu_20_04
+    #   build_config:
+    #     vars:
+    #       boot_wait: 2s
+    #       boot_command_prefix: "<ESC><ESC><F6><ESC>"
