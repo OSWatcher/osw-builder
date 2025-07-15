@@ -32,7 +32,7 @@ from docopt import docopt
 from osw_builder import vagrant
 from osw_builder.capture import capture_neogit, create_branch
 from osw_builder.image_builder.build import build_image_with_inheritance
-from osw_builder.settings import settings
+from osw_builder.settings import resolve_build_config, settings
 from osw_builder.updates.core import OSType, detect_os_type
 from osw_builder.updates.orchestrator import install_update, search_updates
 
@@ -187,6 +187,9 @@ def capture_os(os_name, args):
             return
 
         # OS-agnostic update management
+        # Resolve template from build configuration
+        build_config = resolve_build_config(os_name)
+        template = build_config.template
         os_type = detect_os_type(template)
         logging.info("Starting OS-agnostic update search and installation")
 
