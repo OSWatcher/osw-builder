@@ -50,7 +50,7 @@ runs:
     #   if: ${{ !env.ACT }}
 
     - name: Install and configure Poetry
-      uses: snok/install-poetry@v1
+      uses: snok/install-poetry@v1.4.1
       with:
         version: ${{ inputs.poetry-version }}
         virtualenvs-create: true
