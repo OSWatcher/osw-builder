@@ -42,7 +42,8 @@ class UbuntuPreseed(ResponseFile):
     @property
     def docker_path(self) -> str:
         """Return the Docker container path for preseed file"""
-        return "/packer/preseed.cfg"
+        # must match the relative path in the default_settings.yaml
+        return "/packer/answer_files/ubuntu/preseed.cfg"
 
     @property
     def varfile_key(self) -> str:
