@@ -465,14 +465,39 @@ images:
 
 branches:
   master:
+    # Box images (pre-built, no build_config needed)
     - *win95
     - *win98
     - *winME
     - *win2000
-    - *winxp_sp3
-    - *win7_7600
-    - *win8_9200
-    - *win10_ts1_1507
+    
+    # Packer-built Windows images - Sets base template, answerfile_path, and search_updates behavior
+    - name: *winxp_sp3
+      build_config:
+        template: *win10_template
+        varfiles: [*winxp_varfile]
+        vars:
+          answerfile_path: "./answer_files/xp/WINNT.SIF"
+      search_updates: false
+    
+    - name: *win7_7600
+      build_config:
+        varfiles: [*win7_varfile]
+      extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+    
+    - name: *win8_9200
+      build_config:
+        varfiles: [*win8_varfile]
+      extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+      search_updates: false
+    
+    - name: *win10_ts1_1507
+      build_config:
+        varfiles: [*win10_varfile]
+      extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+      search_updates: true
+    
+    # Windows 10 images inherit everything from win10_ts1_1507
     - *win10_ts2_1511_10586_0
     - *win10_ts2_1511_10586_104
     - *win10_ts2_1511_10586_164
@@ -491,7 +516,15 @@ branches:
     - *win10_21h1_19043_928
     - *win10_21h2_19044_1288
     - *win10_22h2_19045_2006
-    - *win11_21h2_22000_194
+    
+    # Windows 11 images - Changes to win11 varfile and adds network
+    - name: *win11_21h2_22000_194
+      build_config:
+        varfiles: [*win11_varfile]
+      extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+      network: true
+    
+    # Windows 11 images inherit everything from win11_21h2_22000_194
     - *win11_21h2_22000_318
     - *win11_22h2_22621_384
     - *win11_23h2_22631_2861
