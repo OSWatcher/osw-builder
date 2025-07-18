@@ -15,7 +15,7 @@ import hcl2
 
 import osw_builder as root_package
 
-from ..settings import BuildConfig, resolve_build_config
+from ..settings import BuildConfig
 from .response_files import ResponseFile, create_response_file
 from .utils import compute_sha1sum
 
@@ -316,15 +316,14 @@ def create_response_file_from_answerfile_path(answerfile_path: str, packer_templ
 def build_image_with_inheritance(
     image_name: str,
     config_entry: dict,
-    extra_firstlogin_cmds: Optional[list[str]] = None,
+    resolved_config,
     packer_args: Optional[list[str]] = None,
-    network: bool = False,
 ) -> Generator[Path, None, None]:
     """Build image using inheritance system - no template/varfile needed."""
     logging.info("Building image with inheritance: %s", image_name)
 
-    # Resolve build configuration through inheritance
-    build_config = resolve_build_config(image_name)
+    # Use the resolved configuration passed from main
+    build_config = resolved_config.build_config
 
     # Validate source and compute SHA1
     sha1digest = validate_source_and_compute_sha1(config_entry)
@@ -340,7 +339,7 @@ def build_image_with_inheritance(
         )
 
         # Configure response file with product keys, hostnames, etc.
-        response_file.configure(config_entry, extra_firstlogin_cmds)
+        response_file.configure(config_entry, build_config.extra_firstlogin_cmds)
 
         # Build Packer command and Docker configuration using BuildConfig methods
         cmdline = build_config.to_packer_cmdline(
@@ -357,17 +356,34 @@ def build_image_with_inheritance(
         logging.debug("Running packer with command line: %s", cmdline)
 
         # force packer cache, need network for that
-        fake_run_packer_with_inheritance(build_config, response_file, network=True)
-        # enforce no network for now
+        fake_run_packer_with_inheritance(build_config, response_file, config_entry["source"], sha1digest, network=True)
+        # Use network setting from build_config
         yield run_packer_with_inheritance(
-            build_config, response_file, config_entry["source"], sha1digest, packer_args or [], network=network
+            build_config,
+            response_file,
+            config_entry["source"],
+            sha1digest,
+            packer_args or [],
+            network=build_config.network,
         )
 
 
-def fake_run_packer_with_inheritance(build_config: BuildConfig, response_file: ResponseFile, network: bool):
+def fake_run_packer_with_inheritance(
+    build_config: BuildConfig, response_file: ResponseFile, iso_url: str, sha1: str, network: bool
+):
     """Fake run packer to force cache - inheritance version."""
-    # Similar to fake_run_packer but using BuildConfig
-    pass  # Simplified for now
+    logging.info("Fake Packer run (Force image download)")
+
+    with suppress(RuntimeError):
+        # Use real ISO URL and SHA1 but with impossible CPU count to force build failure after download
+        run_packer_with_inheritance(
+            build_config=build_config,
+            response_file=response_file,
+            iso_url=iso_url,
+            sha1=sha1,
+            packer_args=["cpus=999999"],  # Impossible CPU count to force build failure
+            network=network,
+        )
 
 
 def run_packer_with_inheritance(

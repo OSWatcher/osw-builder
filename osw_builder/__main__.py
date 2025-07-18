@@ -26,13 +26,15 @@ import shutil
 import time
 from contextlib import ExitStack, suppress
 from pathlib import Path
+from pprint import pformat
 
+import attrs
 from docopt import docopt
 
 from osw_builder import vagrant
 from osw_builder.capture import capture_neogit, create_branch
 from osw_builder.image_builder.build import build_image_with_inheritance
-from osw_builder.settings import resolve_build_config, settings
+from osw_builder.settings import resolve_image_config, settings
 from osw_builder.updates.core import OSType, detect_os_type
 from osw_builder.updates.orchestrator import install_update, search_updates
 
@@ -82,21 +84,28 @@ def capture_os(os_name, args):
         raise RuntimeError("Could not find OS name")
 
     description = entry["description"]
-    extra_firstlogin_cmds = entry.get("extra_firstlogin_cmds")
-    search_updates_flag = entry.get("search_updates", search_updates_flag)
-    idle = entry.get("idle", idle)
+    # Get runtime configuration
+    config = resolve_image_config(os_name)
+    logging.debug("Resolved config for %s:\n%s", os_name, pformat(attrs.asdict(config), width=80, depth=2))
+    runtime_search_updates = config.runtime_config.search_updates
+    if runtime_search_updates is not None:
+        search_updates_flag = runtime_search_updates
+    idle_config = config.runtime_config.idle
+    if idle_config is not None:
+        idle = idle_config
+
+    # Apply command line network override if provided
+    if network_flag:
+        config.build_config.network = True
 
     with ExitStack() as ex:
         if not vagrant.box_exists(box_name):
             # TODO: win11 hack
-            # Use command line network flag if provided, otherwise fall back to config entry
-            network = network_flag if network_flag else entry.get("network", False)
+            # Network is now handled by build_config
             if entry["source"].endswith(".box"):
                 image = entry["source"]
             else:
-                image = ex.enter_context(
-                    build_image_with_inheritance(os_name, entry, extra_firstlogin_cmds, packer_args, network=network)
-                )
+                image = ex.enter_context(build_image_with_inheritance(os_name, entry, config, packer_args))
             vagrant.box_add(image, name=box_name)
 
         # prepare vagrant env
@@ -188,8 +197,7 @@ def capture_os(os_name, args):
 
         # OS-agnostic update management
         # Resolve template from build configuration
-        build_config = resolve_build_config(os_name)
-        template = build_config.template
+        template = config.build_config.template
         os_type = detect_os_type(template)
         logging.info("Starting OS-agnostic update search and installation")
 

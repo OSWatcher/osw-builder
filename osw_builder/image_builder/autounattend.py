@@ -73,7 +73,7 @@ class WindowsAutounattend(ResponseFile):
     @property
     def varfile_key(self) -> str:
         """Return the varfile key for autounattend files"""
-        return "autounattend"
+        return "answerfile_path"
 
     @property
     def product_key(self):
