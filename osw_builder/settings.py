@@ -27,6 +27,8 @@ class BuildConfig:
     vars: Dict[str, Any] = {}
     network: bool = False
     extra_firstlogin_cmds: Optional[List[str]] = None
+    key: Optional[str] = None
+    image_name: Optional[str] = None
 
     def to_packer_cmdline(self, iso_url: str, sha1: str, packer_args: List[str]) -> List[str]:
         """Export BuildConfig as Packer command line arguments."""

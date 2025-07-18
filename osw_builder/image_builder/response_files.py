@@ -3,7 +3,10 @@
 from abc import ABC, abstractmethod
 from contextlib import AbstractContextManager
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from ..settings import BuildConfig
 
 
 class ResponseFile(AbstractContextManager, ABC):
@@ -51,8 +54,8 @@ class ResponseFile(AbstractContextManager, ABC):
         varfile_data[self.varfile_key] = self.docker_path
 
     @abstractmethod
-    def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
-        """Configure the response file with the given configuration"""
+    def configure(self, build_config: "BuildConfig"):
+        """Configure the response file with the given build configuration"""
         pass
 
     @abstractmethod

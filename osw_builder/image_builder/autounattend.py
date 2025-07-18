@@ -5,7 +5,10 @@ from contextlib import suppress
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from ..settings import BuildConfig
 
 from .response_files import ResponseFile
 
@@ -116,7 +119,7 @@ class WindowsAutounattend(ResponseFile):
             # no need to insert anything
             return
         try:
-            image_name = self.image_name
+            image_name_element = self.image_name
         except ElementNotFoundError:
             # search for OSImage
             # and insert this under OSImage
@@ -148,9 +151,9 @@ class WindowsAutounattend(ResponseFile):
             value_elem.text = value
 
             # set image_name to the newly created Value element
-            image_name = value_elem
+            image_name_element = value_elem
             return
-        image_name.text = value
+        image_name_element.text = value
 
     def tostring(self, pretty_print=True):
         """Returns a string representation of the XML tree"""
@@ -160,14 +163,14 @@ class WindowsAutounattend(ResponseFile):
         """Writes the new Autounattend.xml"""
         self.tree.write(self.tmp_autounattend_f, encoding="utf-8", xml_declaration=True)
 
-    def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
-        """Configure the autounattend file with the product key and image name from the config entry"""
-        if "key" in config_entry:
-            self.product_key = config_entry["key"]
-        if "image_name" in config_entry:
-            self.image_name = config_entry["image_name"]
-        if extra_commands:
-            for cmd in reversed(extra_commands):
+    def configure(self, build_config: "BuildConfig"):
+        """Configure the autounattend file with the product key and image name from the build config"""
+        if build_config.key:
+            self.product_key = build_config.key
+        if build_config.image_name:
+            self.image_name = build_config.image_name  # type: ignore[assignment]
+        if build_config.extra_firstlogin_cmds:
+            for cmd in reversed(build_config.extra_firstlogin_cmds):
                 self.prepend_cmd(cmd)
         self.write()
 

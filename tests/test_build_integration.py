@@ -358,7 +358,7 @@ class TestBuildImageIntegration:
         # Verify calls
         mock_validate.assert_called_once_with(config_entry)
         mock_create_response.assert_called_once()
-        mock_response_file.configure.assert_called_once_with(config_entry, None)
+        mock_response_file.configure.assert_called_once_with(resolved_config.build_config)
         mock_run_packer.assert_called_once()
 
     @patch("osw_builder.image_builder.build.validate_source_and_compute_sha1")
@@ -400,7 +400,7 @@ class TestBuildImageIntegration:
         # Verify calls
         mock_validate.assert_called_once_with(config_entry)
         mock_create_response.assert_called_once()
-        mock_response_file.configure.assert_called_once_with(config_entry, ["reg.exe add HKLM\\SOFTWARE\\Test"])
+        mock_response_file.configure.assert_called_once_with(resolved_config.build_config)
         mock_run_packer.assert_called_once()
 
     def test_build_image_with_inheritance_image_not_found(self):
