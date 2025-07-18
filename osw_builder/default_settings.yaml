@@ -30,6 +30,8 @@ extra_firstlogin_cmds:
 # whether we should remove the domain after once we ran our tools
 remove_domain: false
 storage_pool: "default"
+# whether to skip neogit capture operations
+skip_neogit: false
 images:
   - name: &win95 "win95"
     description: "Windows 95 (4.00.950)"
