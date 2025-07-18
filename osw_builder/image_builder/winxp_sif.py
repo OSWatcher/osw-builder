@@ -3,7 +3,10 @@
 from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from ..settings import BuildConfig
 
 from .response_files import ResponseFile
 
@@ -49,7 +52,7 @@ class WindowsXPSif(ResponseFile):
         """Return the varfile key for SIF files"""
         return "answerfile_path"
 
-    def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
+    def configure(self, build_config: "BuildConfig"):
         """Configure the SIF file - Windows XP doesn't support much customization"""
         # For Windows XP, we mostly just copy the original file
         # Limited configuration options compared to modern Windows autounattend

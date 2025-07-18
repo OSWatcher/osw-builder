@@ -3,7 +3,10 @@
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from ..settings import BuildConfig
 
 from .response_files import ResponseFile
 
@@ -53,9 +56,9 @@ class UbuntuAutoinstall(ResponseFile):
     def update_varfile_data(self, varfile_data: dict) -> None:
         varfile_data["http_directory"] = "./"
 
-    def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
+    def configure(self, build_config: "BuildConfig"):
         """Configure the autoinstall files - customize user-data with config values"""
-        self.write_user_data(config_entry)
+        self.write_user_data(build_config)
         self.write_meta_data()
 
     def write(self):
@@ -64,7 +67,7 @@ class UbuntuAutoinstall(ResponseFile):
         # This method exists to satisfy the abstract base class
         pass
 
-    def write_user_data(self, config_entry: dict):
+    def write_user_data(self, build_config: "BuildConfig"):
         """Write the user-data file - just use the original files for now"""
         # Files are already copied in __enter__, no customization needed
         pass

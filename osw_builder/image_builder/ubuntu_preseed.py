@@ -3,7 +3,10 @@
 from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from ..settings import BuildConfig
 
 from .response_files import ResponseFile
 
@@ -53,7 +56,7 @@ class UbuntuPreseed(ResponseFile):
     def update_varfile_data(self, varfile_data: dict) -> None:
         varfile_data["http_directory"] = "./"
 
-    def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
+    def configure(self, build_config: "BuildConfig"):
         """Configure the preseed file - just copy original for now"""
         self.write()
 

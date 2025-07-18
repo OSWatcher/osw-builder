@@ -339,7 +339,7 @@ def build_image_with_inheritance(
         )
 
         # Configure response file with product keys, hostnames, etc.
-        response_file.configure(config_entry, build_config.extra_firstlogin_cmds)
+        response_file.configure(build_config)
 
         # Build Packer command and Docker configuration using BuildConfig methods
         cmdline = build_config.to_packer_cmdline(
