@@ -368,7 +368,9 @@ def build_image_with_inheritance(
         )
 
 
-def fake_run_packer_with_inheritance(build_config: BuildConfig, response_file: ResponseFile, iso_url: str, sha1: str, network: bool):
+def fake_run_packer_with_inheritance(
+    build_config: BuildConfig, response_file: ResponseFile, iso_url: str, sha1: str, network: bool
+):
     """Fake run packer to force cache - inheritance version."""
     logging.info("Fake Packer run (Force image download)")
 

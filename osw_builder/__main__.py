@@ -26,7 +26,9 @@ import shutil
 import time
 from contextlib import ExitStack, suppress
 from pathlib import Path
+from pprint import pformat
 
+import attrs
 from docopt import docopt
 
 from osw_builder import vagrant
@@ -84,6 +86,7 @@ def capture_os(os_name, args):
     description = entry["description"]
     # Get runtime configuration
     config = resolve_image_config(os_name)
+    logging.debug("Resolved config for %s:\n%s", os_name, pformat(attrs.asdict(config), width=80, depth=2))
     runtime_search_updates = config.runtime_config.search_updates
     if runtime_search_updates is not None:
         search_updates_flag = runtime_search_updates
