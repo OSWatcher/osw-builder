@@ -58,8 +58,11 @@ jobs:
 
               # Create list of dictionaries with os_name and before parameter
               matrix_entries = []
-              for i, os_name in enumerate(os_list):
-                  before = os_list[i-1] if i > 0 else None
+              for i, os_entry in enumerate(os_list):
+                  # Extract name from complex objects or use string directly
+                  os_name = os_entry.get('name', os_entry) if isinstance(os_entry, dict) else os_entry
+                  before_entry = os_list[i-1] if i > 0 else None
+                  before = before_entry.get('name', before_entry) if isinstance(before_entry, dict) else before_entry
                   matrix_entries.append({
                       'os_name': os_name,
                       'before': before
