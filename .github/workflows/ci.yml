@@ -53,6 +53,8 @@ jobs:
           push: false
           load: true
           tags: osw-builder-dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.PAT_TOKEN }}
 
