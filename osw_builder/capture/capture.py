@@ -4,6 +4,7 @@ from typing import Optional
 
 from neogit.service import Neogit
 
+from ..settings import settings
 from .guest_filesystem import LibguestFSMnt
 
 
@@ -16,6 +17,10 @@ def capture_neogit(
     desc: Optional[str] = None,
     before: Optional[str] = None,
 ):
+    if settings.skip_neogit:
+        logging.info("Skipping Neogit capture on %s (skip_neogit flag is enabled)", vm_name)
+        return None
+
     with LibguestFSMnt(qcow_path, local=True, readonly=True) as local_mnt:
         logging.debug("Local mountpoint: %s", local_mnt)
         # ensure init
@@ -26,5 +31,8 @@ def capture_neogit(
 
 
 def create_branch(branch_name: str, commit_hash: str):
+    if settings.skip_neogit:
+        logging.info("Skipping branch creation for %s (skip_neogit flag is enabled)", branch_name)
+        return
     neo = Neogit()
     neo.create_branch(branch_name, commit_hash)

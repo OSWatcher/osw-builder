@@ -17,6 +17,7 @@ Options:
     --search-updates=<SEARCH_ANSWER>    Search for updates [Default: yes]
     --idle=<IDLE_ANSWER>                Capture IDLE state [Default: yes]
     --network                           Enable network access during build
+    --skip-neogit                       Skip neogit capture operations
     --var <packer_args>...              Extra packer arguments
 """
 
@@ -75,9 +76,13 @@ def capture_os(os_name, args):
     search_updates_flag = str2bool(args["--search-updates"])
     idle = str2bool(args["--idle"])
     network_flag = args["--network"]
+    skip_neogit = args["--skip-neogit"]
     before = args.get("--before")
     # Treat empty string as None
     before = before if before else None
+
+    # Set global skip_neogit flag in settings
+    settings.skip_neogit = skip_neogit
     try:
         entry = next((entry for entry in settings["images"] if entry["name"] == os_name))
     except StopIteration:
