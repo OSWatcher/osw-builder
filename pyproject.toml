@@ -23,6 +23,7 @@ docker = "^7.1.0"
 appdirs = "^1.4.4"
 attrs = "^23.2.0"
 ansible-runner = "^2.4.0"
+ansible = "^11.2.0"
 
 [tool.poetry.group.dev.dependencies]
 poethepoet = "^0.26.1"
