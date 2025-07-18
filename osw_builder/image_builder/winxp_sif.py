@@ -47,7 +47,7 @@ class WindowsXPSif(ResponseFile):
     @property
     def varfile_key(self) -> str:
         """Return the varfile key for SIF files"""
-        return "autounattend"
+        return "answerfile_path"
 
     def configure(self, config_entry: dict, extra_commands: Optional[List[str]] = None):
         """Configure the SIF file - Windows XP doesn't support much customization"""

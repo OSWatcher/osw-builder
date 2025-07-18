@@ -29,6 +29,8 @@ class TestCommandGeneration:
             "-only",
             "qemu.vm",
             "-var-file",
+            "docker.pkrvars.hcl",
+            "-var-file",
             "ubuntu.pkrvars.hcl",
             "-var-file",
             "ubuntu.pkrvars/preseed.pkrvars.hcl",
@@ -36,6 +38,10 @@ class TestCommandGeneration:
             "iso_url=http://example.com/ubuntu.iso",
             "-var",
             "iso_checksum=abc123",
+            "-var",
+            "iso_checksum_type=sha1",
+            "-var",
+            "vm_name=ubuntu",
             "-var",
             "answerfile_path=./answer_files/ubuntu/preseed.cfg",
             "-var",
@@ -62,11 +68,17 @@ class TestCommandGeneration:
             "-only",
             "qemu.vm",
             "-var-file",
+            "docker.pkrvars.hcl",
+            "-var-file",
             "windows.pkrvars.hcl",
             "-var",
             "iso_url=http://example.com/win10.iso",
             "-var",
             "iso_checksum=def456",
+            "-var",
+            "iso_checksum_type=sha1",
+            "-var",
+            "vm_name=windows",
             "-var",
             "answerfile_path=./answer_files/windows/Autounattend.xml",
             "-var",
@@ -88,10 +100,16 @@ class TestCommandGeneration:
             "build",
             "-only",
             "qemu.vm",
+            "-var-file",
+            "docker.pkrvars.hcl",
             "-var",
             "iso_url=http://example.com/custom.iso",
             "-var",
             "iso_checksum=xyz789",
+            "-var",
+            "iso_checksum_type=sha1",
+            "-var",
+            "vm_name=custom",
             "-var",
             "custom_var=value",
             "-var",
@@ -122,6 +140,8 @@ class TestCommandGeneration:
             "-only",
             "qemu.vm",
             "-var-file",
+            "docker.pkrvars.hcl",
+            "-var-file",
             "ubuntu.pkrvars.hcl",
             "-var-file",
             "ubuntu.pkrvars/modern.pkrvars.hcl",
@@ -131,6 +151,10 @@ class TestCommandGeneration:
             "iso_url=http://example.com/ubuntu-20.04.iso",
             "-var",
             "iso_checksum=hash123",
+            "-var",
+            "iso_checksum_type=sha1",
+            "-var",
+            "vm_name=ubuntu",
             "-var",
             "answerfile_path=./answer_files/ubuntu/user-data",
             "ubuntu.pkr.hcl",
@@ -164,7 +188,7 @@ class TestDockerVolumeGeneration:
         expected = {
             "/cache": {"bind": "/cache", "mode": "rw"},
             "/packer/templates": {"bind": "/output_parent", "mode": "rw"},
-            "/tmp/preseed.cfg": {"bind": "/packer/preseed.cfg", "mode": "ro"},
+            "/tmp/preseed.cfg": {"bind": "/packer/answer_files/ubuntu/preseed.cfg", "mode": "ro"},
             "/packer/templates/ubuntu.pkrvars.hcl": {"bind": "/packer/ubuntu.pkrvars.hcl", "mode": "ro"},
             "/packer/templates/ubuntu.pkrvars/preseed.pkrvars.hcl": {
                 "bind": "/packer/ubuntu.pkrvars/preseed.pkrvars.hcl",
@@ -196,7 +220,7 @@ class TestDockerVolumeGeneration:
         expected = {
             "/cache": {"bind": "/cache", "mode": "rw"},
             "/packer/templates": {"bind": "/output_parent", "mode": "rw"},
-            "/tmp/Autounattend.xml": {"bind": "/packer/Autounattend.xml", "mode": "ro"},
+            "/tmp/Autounattend.xml": {"bind": "/packer/answer_files/windows/Autounattend.xml", "mode": "ro"},
             "/packer/templates/windows.pkrvars.hcl": {"bind": "/packer/windows.pkrvars.hcl", "mode": "ro"},
         }
 
@@ -222,7 +246,7 @@ class TestDockerVolumeGeneration:
         expected = {
             "/cache": {"bind": "/cache", "mode": "rw"},
             "/packer/templates": {"bind": "/output_parent", "mode": "rw"},
-            "/tmp/config.cfg": {"bind": "/packer/config.cfg", "mode": "ro"},
+            "/tmp/config.cfg": {"bind": "/packer/answer_files/custom/config.cfg", "mode": "ro"},
         }
 
         assert result == expected
@@ -299,20 +323,24 @@ class TestResponseFileCreation:
 class TestBuildImageIntegration:
     """Test the new build_image_with_inheritance function."""
 
-    @patch("osw_builder.image_builder.build.resolve_build_config")
     @patch("osw_builder.image_builder.build.validate_source_and_compute_sha1")
     @patch("osw_builder.image_builder.build.create_response_file_from_answerfile_path")
     @patch("osw_builder.image_builder.build.run_packer_with_inheritance")
     @patch("osw_builder.image_builder.build.fake_run_packer_with_inheritance")
     def test_build_image_with_inheritance_ubuntu(
-        self, mock_fake_run_packer, mock_run_packer, mock_create_response, mock_validate, mock_resolve
+        self, mock_fake_run_packer, mock_run_packer, mock_create_response, mock_validate
     ):
         """Test complete Ubuntu build with inheritance."""
         # Setup mocks
-        mock_resolve.return_value = BuildConfig(
-            template="ubuntu.pkr.hcl",
-            varfiles=["ubuntu.pkrvars.hcl", "ubuntu.pkrvars/preseed.pkrvars.hcl"],
-            vars={"answerfile_path": "./answer_files/ubuntu/preseed.cfg", "boot_dir": "/install"},
+        from osw_builder.settings import ResolvedConfig, RuntimeConfig
+
+        resolved_config = ResolvedConfig(
+            build_config=BuildConfig(
+                template="ubuntu.pkr.hcl",
+                varfiles=["ubuntu.pkrvars.hcl", "ubuntu.pkrvars/preseed.pkrvars.hcl"],
+                vars={"answerfile_path": "./answer_files/ubuntu/preseed.cfg", "boot_dir": "/install"},
+            ),
+            runtime_config=RuntimeConfig(),
         )
         mock_validate.return_value = "abc123"
         mock_response_file = MagicMock()
@@ -324,30 +352,34 @@ class TestBuildImageIntegration:
         config_entry = {"name": "ubuntu-18.04", "source": "http://example.com/ubuntu.iso", "key": "test-key"}
 
         # Test the function
-        with build_image_with_inheritance("ubuntu-18.04", config_entry) as result:
+        with build_image_with_inheritance("ubuntu-18.04", config_entry, resolved_config) as result:
             assert result == Path("/output/ubuntu.qcow2")
 
         # Verify calls
-        mock_resolve.assert_called_once_with("ubuntu-18.04")
         mock_validate.assert_called_once_with(config_entry)
         mock_create_response.assert_called_once()
         mock_response_file.configure.assert_called_once_with(config_entry, None)
         mock_run_packer.assert_called_once()
 
-    @patch("osw_builder.image_builder.build.resolve_build_config")
     @patch("osw_builder.image_builder.build.validate_source_and_compute_sha1")
     @patch("osw_builder.image_builder.build.create_response_file_from_answerfile_path")
     @patch("osw_builder.image_builder.build.run_packer_with_inheritance")
     @patch("osw_builder.image_builder.build.fake_run_packer_with_inheritance")
     def test_build_image_with_inheritance_windows(
-        self, mock_fake_run_packer, mock_run_packer, mock_create_response, mock_validate, mock_resolve
+        self, mock_fake_run_packer, mock_run_packer, mock_create_response, mock_validate
     ):
         """Test complete Windows build with inheritance."""
         # Setup mocks
-        mock_resolve.return_value = BuildConfig(
-            template="windows.pkr.hcl",
-            varfiles=["windows.pkrvars.hcl"],
-            vars={"answerfile_path": "./answer_files/windows/Autounattend.xml"},
+        from osw_builder.settings import ResolvedConfig, RuntimeConfig
+
+        resolved_config = ResolvedConfig(
+            build_config=BuildConfig(
+                template="windows.pkr.hcl",
+                varfiles=["windows.pkrvars.hcl"],
+                vars={"answerfile_path": "./answer_files/windows/Autounattend.xml"},
+                extra_firstlogin_cmds=["reg.exe add HKLM\\SOFTWARE\\Test"],
+            ),
+            runtime_config=RuntimeConfig(),
         )
         mock_validate.return_value = "def456"
         mock_response_file = MagicMock()
@@ -361,26 +393,30 @@ class TestBuildImageIntegration:
             "source": "http://example.com/win10.iso",
             "key": "VK7JG-NPHTM-C97JM-9MPGT-3V66T",
         }
-        extra_cmds = ["reg.exe add HKLM\\SOFTWARE\\Test"]
-
         # Test the function
-        with build_image_with_inheritance("win10-1507", config_entry, extra_cmds) as result:
+        with build_image_with_inheritance("win10-1507", config_entry, resolved_config) as result:
             assert result == Path("/output/windows.qcow2")
 
         # Verify calls
-        mock_resolve.assert_called_once_with("win10-1507")
         mock_validate.assert_called_once_with(config_entry)
         mock_create_response.assert_called_once()
-        mock_response_file.configure.assert_called_once_with(config_entry, extra_cmds)
+        mock_response_file.configure.assert_called_once_with(config_entry, ["reg.exe add HKLM\\SOFTWARE\\Test"])
         mock_run_packer.assert_called_once()
 
-    @patch("osw_builder.image_builder.build.resolve_build_config")
-    def test_build_image_with_inheritance_image_not_found(self, mock_resolve):
+    def test_build_image_with_inheritance_image_not_found(self):
         """Test error handling when image not found."""
-        mock_resolve.side_effect = ValueError("Image 'nonexistent' not found in any branch")
+        from osw_builder.settings import ResolvedConfig, RuntimeConfig
 
-        config_entry = {"name": "nonexistent", "source": "http://example.com/fake.iso"}
+        # Create a resolved config with missing answerfile_path to trigger error
+        resolved_config = ResolvedConfig(
+            build_config=BuildConfig(
+                template="windows.pkr.hcl", varfiles=["windows.pkrvars.hcl"], vars={}  # Missing answerfile_path
+            ),
+            runtime_config=RuntimeConfig(),
+        )
 
-        with pytest.raises(ValueError, match="Image 'nonexistent' not found in any branch"):
-            with build_image_with_inheritance("nonexistent", config_entry):
+        config_entry = {"name": "nonexistent", "source": "http://example.com/fake.iso", "sha1": "abc123"}
+
+        with pytest.raises(ValueError, match="No answerfile_path defined in build configuration"):
+            with build_image_with_inheritance("nonexistent", config_entry, resolved_config):
                 pass

@@ -73,7 +73,7 @@ def create_response_file(template: str, varfile: str, varfile_data: dict, packer
         return UbuntuPreseed(response_file_path)
 
     elif template == "windows.pkr.hcl":
-        response_file_path = packer_templates_dir / varfile_data["autounattend"]
+        response_file_path = packer_templates_dir / varfile_data["answerfile_path"]
 
         # Only Windows XP uses SIF files, all other Windows versions use XML
         if "winxp" in varfile.lower():
