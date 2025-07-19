@@ -268,7 +268,7 @@ class TestResponseFileCreation:
 
             result = create_response_file_from_answerfile_path(answerfile_path, templates_dir)
 
-            mock_preseed.assert_called_once_with(None)  # Ubuntu uses http_content, no file path needed
+            mock_preseed.assert_called_once_with(templates_dir / "answer_files/ubuntu/preseed.cfg")
             assert result == mock_instance
 
     def test_create_response_file_ubuntu_autoinstall(self):
@@ -282,7 +282,7 @@ class TestResponseFileCreation:
 
             result = create_response_file_from_answerfile_path(answerfile_path, templates_dir)
 
-            mock_preseed.assert_called_once_with(None)  # Ubuntu uses http_content, no file path needed
+            mock_preseed.assert_called_once_with(templates_dir / "answer_files/ubuntu/user-data")
             assert result == mock_instance
 
     def test_create_response_file_windows_autounattend(self):
