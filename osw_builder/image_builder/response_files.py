@@ -39,8 +39,8 @@ class ResponseFile(AbstractContextManager, ABC):
 
     @property
     @abstractmethod
-    def docker_path(self) -> str:
-        """Return the Docker container path for this response file"""
+    def docker_path(self) -> Optional[str]:
+        """Return the Docker container path if mounting is needed, None otherwise"""
         pass
 
     @property
@@ -50,8 +50,9 @@ class ResponseFile(AbstractContextManager, ABC):
         pass
 
     def update_varfile_data(self, varfile_data: dict) -> None:
-        """Update the varfile data with the Docker path"""
-        varfile_data[self.varfile_key] = self.docker_path
+        """Update the varfile data with the Docker path if mounting is needed"""
+        if self.docker_path:
+            varfile_data[self.varfile_key] = self.docker_path
 
     @abstractmethod
     def configure(self, build_config: "BuildConfig"):
