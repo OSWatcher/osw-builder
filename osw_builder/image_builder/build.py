@@ -157,8 +157,10 @@ def build_docker_volumes(response_file: ResponseFile, tmp_varfile_path: str, pac
         tmp_varfile_path: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
     }
 
-    # Add response file volume
-    volumes[str(response_file.tmp_path)] = {"bind": response_file.docker_path, "mode": "ro"}
+    # Add response file volume only if mounting is needed
+    docker_path = response_file.docker_path
+    if docker_path:
+        volumes[str(response_file.tmp_path)] = {"bind": docker_path, "mode": "ro"}
 
     return volumes
 
