@@ -49,11 +49,6 @@ class UbuntuAutoinstall(ResponseFile):
         """Return None - autoinstall files are served via http_content, no Docker mounting needed"""
         return None
 
-    @property
-    def varfile_key(self) -> str:
-        """Return the varfile key for autoinstall files"""
-        return "answerfile_path"
-
     def configure(self, build_config: "BuildConfig"):
         """Configure the autoinstall files - customize user-data with config values"""
         # nothing to do, templating is done by Packer http_content

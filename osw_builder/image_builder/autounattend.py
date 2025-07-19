@@ -74,11 +74,6 @@ class WindowsAutounattend(ResponseFile):
         return f"/packer/{str(self.response_file_path).lstrip('./')}"
 
     @property
-    def varfile_key(self) -> str:
-        """Return the varfile key for autounattend files"""
-        return "answerfile_path"
-
-    @property
     def product_key(self):
         """Retrieves the ProductKey"""
         product_key = self.tree.find(".//ns:ProductKey", namespaces=self.nsmap)

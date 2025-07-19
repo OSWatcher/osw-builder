@@ -49,11 +49,6 @@ class WindowsXPSif(ResponseFile):
             return f"/packer/{str(self.response_file_path).lstrip('./')}"
         return "/packer/WINNT.SIF"
 
-    @property
-    def varfile_key(self) -> str:
-        """Return the varfile key for SIF files"""
-        return "answerfile_path"
-
     def configure(self, build_config: "BuildConfig"):
         """Configure the SIF file - Windows XP doesn't support much customization"""
         # For Windows XP, we mostly just copy the original file

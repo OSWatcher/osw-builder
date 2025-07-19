@@ -48,11 +48,6 @@ class UbuntuPreseed(ResponseFile):
         """Return None - preseed files are served via http_content, no Docker mounting needed"""
         return None
 
-    @property
-    def varfile_key(self) -> str:
-        """Return the varfile key for preseed files"""
-        return "answerfile_path"
-
     def configure(self, build_config: "BuildConfig"):
         # nothing to do, templating is done by Packer http_content
         pass

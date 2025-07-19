@@ -43,17 +43,6 @@ class ResponseFile(AbstractContextManager, ABC):
         """Return the Docker container path if mounting is needed, None otherwise"""
         pass
 
-    @property
-    @abstractmethod
-    def varfile_key(self) -> str:
-        """Return the varfile key for this response file type"""
-        pass
-
-    def update_varfile_data(self, varfile_data: dict) -> None:
-        """Update the varfile data with the Docker path if mounting is needed"""
-        if self.docker_path:
-            varfile_data[self.varfile_key] = self.docker_path
-
     @abstractmethod
     def configure(self, build_config: "BuildConfig"):
         """Configure the response file with the given build configuration"""
@@ -63,27 +52,3 @@ class ResponseFile(AbstractContextManager, ABC):
     def write(self):
         """Write the configured response file"""
         pass
-
-
-def create_response_file(template: str, varfile: str, varfile_data: dict, packer_templates_dir: Path) -> ResponseFile:
-    """Factory function to create the appropriate ResponseFile instance based on template and varfile"""
-    from .autounattend import WindowsAutounattend
-    from .ubuntu_preseed import UbuntuPreseed
-    from .winxp_sif import WindowsXPSif
-
-    # Auto-detect response file type based on template and varfile
-    if template == "ubuntu.pkr.hcl":
-        response_file_path = packer_templates_dir / varfile_data["answerfile_path"]
-        return UbuntuPreseed(response_file_path)
-
-    elif template == "windows.pkr.hcl":
-        response_file_path = packer_templates_dir / varfile_data["answerfile_path"]
-
-        # Only Windows XP uses SIF files, all other Windows versions use XML
-        if "winxp" in varfile.lower():
-            return WindowsXPSif(response_file_path)
-        else:
-            return WindowsAutounattend(response_file_path)
-
-    else:
-        raise ValueError(f"Unsupported template: {template}")
