@@ -22,7 +22,7 @@ settings = Dynaconf(
 class BuildConfig:
     """Strongly-typed build configuration resolved through inheritance."""
 
-    template: str
+    template: Optional[str] = None
     varfiles: List[str] = []
     vars: Dict[str, Any] = {}
     network: bool = False
@@ -32,6 +32,8 @@ class BuildConfig:
 
     def to_packer_cmdline(self, iso_url: str, sha1: str, packer_args: List[str]) -> List[str]:
         """Export BuildConfig as Packer command line arguments."""
+        assert self.template is not None, "template is required for Packer builds"
+
         cmdline = ["build", "-only", "qemu.vm"]
 
         # Add docker varfile first (essential for Docker environment)
@@ -99,47 +101,6 @@ class ResolvedConfig:
     runtime_config: RuntimeConfig
 
 
-def resolve_build_config(target_image: str) -> BuildConfig:
-    """
-    Resolve build configuration using chronological inheritance.
-
-    Walks through all branches to find the target image, then applies
-    chronological inheritance to resolve the complete build configuration.
-
-    Args:
-        target_image: Name of the target image to resolve config for
-
-    Returns:
-        BuildConfig: Resolved configuration with template, varfiles, vars
-
-    Raises:
-        ValueError: If image not found, found in multiple branches,
-                   or first build_config lacks template
-    """
-    # Find which branch(es) contain the target image
-    found_branches = []
-
-    if not hasattr(settings, "branches") or not settings.branches:
-        raise ValueError("No branches defined in configuration")
-
-    for branch_name, branch_items in settings.branches.items():
-        if _image_in_branch(branch_items, target_image):
-            found_branches.append(branch_name)
-
-    # Ensure image is found in exactly one branch
-    if not found_branches:
-        raise ValueError(f"Image '{target_image}' not found in any branch")
-
-    if len(found_branches) > 1:
-        raise ValueError(f"Image '{target_image}' found in multiple branches: {found_branches}")
-
-    branch_name = found_branches[0]
-    branch_items = settings.branches[branch_name]
-
-    # Apply chronological inheritance
-    return _resolve_inheritance(branch_items, target_image, branch_name)
-
-
 def _image_in_branch(branch_items: List, target_image: str) -> bool:
     """Check if target image exists in branch items."""
     for item in branch_items:
@@ -148,49 +109,6 @@ def _image_in_branch(branch_items: List, target_image: str) -> bool:
         elif isinstance(item, str) and item == target_image:
             return True
     return False
-
-
-def _resolve_inheritance(branch_items: List, target_image: str, branch_name: str) -> BuildConfig:
-    """Apply chronological inheritance to resolve build configuration."""
-    template = None
-    varfiles = []
-    vars_dict = {}
-    first_build_config_seen = False
-
-    for item in branch_items:
-        # Check if this item has build_config
-        if isinstance(item, dict) and "build_config" in item:
-            build_config = item["build_config"]
-
-            # Validate first build_config has template
-            if not first_build_config_seen:
-                if "template" not in build_config:
-                    raise ValueError(f"First build_config in branch '{branch_name}' must define template")
-                first_build_config_seen = True
-
-            # Apply configuration (replace strategy for template/varfiles, merge for vars)
-            if "template" in build_config:
-                template = build_config["template"]
-
-            if "varfiles" in build_config:
-                varfiles = build_config["varfiles"].copy()  # Replace, don't extend
-
-            if "vars" in build_config:
-                vars_dict.update(build_config["vars"])  # Merge individual keys
-
-            # Stop if this is our target image
-            if item.get("name") == target_image:
-                break
-
-        # Check if we've reached our target (string form)
-        elif isinstance(item, str) and item == target_image:
-            break
-
-    # Validate we found at least one build_config
-    if template is None:
-        raise ValueError(f"No build_config found in branch '{branch_name}'")
-
-    return BuildConfig(template=template, varfiles=varfiles, vars=vars_dict)
 
 
 def resolve_image_config(target_image: str) -> ResolvedConfig:
@@ -238,18 +156,11 @@ def _resolve_full_inheritance(branch_items: List, target_image: str, branch_name
     vars_dict = {}
     build_config_dict = {}
     runtime_config_dict = {}
-    first_build_config_seen = False
 
     for item in branch_items:
         # Check if this item has build_config
         if isinstance(item, dict) and "build_config" in item:
             build_config = item["build_config"]
-
-            # Validate first build_config has template
-            if not first_build_config_seen:
-                if "template" not in build_config:
-                    raise ValueError(f"First build_config in branch '{branch_name}' must define template")
-                first_build_config_seen = True
 
             # Apply build_config (replace strategy for template/varfiles, merge for vars)
             if "template" in build_config:
@@ -275,10 +186,6 @@ def _resolve_full_inheritance(branch_items: List, target_image: str, branch_name
             break
         elif isinstance(item, str) and item == target_image:
             break
-
-    # Validate we found at least one build_config
-    if template is None:
-        raise ValueError(f"No build_config found in branch '{branch_name}'")
 
     return ResolvedConfig(
         build_config=BuildConfig(template=template, varfiles=varfiles, vars=vars_dict, **build_config_dict),

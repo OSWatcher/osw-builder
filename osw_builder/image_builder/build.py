@@ -325,6 +325,10 @@ def build_image_with_inheritance(
     # Use the resolved configuration passed from main
     build_config = resolved_config.build_config
 
+    # Validate that we have a template for Packer builds
+    if not build_config.template:
+        raise ValueError(f"No template defined in build configuration for {image_name} - required for Packer builds")
+
     # Validate source and compute SHA1
     sha1digest = validate_source_and_compute_sha1(config_entry)
 
