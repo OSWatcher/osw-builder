@@ -304,18 +304,18 @@ images:
 
   - name: &ubuntu_18_04 "ubuntu-18.04"
     description: "Ubuntu 18.04 LTS (Bionic Beaver)"
-    source: "https://releases.ubuntu.com/18.04/ubuntu-18.04.6-live-server-amd64.iso"
-    sha1: "ed8ce026c93a74747e758b2b12492569c7660740"
+    source: "https://old-releases.ubuntu.com/releases/bionic/ubuntu-18.04.5-server-amd64.iso"
+    sha1: "c5dc820b3b46ccdd94bb1568715852ea3bf772a4"
 
   - name: &ubuntu_18_10 "ubuntu-18.10"
     description: "Ubuntu 18.10 (Cosmic Cuttlefish)"
-    source: "https://old-releases.ubuntu.com/releases/18.10/ubuntu-18.10-live-server-amd64.iso"
-    sha1: "97dc434a27bfcea151179ffc94ee7745f10efe5e"
+    source: "https://old-releases.ubuntu.com/releases/cosmic/ubuntu-18.10-server-amd64.iso"
+    sha1: "af6096e6372732f0e1f643d630634cbc9c14c521"
 
   - name: &ubuntu_19_04 "ubuntu-19.04"
     description: "Ubuntu 19.04 (Disco Dingo)"
-    source: "https://old-releases.ubuntu.com/releases/19.04/ubuntu-19.04-live-server-amd64.iso"
-    sha1: "544ba93f0e0a92c642c3585894da1a59693cc278"
+    source: "https://old-releases.ubuntu.com/releases/disco/ubuntu-19.04-server-amd64.iso"
+    sha1: "e637251f52ebb165d4234f157cd5ce3d2449b62a"
 
   - name: &ubuntu_20_04 "ubuntu-20.04"
     description: "Ubuntu 20.04 LTS (Focal Fossa)"
@@ -448,18 +448,16 @@ branches:
     - *ubuntu_16_10
     - *ubuntu_17_04
     - *ubuntu_17_10
-    # TODO
-    # Modern autoinstall era (18.04+) - Switches to autoinstall  
-    # - name: *ubuntu_18_04
-    #   build_config:
-    #     varfiles:
-    #       - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
-    #     vars:
-    #       answerfile_path: "./answer_files/ubuntu/"
-    # - *ubuntu_18_10
-    # - *ubuntu_19_04
+    - name: *ubuntu_18_04
+      build_config:
+        vars:
+          # Since Ubuntu 18.04, GRUB Timeout is very short
+          boot_wait: 2s
+    - *ubuntu_18_10
+    - *ubuntu_19_04
+    # Modern autoinstall era (20.04+) - Switches to autoinstall
     # - name: *ubuntu_20_04
     #   build_config:
     #     vars:
-    #       boot_wait: 2s
+    #       answerfile_path: "./answer_files/ubuntu/"
     #       boot_command_prefix: "<ESC><ESC><F6><ESC>"
