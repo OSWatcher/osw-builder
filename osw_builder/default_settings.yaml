@@ -420,8 +420,12 @@ branches:
         vars:
           boot_command_prefix: "<F6>"
           answerfile_path: "./answer_files/ubuntu/preseed.cfg"
+          preseed_disk_device: "/dev/hda"
     - *ubuntu_7_04
-    - *ubuntu_7_10
+    - name: *ubuntu_7_10
+      build_config:
+        vars:
+          preseed_disk_device: "/dev/sda"
     - name: *ubuntu_8_04
       build_config:
         vars:
@@ -447,7 +451,19 @@ branches:
     - *ubuntu_16_04
     - *ubuntu_16_10
     - *ubuntu_17_04
-    - *ubuntu_17_10
+    - name: *ubuntu_17_10
+      build_config:
+        vars:
+          preseed_extra_late_commands: |
+            mkdir -p /target/etc/netplan;
+            cat > /target/etc/netplan/01-dhcp.yaml << 'EOF'
+            network:
+              version: 2
+              ethernets:
+                enp0s3:
+                  dhcp4: true
+            EOF
+            chmod 600 /target/etc/netplan/01-dhcp.yaml
     - name: *ubuntu_18_04
       build_config:
         vars:
