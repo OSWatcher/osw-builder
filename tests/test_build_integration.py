@@ -176,7 +176,7 @@ class TestDockerVolumeGeneration:
 
         mock_response_file = MagicMock()
         mock_response_file.tmp_path = Path("/tmp/preseed.cfg")
-        mock_response_file.docker_path = "/packer/preseed.cfg"
+        mock_response_file.docker_path = None  # Ubuntu uses http_content, no mounting needed
 
         packer_cache = Path("/cache")
         templates_dir = Path("/packer/templates")
@@ -188,7 +188,7 @@ class TestDockerVolumeGeneration:
         expected = {
             "/cache": {"bind": "/cache", "mode": "rw"},
             "/packer/templates": {"bind": "/output_parent", "mode": "rw"},
-            "/tmp/preseed.cfg": {"bind": "/packer/answer_files/ubuntu/preseed.cfg", "mode": "ro"},
+            # No response file mounting for Ubuntu - served via http_content
             "/packer/templates/ubuntu.pkrvars.hcl": {"bind": "/packer/ubuntu.pkrvars.hcl", "mode": "ro"},
             "/packer/templates/ubuntu.pkrvars/preseed.pkrvars.hcl": {
                 "bind": "/packer/ubuntu.pkrvars/preseed.pkrvars.hcl",
@@ -208,7 +208,9 @@ class TestDockerVolumeGeneration:
 
         mock_response_file = MagicMock()
         mock_response_file.tmp_path = Path("/tmp/Autounattend.xml")
-        mock_response_file.docker_path = "/packer/Autounattend.xml"
+        mock_response_file.docker_path = (
+            "/packer/answer_files/windows/Autounattend.xml"  # Dynamic path from answerfile_path
+        )
 
         packer_cache = Path("/cache")
         templates_dir = Path("/packer/templates")
@@ -234,7 +236,7 @@ class TestDockerVolumeGeneration:
 
         mock_response_file = MagicMock()
         mock_response_file.tmp_path = Path("/tmp/config.cfg")
-        mock_response_file.docker_path = "/packer/config.cfg"
+        mock_response_file.docker_path = "/packer/answer_files/custom/config.cfg"  # Dynamic path from answerfile_path
 
         packer_cache = Path("/cache")
         templates_dir = Path("/packer/templates")
@@ -266,7 +268,7 @@ class TestResponseFileCreation:
 
             result = create_response_file_from_answerfile_path(answerfile_path, templates_dir)
 
-            mock_preseed.assert_called_once_with(templates_dir / "answer_files/ubuntu/preseed.cfg")
+            mock_preseed.assert_called_once_with(None)  # Ubuntu uses http_content, no file path needed
             assert result == mock_instance
 
     def test_create_response_file_ubuntu_autoinstall(self):
@@ -280,7 +282,7 @@ class TestResponseFileCreation:
 
             result = create_response_file_from_answerfile_path(answerfile_path, templates_dir)
 
-            mock_preseed.assert_called_once_with(templates_dir / "answer_files/ubuntu/user-data")
+            mock_preseed.assert_called_once_with(None)  # Ubuntu uses http_content, no file path needed
             assert result == mock_instance
 
     def test_create_response_file_windows_autounattend(self):
