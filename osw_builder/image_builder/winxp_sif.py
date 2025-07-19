@@ -45,6 +45,8 @@ class WindowsXPSif(ResponseFile):
     @property
     def docker_path(self) -> str:
         """Return the Docker container path for SIF file"""
+        if self.response_file_path:
+            return f"/packer/{str(self.response_file_path).lstrip('./')}"
         return "/packer/WINNT.SIF"
 
     @property
