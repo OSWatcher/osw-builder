@@ -325,7 +325,10 @@ images:
 branches:
   master:
     # Box images (pre-built, no build_config needed)
-    - *win95
+    - name: *win95
+      runtime_config:
+        search_updates: false
+        idle: false
     - *win98
     - *winME
     - *win2000
@@ -341,6 +344,7 @@ branches:
         image_name: "Windows XP Professional"
         network: true
       runtime_config:
+        idle: true
         search_updates: false
     
     - name: *win7_7600
