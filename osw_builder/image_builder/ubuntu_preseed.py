@@ -15,7 +15,8 @@ class UbuntuPreseed(ResponseFile):
     """Handler for Ubuntu preseed.cfg response files"""
 
     def __init__(self, preseed_path: Optional[Union[str, Path]]):
-        super().__init__(preseed_path)
+        # Skip super().__init__() to avoid file existence check - Ubuntu uses http_content
+        self.response_file_path = Path(preseed_path) if preseed_path is not None else None
         self.tmp_dir: Optional[TemporaryDirectory] = None
         self.tmp_preseed: Optional[Path] = None
         self.tmp_preseed_f: Optional[TextIO] = None
@@ -43,28 +44,18 @@ class UbuntuPreseed(ResponseFile):
         return self.tmp_preseed
 
     @property
-    def docker_path(self) -> str:
-        """Return the Docker container path for preseed file"""
-        # must match the relative path in the default_settings.yaml
-        return "/packer/answer_files/ubuntu/preseed.cfg"
+    def docker_path(self) -> None:
+        """Return None - preseed files are served via http_content, no Docker mounting needed"""
+        return None
 
     @property
     def varfile_key(self) -> str:
         """Return the varfile key for preseed files"""
         return "answerfile_path"
 
-    def update_varfile_data(self, varfile_data: dict) -> None:
-        varfile_data["http_directory"] = "./"
-
     def configure(self, build_config: "BuildConfig"):
-        """Configure the preseed file - just copy original for now"""
-        self.write()
+        # nothing to do, templating is done by Packer http_content
+        pass
 
     def write(self):
-        """Write the preseed file"""
-        if self.response_file_path:
-            # Copy original preseed file content
-            with open(self.response_file_path, "r") as original:
-                content = original.read()
-            self.tmp_preseed_f.write(content)
-        self.tmp_preseed_f.flush()
+        return super().write()

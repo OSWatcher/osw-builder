@@ -15,7 +15,8 @@ class UbuntuAutoinstall(ResponseFile):
     """Handler for Ubuntu autoinstall directory with user-data and meta-data files"""
 
     def __init__(self, autoinstall_dir_path: Optional[Union[str, Path]]):
-        super().__init__(autoinstall_dir_path)
+        # Skip super().__init__() to avoid file existence check - Ubuntu uses http_content
+        self.response_file_path = Path(autoinstall_dir_path) if autoinstall_dir_path is not None else None
         self.tmp_dir: Optional[TemporaryDirectory] = None
         self.tmp_autoinstall_dir: Optional[Path] = None
 
@@ -44,35 +45,19 @@ class UbuntuAutoinstall(ResponseFile):
         return self.tmp_autoinstall_dir
 
     @property
-    def docker_path(self) -> str:
-        """Return the Docker container path for autoinstall directory"""
-        return "/packer/answer_files/ubuntu/"
+    def docker_path(self) -> None:
+        """Return None - autoinstall files are served via http_content, no Docker mounting needed"""
+        return None
 
     @property
     def varfile_key(self) -> str:
         """Return the varfile key for autoinstall files"""
         return "answerfile_path"
 
-    def update_varfile_data(self, varfile_data: dict) -> None:
-        varfile_data["http_directory"] = "./"
-
     def configure(self, build_config: "BuildConfig"):
         """Configure the autoinstall files - customize user-data with config values"""
-        self.write_user_data(build_config)
-        self.write_meta_data()
+        # nothing to do, templating is done by Packer http_content
+        pass
 
     def write(self):
-        """Write the autoinstall files - delegates to configure for now"""
-        # The actual writing is done in configure() when called with config_entry
-        # This method exists to satisfy the abstract base class
-        pass
-
-    def write_user_data(self, build_config: "BuildConfig"):
-        """Write the user-data file - just use the original files for now"""
-        # Files are already copied in __enter__, no customization needed
-        pass
-
-    def write_meta_data(self):
-        """Write the meta-data file - just use the original files for now"""
-        # Files are already copied in __enter__, no customization needed
-        pass
+        return super().write()
