@@ -3,7 +3,7 @@
 from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, TextIO, Union
 
 if TYPE_CHECKING:
     from ..settings import BuildConfig
@@ -18,15 +18,15 @@ class WindowsXPSif(ResponseFile):
         super().__init__(sif_path)
         self.tmp_dir: Optional[TemporaryDirectory] = None
         self.tmp_sif: Optional[Path] = None
-        self.tmp_sif_f = None
+        self.tmp_sif_f: Optional[TextIO] = None
 
-    def __enter__(self):
+    def __enter__(self) -> "WindowsXPSif":
         self.tmp_dir = TemporaryDirectory()
-        self.tmp_sif: Path = Path(self.tmp_dir.name) / "WINNT.SIF"
+        self.tmp_sif = Path(self.tmp_dir.name) / "WINNT.SIF"
         self.tmp_sif_f = open(self.tmp_sif, "w")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self.tmp_sif_f:
             self.tmp_sif_f.close()
         with suppress(FileNotFoundError):
