@@ -454,16 +454,18 @@ branches:
     - name: *ubuntu_17_10
       build_config:
         vars:
-          preseed_extra_late_commands: |
+          preseed_extra_late_commands: >
             mkdir -p /target/etc/netplan;
-            cat > /target/etc/netplan/01-dhcp.yaml << 'EOF'
-            network:
-              version: 2
-              ethernets:
-                enp0s3:
-                  dhcp4: true
-            EOF
-            chmod 600 /target/etc/netplan/01-dhcp.yaml
+            echo "network:" > /target/etc/netplan/01-dhcp.yaml;
+            echo "  version: 2" >> /target/etc/netplan/01-dhcp.yaml;
+            echo "  renderer: networkd" >> /target/etc/netplan/01-dhcp.yaml;
+            echo "  ethernets:" >> /target/etc/netplan/01-dhcp.yaml;
+            echo "    all-eth: " >> /target/etc/netplan/01-dhcp.yaml;
+            echo "      match: " >> /target/etc/netplan/01-dhcp.yaml;
+            echo "        name: \"e*\"" >> /target/etc/netplan/01-dhcp.yaml;
+            echo "      dhcp4: true" >> /target/etc/netplan/01-dhcp.yaml;
+            echo "      optional: true" >> /target/etc/netplan/01-dhcp.yaml;
+
     - name: *ubuntu_18_04
       build_config:
         vars:
