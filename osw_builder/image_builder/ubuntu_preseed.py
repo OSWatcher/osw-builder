@@ -3,7 +3,7 @@
 from contextlib import suppress
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, TextIO, Union
 
 if TYPE_CHECKING:
     from ..settings import BuildConfig
@@ -18,15 +18,15 @@ class UbuntuPreseed(ResponseFile):
         super().__init__(preseed_path)
         self.tmp_dir: Optional[TemporaryDirectory] = None
         self.tmp_preseed: Optional[Path] = None
-        self.tmp_preseed_f = None
+        self.tmp_preseed_f: Optional[TextIO] = None
 
-    def __enter__(self):
+    def __enter__(self) -> "UbuntuPreseed":
         self.tmp_dir = TemporaryDirectory()
-        self.tmp_preseed: Path = Path(self.tmp_dir.name) / "preseed.cfg"
+        self.tmp_preseed = Path(self.tmp_dir.name) / "preseed.cfg"
         self.tmp_preseed_f = open(self.tmp_preseed, "w")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self.tmp_preseed_f:
             self.tmp_preseed_f.close()
         with suppress(FileNotFoundError):
