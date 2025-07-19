@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from osw_builder.settings import BuildConfig, resolve_build_config
+from osw_builder.settings import BuildConfig, resolve_image_config
 
 
 class TestBasicInheritance:
@@ -27,7 +27,7 @@ class TestBasicInheritance:
             ]
         }
 
-        result = resolve_build_config("ubuntu-7.04")
+        result = resolve_image_config("ubuntu-7.04").build_config
 
         assert isinstance(result, BuildConfig)
         assert result.template == "ubuntu.pkr.hcl"
@@ -49,27 +49,28 @@ class TestBasicInheritance:
         }
 
         # First item should work
-        result_first = resolve_build_config("ubuntu-6.10")
+        result_first = resolve_image_config("ubuntu-6.10").build_config
         assert result_first.template == "ubuntu.pkr.hcl"
         assert result_first.vars["boot_dir"] == "/install"
 
         # Second item should inherit template
-        result_second = resolve_build_config("ubuntu-7.04")
+        result_second = resolve_image_config("ubuntu-7.04").build_config
         assert result_second.template == "ubuntu.pkr.hcl"
         assert result_second.vars["boot_dir"] == "/install"
 
     @patch("osw_builder.settings.settings")
-    def test_first_item_without_template_fails(self, mock_settings):
-        """Test that branch starting without template in first item is invalid."""
+    def test_first_item_without_template_succeeds(self, mock_settings):
+        """Test that branch starting without template works (for box images)."""
         mock_settings.branches = {
-            "invalid-branch": [
+            "box-branch": [
                 {"name": "ubuntu-6.10", "build_config": {"vars": {"boot_dir": "/install"}}},  # No template!
                 "ubuntu-7.04",
             ]
         }
 
-        with pytest.raises(ValueError, match="First build_config in branch 'invalid-branch' must define template"):
-            resolve_build_config("ubuntu-7.04")
+        result = resolve_image_config("ubuntu-7.04").build_config
+        assert result.template is None  # Box images don't need templates
+        assert result.vars["boot_dir"] == "/install"
 
     @patch("osw_builder.settings.settings")
     def test_target_not_found(self, mock_settings):
@@ -79,7 +80,7 @@ class TestBasicInheritance:
         }
 
         with pytest.raises(ValueError, match="Image 'ubuntu-99.99' not found in any branch"):
-            resolve_build_config("ubuntu-99.99")
+            resolve_image_config("ubuntu-99.99")
 
     @patch("osw_builder.settings.settings")
     def test_no_branches_defined(self, mock_settings):
@@ -87,7 +88,7 @@ class TestBasicInheritance:
         mock_settings.branches = {}
 
         with pytest.raises(ValueError, match="No branches defined in configuration"):
-            resolve_build_config("any-image")
+            resolve_image_config("any-image")
 
     @patch("osw_builder.settings.settings")
     def test_image_in_multiple_branches_fails(self, mock_settings):
@@ -97,7 +98,7 @@ class TestBasicInheritance:
         with pytest.raises(
             ValueError, match="Image 'duplicate-image' found in multiple branches: \\['branch1', 'branch2'\\]"
         ):
-            resolve_build_config("duplicate-image")
+            resolve_image_config("duplicate-image")
 
 
 class TestOverrideInheritance:
@@ -128,7 +129,7 @@ class TestOverrideInheritance:
             ]
         }
 
-        result = resolve_build_config("ubuntu-18.04")
+        result = resolve_image_config("ubuntu-18.04").build_config
 
         assert result.template == "ubuntu.pkr.hcl"  # From 6.10
         assert result.varfiles == ["modern.pkrvars.hcl"]  # From 16.04 (replaced)
@@ -155,7 +156,7 @@ class TestOverrideInheritance:
             ]
         }
 
-        result = resolve_build_config("ubuntu-18.04")
+        result = resolve_image_config("ubuntu-18.04").build_config
 
         # Should only have varfiles from 16.04, not 6.10 + 16.04
         assert result.varfiles == ["modern.pkrvars.hcl"]
@@ -186,7 +187,7 @@ class TestOverrideInheritance:
             ]
         }
 
-        result = resolve_build_config("ubuntu-18.04")
+        result = resolve_image_config("ubuntu-18.04").build_config
 
         assert result.vars["boot_dir"] == "/casper"  # Overridden
         assert result.vars["boot_command"] == "<ESC><F6>"  # Overridden
@@ -209,7 +210,7 @@ class TestOverrideInheritance:
             ]
         }
 
-        result = resolve_build_config("ubuntu-22.04")
+        result = resolve_image_config("ubuntu-22.04").build_config
 
         assert result.template == "ubuntu.pkr.hcl"  # From 6.10
         assert result.vars["era"] == "autoinstall"  # From 20.04 (last override)
@@ -222,11 +223,13 @@ class TestEdgeCases:
 
     @patch("osw_builder.settings.settings")
     def test_string_only_branch(self, mock_settings):
-        """Test branch with only string entries (no build_config)."""
+        """Test branch with only string entries (no build_config) works for box images."""
         mock_settings.branches = {"string-only": ["image-1", "image-2", "image-3"]}
 
-        with pytest.raises(ValueError, match="No build_config found in branch 'string-only'"):
-            resolve_build_config("image-2")
+        result = resolve_image_config("image-2").build_config
+        assert result.template is None  # No template for box images
+        assert result.varfiles == []
+        assert result.vars == {}
 
     @patch("osw_builder.settings.settings")
     def test_mixed_string_and_object_branch(self, mock_settings):
@@ -241,7 +244,7 @@ class TestEdgeCases:
             ]
         }
 
-        result = resolve_build_config("inherit-3")
+        result = resolve_image_config("inherit-3").build_config
 
         assert result.template == "test.pkr.hcl"  # From base
         assert result.vars["key"] == "value"  # From override
@@ -256,7 +259,7 @@ class TestEdgeCases:
             ]
         }
 
-        result = resolve_build_config("target")
+        result = resolve_image_config("target").build_config
 
         assert result.template == "base.pkr.hcl"
         assert result.vars["new"] == "value"
@@ -285,7 +288,7 @@ class TestWindowsCompatibility:
             ]
         }
 
-        result = resolve_build_config("win10-1511")
+        result = resolve_image_config("win10-1511").build_config
 
         assert result.template == "windows.pkr.hcl"
         assert result.varfiles == ["windows.pkrvars.hcl"]
