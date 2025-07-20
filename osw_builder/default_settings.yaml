@@ -32,6 +32,9 @@ remove_domain: false
 storage_pool: "default"
 # whether to skip neogit capture operations
 skip_neogit: false
+# Logging configuration
+logging:
+  format: "%(asctime)s %(levelname)s:%(name)s:%(message)s"
 images:
   - name: &win95 "win95"
     description: "Windows 95 (4.00.950)"

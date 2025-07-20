@@ -57,7 +57,7 @@ def str2bool(v):
 
 
 def init_logger(debug=False):
-    formatter = "%(asctime)s %(levelname)s:%(name)s:%(message)s"
+    formatter = settings.logging.format
     logging_level = logging.INFO
     if debug:
         logging_level = logging.DEBUG
