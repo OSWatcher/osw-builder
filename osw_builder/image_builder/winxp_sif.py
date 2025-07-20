@@ -45,12 +45,9 @@ class WindowsXPSif(ResponseFile):
     @property
     def docker_path(self) -> str:
         """Return the Docker container path for SIF file"""
+        if self.response_file_path:
+            return f"/packer/{str(self.response_file_path).lstrip('./')}"
         return "/packer/WINNT.SIF"
-
-    @property
-    def varfile_key(self) -> str:
-        """Return the varfile key for SIF files"""
-        return "answerfile_path"
 
     def configure(self, build_config: "BuildConfig"):
         """Configure the SIF file - Windows XP doesn't support much customization"""

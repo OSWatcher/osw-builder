@@ -16,7 +16,7 @@ import hcl2
 import osw_builder as root_package
 
 from ..settings import BuildConfig
-from .response_files import ResponseFile, create_response_file
+from .response_files import ResponseFile
 from .utils import compute_sha1sum
 
 
@@ -97,36 +97,6 @@ def ensure_cleanup_output():
         raise
 
 
-@contextmanager
-def build_image(
-    template: str,
-    varfile: str,
-    config_entry: dict,
-    extra_firstlogin_cmds: Optional[list[str]],
-    packer_args: Optional[list[str]] = None,
-    network: bool = False,
-) -> Generator[Path, None, None]:
-    logging.info("Building image")
-    sha1digest = validate_source_and_compute_sha1(config_entry)
-    varfile_data = update_varfile(PACKER_TEMPLATES_DIR / varfile, config_entry["source"], sha1digest)
-
-    with ExitStack() as ex:
-        # Create appropriate response file handler based on template and varfile
-        # Examples:
-        # - template="windows.pkr.hcl", varfile="win10.pkrvars.hcl" -> WindowsAutounattend
-        # - template="windows.pkr.hcl", varfile="winxp.pkrvars.hcl" -> WindowsXPSif
-        # - template="ubuntu.pkr.hcl", varfile="ubuntu.pkrvars.hcl" -> UbuntuPreseed
-        response_file = ex.enter_context(create_response_file(template, varfile, varfile_data, PACKER_TEMPLATES_DIR))
-
-        # Configure response file with product keys, hostnames, etc.
-        response_file.configure(config_entry, extra_firstlogin_cmds)
-
-        # force packer cache, need network for that
-        fake_run_packer(template, varfile_data, response_file, network=True)
-        # enforce no network for now
-        yield run_packer(template, varfile_data, response_file, packer_args or [], network=network)
-
-
 def build_packer_cmdline(template: str, packer_args: list[str]) -> list[str]:
     """Build Packer command line arguments - pure function."""
     cmdline = [
@@ -157,8 +127,10 @@ def build_docker_volumes(response_file: ResponseFile, tmp_varfile_path: str, pac
         tmp_varfile_path: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
     }
 
-    # Add response file volume
-    volumes[str(response_file.tmp_path)] = {"bind": response_file.docker_path, "mode": "ro"}
+    # Add response file volume only if mounting is needed
+    docker_path = response_file.docker_path
+    if docker_path:
+        volumes[str(response_file.tmp_path)] = {"bind": docker_path, "mode": "ro"}
 
     return volumes
 
@@ -228,42 +200,6 @@ def docker_packer_runner(docker_config: dict, network: bool) -> Generator[None, 
         if container:
             with suppress(docker.errors.NotFound, docker.errors.APIError):
                 container.remove(force=True)
-
-
-def fake_run_packer(template: str, varfile_data: dict, response_file: ResponseFile, network: bool = True):
-    logging.info("Fake Packer run (Force image download)")
-    # Create fake varfile with impossible CPU count to force download failure
-    fake_varfile_data = varfile_data.copy()
-    fake_varfile_data["cpus"] = 999999
-
-    with suppress(RuntimeError):
-        # empty packer args, we don't want any cpu override here
-        run_packer(template, fake_varfile_data, response_file, packer_args=[], network=network)
-
-
-def run_packer(
-    template: str, varfile_data: dict, response_file: ResponseFile, packer_args: list[str], network: bool
-) -> Path:
-    with ensure_cleanup_output():
-        packer_home_cache = get_packer_home_cache()
-
-        # Update varfile_data with response file Docker path
-        response_file.update_varfile_data(varfile_data)
-
-        # Create temporary varfile
-        with write_temp_varfile(varfile_data) as tmp_varfile_path:
-            # Build configuration using pure functions
-            cmdline = build_packer_cmdline(template, packer_args)
-            volumes = build_docker_volumes(response_file, tmp_varfile_path, packer_home_cache)
-            docker_config = build_docker_config(volumes, cmdline, network)
-
-            logging.debug("Volumes: %s", volumes)
-            logging.debug("Running packer with command line: %s", cmdline)
-
-            # Use Docker context manager for container lifecycle
-            with docker_packer_runner(docker_config, network):
-                # return the first file ending with .box in the output directory
-                return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
 
 
 # New inheritance-based build functions

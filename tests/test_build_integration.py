@@ -176,7 +176,7 @@ class TestDockerVolumeGeneration:
 
         mock_response_file = MagicMock()
         mock_response_file.tmp_path = Path("/tmp/preseed.cfg")
-        mock_response_file.docker_path = "/packer/preseed.cfg"
+        mock_response_file.docker_path = None  # Ubuntu uses http_content, no mounting needed
 
         packer_cache = Path("/cache")
         templates_dir = Path("/packer/templates")
@@ -188,7 +188,7 @@ class TestDockerVolumeGeneration:
         expected = {
             "/cache": {"bind": "/cache", "mode": "rw"},
             "/packer/templates": {"bind": "/output_parent", "mode": "rw"},
-            "/tmp/preseed.cfg": {"bind": "/packer/answer_files/ubuntu/preseed.cfg", "mode": "ro"},
+            # No response file mounting for Ubuntu - served via http_content
             "/packer/templates/ubuntu.pkrvars.hcl": {"bind": "/packer/ubuntu.pkrvars.hcl", "mode": "ro"},
             "/packer/templates/ubuntu.pkrvars/preseed.pkrvars.hcl": {
                 "bind": "/packer/ubuntu.pkrvars/preseed.pkrvars.hcl",
@@ -208,7 +208,9 @@ class TestDockerVolumeGeneration:
 
         mock_response_file = MagicMock()
         mock_response_file.tmp_path = Path("/tmp/Autounattend.xml")
-        mock_response_file.docker_path = "/packer/Autounattend.xml"
+        mock_response_file.docker_path = (
+            "/packer/answer_files/windows/Autounattend.xml"  # Dynamic path from answerfile_path
+        )
 
         packer_cache = Path("/cache")
         templates_dir = Path("/packer/templates")
@@ -234,7 +236,7 @@ class TestDockerVolumeGeneration:
 
         mock_response_file = MagicMock()
         mock_response_file.tmp_path = Path("/tmp/config.cfg")
-        mock_response_file.docker_path = "/packer/config.cfg"
+        mock_response_file.docker_path = "/packer/answer_files/custom/config.cfg"  # Dynamic path from answerfile_path
 
         packer_cache = Path("/cache")
         templates_dir = Path("/packer/templates")
