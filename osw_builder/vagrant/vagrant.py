@@ -30,7 +30,6 @@ class SSHConfig:
     HostName: str
     User: str
     Port: int
-    IdentityFile: str
 
 
 @define(auto_attribs=True)
@@ -347,11 +346,18 @@ def parse_winrm_config(output: str) -> WinRMConfig:
 
 def parse_ssh_config(output: str) -> SSHConfig:
     """sample output:
-    Host default
-        HostName 192.168.121.173
-        User vagrant
-        Port 22
-        IdentityFile /home/user/.vagrant.d/insecure_private_key
+    Host ubuntu-17.10
+    HostName 192.168.122.92
+    User vagrant
+    Port 22
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+    PasswordAuthentication no
+    IdentitiesOnly yes
+    LogLevel FATAL
+    PubkeyAcceptedKeyTypes +ssh-rsa
+    HostKeyAlgorithms +ssh-rsa
+
     """
     config = {}
     lines = output.strip().split("\n")
@@ -362,7 +368,7 @@ def parse_ssh_config(output: str) -> SSHConfig:
             config[key] = value
 
     # Ensure required fields are present
-    required_fields = ["Host", "HostName", "User", "Port", "IdentityFile"]
+    required_fields = ["Host", "HostName", "User", "Port"]
     for field in required_fields:
         if field not in config:
             raise ValueError(f"Missing required SSH config field: {field}")
@@ -372,7 +378,6 @@ def parse_ssh_config(output: str) -> SSHConfig:
         HostName=config["HostName"],
         User=config["User"],
         Port=int(config["Port"]),
-        IdentityFile=config["IdentityFile"],
     )
 
 
