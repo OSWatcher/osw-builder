@@ -70,31 +70,6 @@ def run_ansible_playbook(
         logging.error("Ansible playbook failed with status: %s", result.status)
         logging.error("Return code: %s", result.rc)
 
-        # Log stdout content
-        if hasattr(result, "stdout") and result.stdout:
-            try:
-                stdout_content = result.stdout.read()
-                logging.error("Ansible stdout:\n%s", stdout_content)
-            except Exception as e:
-                logging.error("Could not read stdout: %s", e)
-
-        # Log stderr content if available
-        if hasattr(result, "stderr") and result.stderr:
-            try:
-                stderr_content = result.stderr.read()
-                logging.error("Ansible stderr:\n%s", stderr_content)
-            except Exception as e:
-                logging.error("Could not read stderr: %s", e)
-
-        # Log last few events for context
-        if result.events:
-            logging.error("Last few events:")
-            events_list = list(result.events)
-            for event in events_list[-3:]:  # Last 3 events
-                event_type = event.get("event", "unknown")
-                stdout = event.get("stdout", "")
-                logging.error("  %s: %s", event_type, stdout)
-
         raise RuntimeError(f"Ansible playbook failed with status: {result.status}")
 
     # Example of event structure containing the registered variable 'windows_updates'
