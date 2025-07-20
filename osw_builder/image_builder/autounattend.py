@@ -71,12 +71,7 @@ class WindowsAutounattend(ResponseFile):
     @property
     def docker_path(self) -> str:
         """Return the Docker container path for autounattend file"""
-        return "/packer/Autounattend.xml"
-
-    @property
-    def varfile_key(self) -> str:
-        """Return the varfile key for autounattend files"""
-        return "answerfile_path"
+        return f"/packer/{str(self.response_file_path).lstrip('./')}"
 
     @property
     def product_key(self):

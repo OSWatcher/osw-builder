@@ -71,10 +71,10 @@ class BuildConfig:
             str(packer_templates_dir): {"bind": "/output_parent", "mode": "rw"},
         }
 
-        # Mount response file at the correct nested path that matches answerfile_path
-        answerfile_path = self.vars.get("answerfile_path", "")
-        docker_response_path = f"/packer/{answerfile_path.lstrip('./')}"
-        volumes[str(response_file.tmp_path)] = {"bind": docker_response_path, "mode": "ro"}
+        # Mount response file only if docker_path indicates mounting is needed
+        docker_path = response_file.docker_path
+        if docker_path:
+            volumes[str(response_file.tmp_path)] = {"bind": docker_path, "mode": "ro"}
 
         # Add varfiles from BuildConfig
         for varfile in self.varfiles:
