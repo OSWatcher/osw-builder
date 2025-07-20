@@ -6,9 +6,11 @@ from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import IO, Generator, Optional, Tuple, cast
+from typing import Generator, Optional, Tuple
 
 from attrs import define
+
+from ..settings import settings
 
 
 @define(auto_attribs=True)
@@ -52,22 +54,65 @@ LIBVIRT_LOADER_EFI = "libvirt.loader = '/usr/share/OVMF/OVMF_CODE.fd'"
 LOG_FILE = "vagrant.log"
 
 
+def setup_vagrant_logging() -> logging.Logger:
+    """Configure dedicated Vagrant logging with console and file output."""
+    vagrant_logger = logging.getLogger("osw_builder.vagrant")
+
+    # Only setup if not already configured
+    if not vagrant_logger.handlers:
+        vagrant_logger.setLevel(logging.INFO)
+        # Prevent propagation to root logger to avoid duplicate console output
+        vagrant_logger.propagate = False
+
+        # Use same format as main logger from settings
+        formatter = logging.Formatter(settings.logging.format)
+
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        vagrant_logger.addHandler(console_handler)
+
+        # File handler - log to vagrant.log (truncate on each run)
+        log_file = Path(LOG_FILE)
+        file_handler = logging.FileHandler(log_file, mode="w")  # 'w' mode truncates file
+        file_handler.setFormatter(formatter)
+        vagrant_logger.addHandler(file_handler)
+
+    return vagrant_logger
+
+
 def log_subprocess_call(cmdline: list[str], cwd: Optional[Path] = None, check: bool = True):
-    with open(LOG_FILE, "a") as log:
-        # stdout=PIPE guarantees process.stdout is not None
-        process = subprocess.Popen(cmdline, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        output = ""
-        # Type cast to inform mypy that stdout is guaranteed to be non-None
-        stdout = cast(IO[str], process.stdout)
-        for line in stdout:
-            log.write(line)
-            # force flush on every line to see progress live when tail -f vagrant.log
-            log.flush()
+    # Setup and use dedicated vagrant logger
+    vagrant_logger = setup_vagrant_logging()
+
+    # Log the command being executed
+    cmd_str = " ".join(cmdline)
+    vagrant_logger.info(f"Executing: {cmd_str}")
+
+    # Run subprocess with PIPE to capture output
+    process = subprocess.Popen(cmdline, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+    output = ""
+    # Read output line by line and log in real-time
+    if process.stdout:
+        for line in process.stdout:
+            # Log to vagrant logger in real-time at debug level
+            clean_line = line.rstrip("\n\r")
+            if clean_line:  # Only log non-empty lines
+                vagrant_logger.debug(clean_line)
             output += line
-        return_code = process.wait()
-        if check and return_code:
-            raise subprocess.CalledProcessError(return_code, cmdline, output=output)
-        return return_code, output
+
+    return_code = process.wait()
+
+    if return_code == 0:
+        vagrant_logger.info("Command completed successfully")
+    else:
+        vagrant_logger.error(f"Command failed with exit code: {return_code}")
+
+    if check and return_code:
+        raise subprocess.CalledProcessError(return_code, cmdline, output=output)
+
+    return return_code, output
 
 
 def box_add(box_path: Path, name: Optional[str] = None):
@@ -75,7 +120,7 @@ def box_add(box_path: Path, name: Optional[str] = None):
     if name:
         cmdline.extend(["--name", name])
     cmdline.append(str(box_path))
-    subprocess.check_call(cmdline)
+    log_subprocess_call(cmdline)
 
 
 def parse_box_list(output: str) -> Generator[str, None, None]:
@@ -92,7 +137,7 @@ def parse_box_list(output: str) -> Generator[str, None, None]:
 
 def box_list() -> list[str]:
     cmdline = ["vagrant", "box", "list"]
-    output = subprocess.check_output(cmdline).decode()
+    _, output = log_subprocess_call(cmdline)
     return list(parse_box_list(output))
 
 
