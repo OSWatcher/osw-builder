@@ -63,7 +63,12 @@ def run_ansible_playbook(
         playbook=playbook_content,
         quiet=False,
         verbosity=2,
-        envvars={"ANSIBLE_STDOUT_CALLBACK": "yaml"},
+        envvars={
+            "ANSIBLE_STDOUT_CALLBACK": "yaml",
+            "ANSIBLE_WINRM_CONNECTION_TIMEOUT": "120",
+            "ANSIBLE_WINRM_READ_TIMEOUT": "600",
+            "ANSIBLE_WINRM_OPERATION_TIMEOUT": "300",
+        },
     )
 
     if result.status != "successful":
