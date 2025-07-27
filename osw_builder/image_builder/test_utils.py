@@ -1,9 +1,11 @@
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
+from .autounattend import WindowsAutounattend
 from .build import build_docker_config, build_docker_volumes, build_packer_cmdline, docker_packer_runner
 from .utils import compute_sha1sum
 
@@ -262,3 +264,64 @@ def test_docker_packer_runner_missing_token(mock_docker_from_env):
     # Verify no Docker operations were attempted
     mock_client.login.assert_not_called()
     mock_client.containers.run.assert_not_called()
+
+
+@pytest.fixture
+def autounattend_files():
+    """Get all Autounattend.xml files in the project."""
+    packer_templates_dir = Path(__file__).parent / "packer-templates" / "answer_files"
+    xml_files = list(packer_templates_dir.glob("**/Autounattend.xml"))
+    if not xml_files:
+        # If not found in relative path, try from project root
+        project_root = Path(__file__).parent.parent
+        packer_templates_dir = project_root / "packer-templates" / "answer_files"
+        xml_files = list(packer_templates_dir.glob("**/Autounattend.xml"))
+    return xml_files
+
+
+@pytest.mark.parametrize(
+    "xml_file",
+    list((Path(__file__).parent / "packer-templates" / "answer_files").glob("**/Autounattend.xml"))
+    or list((Path(__file__).parent.parent / "packer-templates" / "answer_files").glob("**/Autounattend.xml")),
+)
+def test_autounattend_xml_is_well_formed(xml_file):
+    """Test that all Autounattend.xml files are well-formed XML."""
+    try:
+        with open(xml_file, "rb") as f:
+            content = f.read()
+            # This should not raise an exception
+            ET.fromstring(content)
+    except ET.ParseError as e:
+        pytest.fail(f"XML file {xml_file} is not well-formed: {e}")
+    except FileNotFoundError:
+        pytest.fail(f"XML file {xml_file} not found")
+
+
+def test_autounattend_xml_parsability_with_windowsautounattend():
+    """Test that WindowsAutounattend can parse all XML files without errors."""
+    packer_templates_dir = Path(__file__).parent / "packer-templates" / "answer_files"
+    xml_files = list(packer_templates_dir.glob("**/Autounattend.xml"))
+    if not xml_files:
+        # If not found in relative path, try from project root
+        project_root = Path(__file__).parent.parent
+        packer_templates_dir = project_root / "packer-templates" / "answer_files"
+        xml_files = list(packer_templates_dir.glob("**/Autounattend.xml"))
+
+    if not xml_files:
+        pytest.skip("No Autounattend.xml files found")
+
+    errors = []
+    for xml_file in xml_files:
+        try:
+            # Test that WindowsAutounattend can parse the file
+            autounattend = WindowsAutounattend(xml_file)
+            # Test that the tree was created successfully
+            assert autounattend.tree is not None, f"Tree is None for {xml_file}"
+            # Test that we can access the root element
+            root = autounattend.tree.getroot()
+            assert root is not None, f"Root element is None for {xml_file}"
+        except Exception as e:
+            errors.append(f"{xml_file}: {e}")
+
+    if errors:
+        pytest.fail("XML parsing errors found:\n" + "\n".join(errors))
