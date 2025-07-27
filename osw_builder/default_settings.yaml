@@ -358,6 +358,9 @@ branches:
         key: *key_pro
         image_name: "Windows 7 Enterprise"
         extra_firstlogin_cmds: *win10_extra_firstlogin_cmds
+      runtime_config:
+        # too many problems disabling NewNetworkWindow and public network by default
+        idle: false
     
     - name: *win8_9200
       build_config:
@@ -367,6 +370,7 @@ branches:
         key: *key_win8_pro
         image_name: *image_name_win8_pro
       runtime_config:
+        idle: true
         search_updates: false
     
     - name: *win10_ts1_1507
@@ -479,6 +483,8 @@ branches:
     # Modern autoinstall era (20.04+) - Switches to autoinstall
     # - name: *ubuntu_20_04
     #   build_config:
+    #     varfiles:
+    #       - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
     #     vars:
     #       answerfile_path: "./answer_files/ubuntu/"
     #       boot_command_prefix: "<ESC><ESC><F6><ESC>"
