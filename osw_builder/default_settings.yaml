@@ -457,7 +457,7 @@ branches:
     - *ubuntu_15_10
     - *ubuntu_16_04
     - *ubuntu_16_10
-    - *ubuntu_17_04
+    # - *ubuntu_17_04
     - name: *ubuntu_17_10
       build_config:
         vars:
