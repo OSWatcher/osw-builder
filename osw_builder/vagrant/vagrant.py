@@ -60,7 +60,8 @@ def setup_vagrant_logging() -> logging.Logger:
 
     # Only setup if not already configured
     if not vagrant_logger.handlers:
-        vagrant_logger.setLevel(logging.INFO)
+        # use current logging level from root logger
+        vagrant_logger.setLevel(logging.getLogger().level)
         # Prevent propagation to root logger to avoid duplicate console output
         vagrant_logger.propagate = False
 
