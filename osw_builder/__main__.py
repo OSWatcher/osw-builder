@@ -18,6 +18,7 @@ Options:
     --idle=<IDLE_ANSWER>                Capture IDLE state [Default: yes]
     --network                           Enable network access during build
     --skip-neogit                       Skip neogit capture operations
+    --branch=<BRANCH_NAME>              Neogit branch to commit to
     --var <packer_args>...              Extra packer arguments
 """
 
@@ -77,6 +78,7 @@ def capture_os(os_name, args):
     idle = str2bool(args["--idle"])
     network_flag = args["--network"]
     skip_neogit = args["--skip-neogit"]
+    neogit_branch = args.get("--branch")
     before = args.get("--before")
     # Treat empty string as None
     before = before if before else None
@@ -164,7 +166,9 @@ def capture_os(os_name, args):
         # process build snapshot
         vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
         # use description from default_settings.yaml just for build snapshot
-        build_commit = capture_neogit(qcow_path, box_name, unique=True, desc=description, before=before)
+        build_commit = capture_neogit(
+            qcow_path, box_name, branch_name=neogit_branch, unique=True, desc=description, before=before
+        )
         snap_list.pop(0)  # remove build snapshot from the list
 
         # ensure create OS branch
@@ -190,12 +194,14 @@ def capture_os(os_name, args):
                 vagrant.snapshot_save(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
 
             vagrant.snapshot_restore(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
-            capture_neogit(qcow_path, IDLE_SNAPSHOT.name, branch_name, unique=True, desc=IDLE_SNAPSHOT.description)
+            capture_neogit(
+                qcow_path, IDLE_SNAPSHOT.name, branch_name=branch_name, unique=True, desc=IDLE_SNAPSHOT.description
+            )
 
         for raw_snap in snap_list:
             vagrant.snapshot_restore(vagrant_dir, raw_snap.Tag)
             snap = Snapshot.from_raw_tag(raw_snap.Tag)
-            capture_neogit(qcow_path, snap.name, branch_name, unique=True, desc=snap.description)
+            capture_neogit(qcow_path, snap.name, branch_name=branch_name, unique=True, desc=snap.description)
 
         if not search_updates_flag:
             return
@@ -267,7 +273,7 @@ def capture_os(os_name, args):
                 logging.info("📸 Snapshot created: %s", snapshot_name)
 
                 # Capture git commit
-                capture_neogit(qcow_path, snapshot_name, branch_name, unique=True, desc=update.description)
+                capture_neogit(qcow_path, snapshot_name, branch_name=branch_name, unique=True, desc=update.description)
 
                 # Update previous snapshot reference for next iteration
                 previous_raw_snap = snap.to_raw_tag()
