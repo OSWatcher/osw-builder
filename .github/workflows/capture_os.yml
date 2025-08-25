@@ -21,6 +21,10 @@ on:
         required: false
         description: 'Skip compaction'
         default: false
+      branch_name:
+        type: string
+        required: false
+        description: 'Neogit branch to commit to'
 
 jobs:
   capture:
@@ -52,7 +56,7 @@ jobs:
           minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Capture OS
-        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}" --search-updates="${{ inputs.search_updates }}" --var skip_compaction=${{ inputs.skip_compaction }}
+        run: poetry run osw-builder capture_os "${{ inputs.os_name }}" --var cpus=4 --before="${{ inputs.before }}" --search-updates="${{ inputs.search_updates }}" --var skip_compaction=${{ inputs.skip_compaction }} --branch="${{ inputs.branch_name }}"
         env:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer

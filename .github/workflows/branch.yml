@@ -84,6 +84,7 @@ jobs:
       os_name: ${{ matrix.os_name }}
       before: ${{ matrix.before }}
       search_updates: ${{ github.event.inputs.search_updates }}
+      branch_name: ${{ github.event.inputs.branch }}
     secrets: inherit
 
   plugins_main_branch:
