@@ -282,7 +282,7 @@ images:
 
   - name: &ubuntu_15_10 "ubuntu-15.10"
     description: "Ubuntu 15.10 (Wily Werewolf)"
-    source: "https://old-releases.ubuntu.com/releases/wily/ubuntu-15.10.1-server-amd64.iso"
+    source: "https://old-releases.ubuntu.com/releases/wily/ubuntu-15.10-server-amd64.iso"
     sha1: "478446f33e336a98d5868c0b353d0d347e8a7262"
 
   - name: &ubuntu_16_04 "ubuntu-16.04"
