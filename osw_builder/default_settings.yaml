@@ -272,7 +272,7 @@ images:
 
   - name: &ubuntu_14_10 "ubuntu-14.10"
     description: "Ubuntu 14.10 (Utopic Unicorn)"
-    source: "http://old-releases.ubuntu.com/releases/utopic/ubuntu-14.10.6-server-amd64.iso"
+    source: "https://old-releases.ubuntu.com/releases/utopic/ubuntu-14.10-server-amd64.iso"
     sha1: "0c1ebea31c3523cfe9a4ffed8bcf6c7d23dfb97b"
 
   - name: &ubuntu_15_04 "ubuntu-15.04"
