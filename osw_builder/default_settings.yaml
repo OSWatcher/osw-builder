@@ -428,6 +428,12 @@ branches:
           boot_command_prefix: "<F6>"
           answerfile_path: "./answer_files/ubuntu/preseed.cfg"
           preseed_disk_device: "/dev/hda"
+      runtime_config:
+        # disable runtime capture for the entire series
+        # some build fail to boot properly in QEMU (16.10, 17.04)
+        # while others don't have proper network connection (10.04)
+        idle: false
+        search_updates: false
     - *ubuntu_7_04
     - name: *ubuntu_7_10
       build_config:
@@ -456,8 +462,8 @@ branches:
     - *ubuntu_15_04
     - *ubuntu_15_10
     - *ubuntu_16_04
-    # - *ubuntu_16_10
-    # - *ubuntu_17_04
+    - *ubuntu_16_10
+    - *ubuntu_17_04
     - name: *ubuntu_17_10
       build_config:
         vars:
