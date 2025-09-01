@@ -51,6 +51,9 @@ class BuildConfig:
 
         # Add BuildConfig variables
         for key, value in self.vars.items():
+            # Convert Python boolean to lowercase string for Packer
+            if isinstance(value, bool):
+                value = str(value).lower()
             cmdline.extend(["-var", f"{key}={value}"])
 
         # Add additional packer arguments
