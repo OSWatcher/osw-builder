@@ -12,7 +12,7 @@ inputs:
   poetry-version:
     description: "Poetry version to install"
     required: false
-    default: "1.8.3"
+    default: "2.1.4"
   minio_secret:
     description: "Minio admin password"
     required: false
