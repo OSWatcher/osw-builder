@@ -60,6 +60,10 @@ def _build_vagrant_env(build_config: BuildConfig, for_definition: bool = False) 
     env["EFI_BOOT"] = str(build_config.vars.get("efi_boot", False)).lower()
     env["HACK_NONEXISTENT_LOADER"] = str(for_definition).lower()
 
+    # Q35 chipset detection
+    machine_type = build_config.vars.get("machine_type", "")
+    env["Q35_CHIPSET"] = str(machine_type == "q35").lower()
+
     return env
 
 
