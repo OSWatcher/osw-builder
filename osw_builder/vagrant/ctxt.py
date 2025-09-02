@@ -6,6 +6,8 @@ from appdirs import AppDirs
 
 import osw_builder as root_package
 
+from ..settings import BuildConfig
+
 APPDIRS = AppDirs("osw-builder", "OSWatcher")
 
 
@@ -16,7 +18,7 @@ def read_vagrantfile_template() -> str:
 
 
 @contextmanager
-def prepare_vagrantfile(box_name: str):
+def prepare_vagrantfile(box_name: str, build_config: BuildConfig):
     box_dir = Path(APPDIRS.user_data_dir) / box_name
     box_dir.mkdir(parents=True, exist_ok=True)
     vagrantfile = Path(box_dir) / "Vagrantfile"
