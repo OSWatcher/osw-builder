@@ -8,7 +8,6 @@ from .vagrant import (
     define_vm,
     ensure_destroyed,
     provision,
-    set_loader_efi,
     snapshot_libvirt_define,
     snapshot_list,
     snapshot_pop,
@@ -39,6 +38,5 @@ __all__ = [
     "winrm_config",
     "snapshot_push",
     "snapshot_pop",
-    "set_loader_efi",
     "snapshot_libvirt_define",
 ]

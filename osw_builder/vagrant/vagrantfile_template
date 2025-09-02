@@ -17,6 +17,15 @@ Vagrant.configure("2") do |config|
         libvirt.graphics_type = "spice"
         # remove prefix (tmp directory)
         libvirt.default_prefix = ""
-        # PLACEHOLDER
+        
+        # Environment-driven configuration
+        efi_boot = ENV['EFI_BOOT'] == 'true'
+        hack_nonexistent = ENV['HACK_NONEXISTENT_LOADER'] == 'true'
+        
+        if hack_nonexistent
+            libvirt.loader = "/nonexistent"  # For domain definition
+        elsif efi_boot
+            libvirt.loader = "/usr/share/OVMF/OVMF_CODE.fd"  # For EFI boot
+        end
     end
 end

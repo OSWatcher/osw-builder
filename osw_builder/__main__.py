@@ -116,7 +116,7 @@ def capture_os(os_name, args):
             vagrant.box_add(image, name=box_name)
 
         # prepare vagrant env
-        vagrant_dir = ex.enter_context(vagrant.prepare_vagrantfile(box_name))
+        vagrant_dir = ex.enter_context(vagrant.prepare_vagrantfile(box_name, config.build_config))
         logging.info("Vagrant dir: %s", vagrant_dir)
         if destroy:
             ex.enter_context(vagrant.ensure_destroyed(vagrant_dir))
@@ -130,7 +130,7 @@ def capture_os(os_name, args):
             # ensure atomicity
             with vagrant.ensure_destroyed(vagrant_dir, only_on_error=True):
                 logging.info("Defining VM")
-                vagrant.define_vm(vagrant_dir)
+                vagrant.define_vm(vagrant_dir, config.build_config)
                 # get the qcow path
                 qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
                 # WORKAROUND: if source is box, we must copy the box qcow origninal source
@@ -154,9 +154,6 @@ def capture_os(os_name, args):
                     ]
                 ):
                     vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
-        # TODO: hack win11: add EFI loader
-        if "win11" in box_name:
-            vagrant.set_loader_efi(vagrant_dir)
         # get the qcow path
         qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
         logging.debug("Qcow path: %s", qcow_path)
