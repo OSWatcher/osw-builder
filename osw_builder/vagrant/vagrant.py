@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from contextlib import contextmanager
@@ -63,7 +64,7 @@ def _build_vagrant_env(build_config: BuildConfig, for_definition: bool = False) 
     # Q35 chipset detection
     machine_type = build_config.vars.get("machine_type", "")
     env["Q35_CHIPSET"] = str(machine_type == "q35").lower()
-    
+
     # vTPM detection
     env["VTPM"] = str(build_config.vars.get("vtpm", False)).lower()
 
@@ -195,6 +196,24 @@ def provision(cwd: Path):
     log_subprocess_call(["vagrant", "provision"], cwd=cwd)
 
 
+def _copy_efivars_to_vagrant_dir(box_name: str, vagrant_dir: Path):
+    """Copy efivars.fd from ~/.vagrant.d/boxes to vagrant directory"""
+    efivars_dest = vagrant_dir / "efivars.fd"
+
+    # Find efivars.fd in ~/.vagrant.d/boxes/{box_name}/0/amd64/libvirt/
+    vagrant_d = Path.home() / ".vagrant.d" / "boxes" / box_name / "0" / "amd64" / "libvirt"
+    efivars_source = vagrant_d / "efivars.fd"
+
+    if not efivars_source.exists():
+        logging.warning("efivars.fd not found at %s", efivars_source)
+        logging.warning("Skipping efivars.fd copy - will use default OVMF variables")
+        return
+
+    # Copy efivars.fd to vagrant directory
+    shutil.copy2(efivars_source, efivars_dest)
+    logging.info("Copied efivars.fd from %s to %s", efivars_source, efivars_dest)
+
+
 def define_vm(cwd: Path, build_config: BuildConfig):
     """Define the VM in the provider without starting it"""
     try:
@@ -203,6 +222,11 @@ def define_vm(cwd: Path, build_config: BuildConfig):
         # check for expected error "Path '/nonexistent' is not accessible"
         if LIBVIRT_SYSTEM_LOADER_FAIL_ERR not in e.output and LIBVIRT_USER_LOADER_FAIL_ERR not in e.output:
             raise
+
+    # Copy efivars.fd if EFI boot is enabled and efivars are available
+    if build_config.vars.get("efi_boot", False):
+        box_name = cwd.name
+        _copy_efivars_to_vagrant_dir(box_name, cwd)
 
 
 def snapshot_save(cwd: Path, name: str):
