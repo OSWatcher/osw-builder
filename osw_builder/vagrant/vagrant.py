@@ -63,6 +63,9 @@ def _build_vagrant_env(build_config: BuildConfig, for_definition: bool = False) 
     # Q35 chipset detection
     machine_type = build_config.vars.get("machine_type", "")
     env["Q35_CHIPSET"] = str(machine_type == "q35").lower()
+    
+    # vTPM detection
+    env["VTPM"] = str(build_config.vars.get("vtpm", False)).lower()
 
     return env
 
