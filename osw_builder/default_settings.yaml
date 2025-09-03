@@ -426,8 +426,8 @@ branches:
     - name: *win11_24h2_26100_1742
       build_config:
         vars:
-          efi_firmware_code: "/usr/share/OVMF/OVMF_CODE.fd"
-          efi_firmware_vars: "/usr/share/OVMF/OVMF_VARS.fd"
+          # vagrant needs efi_boot var to set loader and nvram
+          efi_boot: true
           vtpm: true
           boot_wait: "1s"
           machine_type: "q35"

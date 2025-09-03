@@ -53,13 +53,13 @@ LIBVIRT_SYSTEM_LOADER_FAIL_ERR = "Path '/nonexistent' is not accessible"
 LOG_FILE = "vagrant.log"
 
 
-def _build_vagrant_env(build_config: BuildConfig, for_definition: bool = False) -> Dict[str, str]:
+def _build_vagrant_env(build_config: BuildConfig) -> Dict[str, str]:
     """Build environment variables for Vagrant from BuildConfig."""
     env = os.environ.copy()
 
     # Always set environment variables
     env["EFI_BOOT"] = str(build_config.vars.get("efi_boot", False)).lower()
-    env["HACK_NONEXISTENT_LOADER"] = str(for_definition).lower()
+    env["HACK_NONEXISTENT_LOADER"] = str(build_config.vars.get("for_definition", False)).lower()
 
     # Q35 chipset detection
     machine_type = build_config.vars.get("machine_type", "")
@@ -69,6 +69,11 @@ def _build_vagrant_env(build_config: BuildConfig, for_definition: bool = False) 
     env["VTPM"] = str(build_config.vars.get("vtpm", False)).lower()
 
     return env
+
+
+def set_build_config(build_config: BuildConfig):
+    """Set the BuildConfig in global settings for automatic environment variable generation."""
+    settings.current_build_config = build_config
 
 
 def setup_vagrant_logging() -> logging.Logger:
@@ -99,11 +104,11 @@ def setup_vagrant_logging() -> logging.Logger:
     return vagrant_logger
 
 
-def log_subprocess_call(
-    cmdline: list[str], cwd: Optional[Path] = None, check: bool = True, env: Optional[Dict[str, str]] = None
-):
+def log_subprocess_call(cmdline: list[str], cwd: Optional[Path] = None, check: bool = True):
     # Setup and use dedicated vagrant logger
     vagrant_logger = setup_vagrant_logging()
+
+    env = _build_vagrant_env(settings.current_build_config)
 
     # Log the command being executed
     cmd_str = " ".join(cmdline)
@@ -165,7 +170,7 @@ def box_exists(name: str) -> bool:
     return name in box_list()
 
 
-def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True, build_config: Optional[BuildConfig] = None):
+def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True):
     logging.debug("vagrant up - %s %s", no_destroy, no_provision)
     cmdline = ["vagrant", "up"]
     if no_destroy:
@@ -173,12 +178,7 @@ def up(cwd: Path, no_destroy: bool = False, no_provision: bool = True, build_con
     if no_provision:
         cmdline.append("--no-provision")
 
-    # Use environment variables if build_config is provided
-    env = None
-    if build_config is not None:
-        env = _build_vagrant_env(build_config, for_definition=no_destroy)
-
-    log_subprocess_call(cmdline, cwd=cwd, env=env)
+    log_subprocess_call(cmdline, cwd=cwd)
 
 
 def halt(cwd: Path):
@@ -214,19 +214,20 @@ def _copy_efivars_to_vagrant_dir(box_name: str, vagrant_dir: Path):
     logging.info("Copied efivars.fd from %s to %s", efivars_source, efivars_dest)
 
 
-def define_vm(cwd: Path, build_config: BuildConfig):
+def define_vm(cwd: Path):
     """Define the VM in the provider without starting it"""
     try:
-        up(cwd, no_destroy=True, build_config=build_config)
+        settings.current_build_config.vars["for_definition"] = True
+        up(cwd, no_destroy=True)
     except subprocess.CalledProcessError as e:
         # check for expected error "Path '/nonexistent' is not accessible"
         if LIBVIRT_SYSTEM_LOADER_FAIL_ERR not in e.output and LIBVIRT_USER_LOADER_FAIL_ERR not in e.output:
             raise
+    finally:
+        del settings.current_build_config.vars["for_definition"]
 
-    # Copy efivars.fd if EFI boot is enabled and efivars are available
-    if build_config.vars.get("efi_boot", False):
-        box_name = cwd.name
-        _copy_efivars_to_vagrant_dir(box_name, cwd)
+    box_name = cwd.name
+    _copy_efivars_to_vagrant_dir(box_name, cwd)
 
 
 def snapshot_save(cwd: Path, name: str):
