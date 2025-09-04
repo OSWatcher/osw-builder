@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from ..settings import BuildConfig
 
+from . import build
 from .response_files import ResponseFile
 
 
@@ -71,7 +72,11 @@ class WindowsAutounattend(ResponseFile):
     @property
     def docker_path(self) -> str:
         """Return the Docker container path for autounattend file"""
-        return f"/packer/{str(self.response_file_path).lstrip('./')}"
+        if self.response_file_path is None:
+            raise ValueError("response_file_path is None")
+        # Get relative path from packer-templates directory
+        relative_path = self.response_file_path.relative_to(build.PACKER_TEMPLATES_DIR)
+        return f"/packer/{relative_path}"
 
     @property
     def product_key(self):
