@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional, TextIO, Union
 if TYPE_CHECKING:
     from ..settings import BuildConfig
 
+from . import build
 from .response_files import ResponseFile
 
 
@@ -46,7 +47,9 @@ class WindowsXPSif(ResponseFile):
     def docker_path(self) -> str:
         """Return the Docker container path for SIF file"""
         if self.response_file_path:
-            return f"/packer/{str(self.response_file_path).lstrip('./')}"
+            # Get relative path from packer-templates directory
+            relative_path = self.response_file_path.relative_to(build.PACKER_TEMPLATES_DIR)
+            return f"/packer/{relative_path}"
         return "/packer/WINNT.SIF"
 
     def configure(self, build_config: "BuildConfig"):
