@@ -94,6 +94,9 @@ def capture_os(os_name, args):
     # Get runtime configuration
     config = resolve_image_config(os_name)
     logging.debug("Resolved config for %s:\n%s", os_name, pformat(attrs.asdict(config), width=80, depth=2))
+
+    # Set BuildConfig in global settings for automatic vagrant environment variables
+    vagrant.set_build_config(config.build_config)
     runtime_search_updates = config.runtime_config.search_updates
     if runtime_search_updates is not None:
         search_updates_flag = runtime_search_updates
@@ -154,9 +157,6 @@ def capture_os(os_name, args):
                     ]
                 ):
                     vagrant.snapshot_save(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
-        # TODO: hack win11: add EFI loader
-        if "win11" in box_name:
-            vagrant.set_loader_efi(vagrant_dir)
         # get the qcow path
         qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
         logging.debug("Qcow path: %s", qcow_path)

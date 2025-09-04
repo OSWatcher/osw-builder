@@ -189,6 +189,11 @@ images:
     source: "https://storage.grapheos.cc/images/win11/Win11_English_23H2_22631.2861_x64v2.iso"
     sha1: "cd5e995387669b2ff2c58c23894900f1d238a103"
 
+  - name: &win11_24h2_26100_1742 "win11-24h2-26100.1742"
+    description: "Windows 11 24H2 (October 2024 Update, 26100)"
+    source: "https://storage.grapheos.cc/images/win11/Win11_24H2_English_x64_26100_1742.iso"
+    sha1: "a81079ba4b9a9ce29a7a2a20cd34266ac21becce"
+
   # Ubuntu
   - name: &ubuntu_6_10 "ubuntu-6.10"
     description: "Ubuntu 6.10 (Edgy Eft)"
@@ -407,6 +412,8 @@ branches:
     - name: *win11_21h2_22000_194
       build_config:
         varfiles: [*win11_varfile]
+        vars:
+          answerfile_path: "./answer_files/11/Autounattend.xml"
         key: *key_pro
         image_name: *win11_pro
         # win11 build needs internet access
@@ -416,6 +423,16 @@ branches:
     - *win11_21h2_22000_318
     - *win11_22h2_22621_384
     - *win11_23h2_22631_2861
+    - name: *win11_24h2_26100_1742
+      build_config:
+        vars:
+          # vagrant needs efi_boot var to set loader and nvram
+          efi_boot: true
+          vtpm: true
+          boot_wait: "1s"
+          machine_type: "q35"
+          cpu_model: "host"
+
 
   ubuntu-server:
     # Legacy preseed era (6.10-15.10) - Sets initial defaults
