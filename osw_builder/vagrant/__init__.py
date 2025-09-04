@@ -8,7 +8,7 @@ from .vagrant import (
     define_vm,
     ensure_destroyed,
     provision,
-    set_loader_efi,
+    set_build_config,
     snapshot_libvirt_define,
     snapshot_list,
     snapshot_pop,
@@ -29,6 +29,7 @@ __all__ = [
     "ensure_destroyed",
     "define_vm",
     "prepare_vagrantfile",
+    "set_build_config",
     "snapshot_save",
     "status",
     "MachineStateEnum",
@@ -39,6 +40,5 @@ __all__ = [
     "winrm_config",
     "snapshot_push",
     "snapshot_pop",
-    "set_loader_efi",
     "snapshot_libvirt_define",
 ]

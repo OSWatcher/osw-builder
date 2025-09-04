@@ -1,16 +1,18 @@
 import logging
+import os
 import re
+import shutil
 import subprocess
 import tempfile
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
-from typing import Generator, Optional, Tuple
+from typing import Dict, Generator, Optional, Tuple
 
 from attrs import define
 
-from ..settings import settings
+from ..settings import BuildConfig, settings
 
 
 @define(auto_attribs=True)
@@ -46,12 +48,32 @@ class MachineStateEnum(Enum):
     RUNNING = auto()
 
 
-PLACEHOLDER_VALUE = "# PLACEHOLDER"
-LIBVIRT_LOADER_FAIL = "libvirt.loader = '/nonexistent'"
 LIBVIRT_USER_LOADER_FAIL_ERR = "could not load PC BIOS '/nonexistent'"
 LIBVIRT_SYSTEM_LOADER_FAIL_ERR = "Path '/nonexistent' is not accessible"
-LIBVIRT_LOADER_EFI = "libvirt.loader = '/usr/share/OVMF/OVMF_CODE.fd'"
 LOG_FILE = "vagrant.log"
+
+
+def _build_vagrant_env(build_config: BuildConfig) -> Dict[str, str]:
+    """Build environment variables for Vagrant from BuildConfig."""
+    env = os.environ.copy()
+
+    # Always set environment variables
+    env["EFI_BOOT"] = str(build_config.vars.get("efi_boot", False)).lower()
+    env["HACK_NONEXISTENT_LOADER"] = str(build_config.vars.get("for_definition", False)).lower()
+
+    # Q35 chipset detection
+    machine_type = build_config.vars.get("machine_type", "")
+    env["Q35_CHIPSET"] = str(machine_type == "q35").lower()
+
+    # vTPM detection
+    env["VTPM"] = str(build_config.vars.get("vtpm", False)).lower()
+
+    return env
+
+
+def set_build_config(build_config: BuildConfig):
+    """Set the BuildConfig in global settings for automatic environment variable generation."""
+    settings.current_build_config = build_config
 
 
 def setup_vagrant_logging() -> logging.Logger:
@@ -86,12 +108,14 @@ def log_subprocess_call(cmdline: list[str], cwd: Optional[Path] = None, check: b
     # Setup and use dedicated vagrant logger
     vagrant_logger = setup_vagrant_logging()
 
+    env = _build_vagrant_env(settings.current_build_config)
+
     # Log the command being executed
     cmd_str = " ".join(cmdline)
     vagrant_logger.info(f"Executing: {cmd_str}")
 
     # Run subprocess with PIPE to capture output
-    process = subprocess.Popen(cmdline, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    process = subprocess.Popen(cmdline, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
 
     output = ""
     # Read output line by line and log in real-time
@@ -172,15 +196,38 @@ def provision(cwd: Path):
     log_subprocess_call(["vagrant", "provision"], cwd=cwd)
 
 
+def _copy_efivars_to_vagrant_dir(box_name: str, vagrant_dir: Path):
+    """Copy efivars.fd from ~/.vagrant.d/boxes to vagrant directory"""
+    efivars_dest = vagrant_dir / "efivars.fd"
+
+    # Find efivars.fd in ~/.vagrant.d/boxes/{box_name}/0/amd64/libvirt/
+    vagrant_d = Path.home() / ".vagrant.d" / "boxes" / box_name / "0" / "amd64" / "libvirt"
+    efivars_source = vagrant_d / "efivars.fd"
+
+    if not efivars_source.exists():
+        logging.warning("efivars.fd not found at %s", efivars_source)
+        logging.warning("Skipping efivars.fd copy - will use default OVMF variables")
+        return
+
+    # Copy efivars.fd to vagrant directory
+    shutil.copy2(efivars_source, efivars_dest)
+    logging.info("Copied efivars.fd from %s to %s", efivars_source, efivars_dest)
+
+
 def define_vm(cwd: Path):
     """Define the VM in the provider without starting it"""
-    with loader_fail_ctxt(cwd):
-        try:
-            up(cwd, no_destroy=True)
-        except subprocess.CalledProcessError as e:
-            # check for error "Path '/nonexistent' is not accessible"
-            if LIBVIRT_SYSTEM_LOADER_FAIL_ERR not in e.output and LIBVIRT_USER_LOADER_FAIL_ERR not in e.output:
-                raise
+    try:
+        settings.current_build_config.vars["for_definition"] = True
+        up(cwd, no_destroy=True)
+    except subprocess.CalledProcessError as e:
+        # check for expected error "Path '/nonexistent' is not accessible"
+        if LIBVIRT_SYSTEM_LOADER_FAIL_ERR not in e.output and LIBVIRT_USER_LOADER_FAIL_ERR not in e.output:
+            raise
+    finally:
+        del settings.current_build_config.vars["for_definition"]
+
+    box_name = cwd.name
+    _copy_efivars_to_vagrant_dir(box_name, cwd)
 
 
 def snapshot_save(cwd: Path, name: str):
@@ -425,40 +472,6 @@ def parse_ssh_config(output: str) -> SSHConfig:
         User=config["User"],
         Port=int(config["Port"]),
     )
-
-
-@contextmanager
-def loader_fail_ctxt(cwd: Path):
-    try:
-        with open(cwd / "Vagrantfile", "r") as f:
-            content = f.read()
-            # replace PLACEHOLDER_VALUE
-            content = content.replace(PLACEHOLDER_VALUE, LIBVIRT_LOADER_FAIL)
-            # write it back
-            with open(cwd / "Vagrantfile", "w") as f:
-                f.write(content)
-            yield
-    finally:
-        # revert back to original
-        with open(cwd / "Vagrantfile", "r") as f:
-            content = f.read()
-            # replace LIBVIRT_LOADER_FAIL
-            content = content.replace(LIBVIRT_LOADER_FAIL, PLACEHOLDER_VALUE)
-            # write it back
-            with open(cwd / "Vagrantfile", "w") as f:
-                f.write(content)
-
-
-def set_loader_efi(cwd: Path):
-    # revert back to original
-    with open(cwd / "Vagrantfile", "r") as f:
-        content = f.read()
-        # replace LIBVIRT_LOADER_FAIL
-        print("Setting loader to EFI !")
-        content = content.replace(PLACEHOLDER_VALUE, LIBVIRT_LOADER_EFI)
-        # write it back
-        with open(cwd / "Vagrantfile", "w") as f:
-            f.write(content)
 
 
 @contextmanager
