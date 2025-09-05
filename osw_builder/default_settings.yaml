@@ -330,10 +330,25 @@ images:
     source: "https://releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
     checksum: "sha1:8fb2fc63a10bff266a3ee2d2cc236dbb5feb7965"
 
-  - name: &ubuntu-20_10 "ubuntu-20.10"
+  - name: &ubuntu_20_10 "ubuntu-20.10"
     description: "Ubuntu 20.10 (Groovy Gorilla)"
     source: "https://old-releases.ubuntu.com/releases/groovy/ubuntu-20.10-live-server-amd64.iso"
-    sha1: "3c3b6d2f3e8f0e2e4f6e5a5f6c3e4b5e6f7a8b9c"
+    sha1: "a7186b62bac9ce0006a3c93777ce0131df1e972b"
+
+  - name: &ubuntu_21_04 "ubuntu-21.04"
+    description: "Ubuntu 21.04 (Hirsute Hippo)"
+    source: "https://old-releases.ubuntu.com/releases/hirsute/ubuntu-21.04-live-server-amd64.iso"
+    sha1: "b8271df9d1a9fde8699e9a8385f235c51f6d0041"
+
+  - name: &ubuntu_21_10 "ubuntu-21.10"
+    description: "Ubuntu 21.10 (Impish Indri)"
+    source: "https://old-releases.ubuntu.com/releases/impish/ubuntu-21.10-live-server-amd64.iso"
+    sha1: "60deea0270d4f78a28242278f065fa5d43ec4f79"
+
+  - name: &ubuntu_22_04 "ubuntu-22.04"
+    description: "Ubuntu 22.04 LTS (Jammy Jellyfish)"
+    source: "https://old-releases.ubuntu.com/releases/jammy/ubuntu-22.04.4-live-server-amd64.iso"
+    sha1: "fdf1d0d47b5cdfd2feacafe2714b4f045cf7fdb2"
 
 branches:
   master:
@@ -525,3 +540,12 @@ branches:
       runtime_config:
         idle: true
         search_updates: true
+      # 20.10-21.10 are buggy, Subiquity is crashing
+      # boot_command_type = "grub" should start from 20.10
+    # - *ubuntu_20_10
+    # - *ubuntu_21_04
+    # - *ubuntu_21_10
+    - name: *ubuntu_22_04
+      build_config:
+        vars:
+          boot_command_type: "grub"
