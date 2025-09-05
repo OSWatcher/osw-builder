@@ -330,6 +330,11 @@ images:
     source: "https://releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
     checksum: "sha1:8fb2fc63a10bff266a3ee2d2cc236dbb5feb7965"
 
+  - name: &ubuntu-20_10 "ubuntu-20.10"
+    description: "Ubuntu 20.10 (Groovy Gorilla)"
+    source: "https://old-releases.ubuntu.com/releases/groovy/ubuntu-20.10-live-server-amd64.iso"
+    sha1: "3c3b6d2f3e8f0e2e4f6e5a5f6c3e4b5e6f7a8b9c"
+
 branches:
   master:
     # Box images (pre-built, no build_config needed)
