@@ -477,7 +477,7 @@ def parse_ssh_config(output: str) -> SSHConfig:
 @contextmanager
 def up_down_ctxt(cwd: Path, no_destroy: bool = True, no_provision: bool = True):
     try:
-        up(cwd)
+        up(cwd, no_destroy=no_destroy, no_provision=no_provision)
         yield
     finally:
         halt(cwd)
