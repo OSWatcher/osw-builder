@@ -187,7 +187,7 @@ def capture_os(os_name, args):
         if idle:
             if not snap_list:
                 logging.info("No IDLE snapshot found. Creating one...")
-                with vagrant.up_down_ctxt(vagrant_dir):
+                with vagrant.up_down_ctxt(vagrant_dir, no_destroy=True):
                     # 10 min
                     logging.info("Waiting for 10 minutes")
                     time.sleep(10 * 60)
@@ -221,7 +221,7 @@ def capture_os(os_name, args):
             previous_raw_snap = BUILD_SNAPSHOT.to_raw_tag()
 
         # First, search for available updates
-        with vagrant.up_down_ctxt(vagrant_dir):
+        with vagrant.up_down_ctxt(vagrant_dir, no_destroy=True):
             try:
                 available_updates = search_updates(vagrant_dir, os_type)
                 logging.info("Found %d available updates:", len(available_updates))
@@ -259,7 +259,7 @@ def capture_os(os_name, args):
 
             try:
                 # Full vagrant cycle: up -> install -> halt -> snapshot
-                with vagrant.up_down_ctxt(vagrant_dir):
+                with vagrant.up_down_ctxt(vagrant_dir, no_destroy=True):
                     success = install_update(vagrant_dir, os_type, update)
                     if success:
                         logging.info("✅ Update %s installed successfully", update.name)
