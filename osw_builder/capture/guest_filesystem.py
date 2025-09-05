@@ -76,12 +76,14 @@ class LibguestFSMnt:
                     self._logger.info("Local filesystem unmount completed")
 
             os_partitions = self.gfs.inspect_os()
-            if len(os_partitions) == 0:
-                main_partition = self.gfs.list_partitions()[0]
-                self._logger.info(f"No OS detected, using first partition: {main_partition}")
-            else:
-                # capture first detected OS
+            if os_partitions:
+                # OS found, use first one
                 main_partition = os_partitions[0]
+                self._logger.info(f"OS detected, using first partition: {main_partition}")
+            else:
+                # no OS detected, use first partition
+                self._logger.info("No OS detected, using first partition")
+                main_partition = self.gfs.list_partitions()[0]
             self._logger.info("Mounting filesystem")
             self._ex.enter_context(ctx_mount(main_partition, self.ROOT))
             if self._local:
