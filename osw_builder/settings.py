@@ -54,6 +54,10 @@ class BuildConfig:
             # Convert Python boolean to lowercase string for Packer
             if isinstance(value, bool):
                 value = str(value).lower()
+            if isinstance(value, list):
+                import json
+
+                value = json.dumps(value)
             cmdline.extend(["-var", f"{key}={value}"])
 
         # Add additional packer arguments
