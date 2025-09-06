@@ -30,7 +30,7 @@ class BuildConfig:
     key: Optional[str] = None
     image_name: Optional[str] = None
 
-    def to_packer_cmdline(self, iso_url: str, sha1: str, packer_args: List[str]) -> List[str]:
+    def to_packer_cmdline(self, iso_url: str, checksum: str, packer_args: List[str]) -> List[str]:
         """Export BuildConfig as Packer command line arguments."""
         assert self.template is not None, "template is required for Packer builds"
 
@@ -45,8 +45,7 @@ class BuildConfig:
 
         # Add runtime variables (iso_url, sha1)
         cmdline.extend(["-var", f"iso_url={iso_url}"])
-        cmdline.extend(["-var", f"iso_checksum={sha1}"])
-        cmdline.extend(["-var", "iso_checksum_type=sha1"])
+        cmdline.extend(["-var", f"iso_checksum={checksum}"])
         cmdline.extend(["-var", f"vm_name={self.template.replace('.pkr.hcl', '')}"])
 
         # Add BuildConfig variables
