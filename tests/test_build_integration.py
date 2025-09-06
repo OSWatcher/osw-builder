@@ -21,7 +21,7 @@ class TestCommandGeneration:
         )
 
         result = build_config.to_packer_cmdline(
-            iso_url="http://example.com/ubuntu.iso", sha1="abc123", packer_args=["cpus=2"]
+            iso_url="http://example.com/ubuntu.iso", checksum="abc123", packer_args=["cpus=2"]
         )
 
         expected = [
@@ -38,8 +38,6 @@ class TestCommandGeneration:
             "iso_url=http://example.com/ubuntu.iso",
             "-var",
             "iso_checksum=abc123",
-            "-var",
-            "iso_checksum_type=sha1",
             "-var",
             "vm_name=ubuntu",
             "-var",
@@ -61,7 +59,9 @@ class TestCommandGeneration:
             vars={"answerfile_path": "./answer_files/windows/Autounattend.xml", "key": "VK7JG-NPHTM-C97JM-9MPGT-3V66T"},
         )
 
-        result = build_config.to_packer_cmdline(iso_url="http://example.com/win10.iso", sha1="def456", packer_args=[])
+        result = build_config.to_packer_cmdline(
+            iso_url="http://example.com/win10.iso", checksum="def456", packer_args=[]
+        )
 
         expected = [
             "build",
@@ -75,8 +75,6 @@ class TestCommandGeneration:
             "iso_url=http://example.com/win10.iso",
             "-var",
             "iso_checksum=def456",
-            "-var",
-            "iso_checksum_type=sha1",
             "-var",
             "vm_name=windows",
             "-var",
@@ -93,7 +91,7 @@ class TestCommandGeneration:
         build_config = BuildConfig(template="custom.pkr.hcl", varfiles=[], vars={"custom_var": "value"})
 
         result = build_config.to_packer_cmdline(
-            iso_url="http://example.com/custom.iso", sha1="xyz789", packer_args=["memory=4096"]
+            iso_url="http://example.com/custom.iso", checksum="xyz789", packer_args=["memory=4096"]
         )
 
         expected = [
@@ -106,8 +104,6 @@ class TestCommandGeneration:
             "iso_url=http://example.com/custom.iso",
             "-var",
             "iso_checksum=xyz789",
-            "-var",
-            "iso_checksum_type=sha1",
             "-var",
             "vm_name=custom",
             "-var",
@@ -132,7 +128,7 @@ class TestCommandGeneration:
         )
 
         result = build_config.to_packer_cmdline(
-            iso_url="http://example.com/ubuntu-20.04.iso", sha1="hash123", packer_args=[]
+            iso_url="http://example.com/ubuntu-20.04.iso", checksum="hash123", packer_args=[]
         )
 
         expected = [
@@ -151,8 +147,6 @@ class TestCommandGeneration:
             "iso_url=http://example.com/ubuntu-20.04.iso",
             "-var",
             "iso_checksum=hash123",
-            "-var",
-            "iso_checksum_type=sha1",
             "-var",
             "vm_name=ubuntu",
             "-var",
@@ -417,7 +411,7 @@ class TestBuildImageIntegration:
             runtime_config=RuntimeConfig(),
         )
 
-        config_entry = {"name": "nonexistent", "source": "http://example.com/fake.iso", "sha1": "abc123"}
+        config_entry = {"name": "nonexistent", "source": "http://example.com/fake.iso", "checksum": "sha1:abc123"}
 
         with pytest.raises(ValueError, match="No answerfile_path defined in build configuration"):
             with build_image_with_inheritance("nonexistent", config_entry, resolved_config):
