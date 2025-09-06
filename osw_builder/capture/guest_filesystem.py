@@ -5,6 +5,7 @@ from contextlib import ExitStack, closing, contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Thread
+from typing import Optional
 
 import guestfs
 
@@ -75,15 +76,21 @@ class LibguestFSMnt:
                     self._thread_mnt_local.join()
                     self._logger.info("Local filesystem unmount completed")
 
+            # Try standard libguestfs OS detection first
             os_partitions = self.gfs.inspect_os()
             if os_partitions:
                 # OS found, use first one
                 main_partition = os_partitions[0]
                 self._logger.info(f"OS detected, using first partition: {main_partition}")
             else:
-                # no OS detected, use first partition
-                self._logger.info("No OS detected, using first partition")
-                main_partition = self.gfs.list_partitions()[0]
+                # Fallback to custom OS detection when inspect_os fails
+                self._logger.info("No OS detected by inspect_os, trying custom detection")
+                main_partition = self._detect_main_partition()
+                if not main_partition:
+                    # Exit with error instead of guessing
+                    raise RuntimeError(
+                        "Unable to detect main OS partition - both inspect_os and custom detection failed"
+                    )
             self._logger.info("Mounting filesystem")
             self._ex.enter_context(ctx_mount(main_partition, self.ROOT))
             if self._local:
@@ -93,6 +100,36 @@ class LibguestFSMnt:
                 self._thread_mnt_local = Thread(target=self.gfs.mount_local_run)
                 self._thread_mnt_local.start()
             return self._local_mntpnt if self._local else None
+
+    def _detect_main_partition(self) -> Optional[str]:
+        """
+        Custom OS partition detection when libguestfs inspect_os fails.
+        Iterates through filesystems, skips EFI (vfat), and returns first mountable partition.
+        """
+        filesystems = self.gfs.list_filesystems()
+        self._logger.info(f"Available filesystems: {filesystems}")
+
+        for partition, fs_type in filesystems.items():
+            # Skip EFI partitions (vfat)
+            if fs_type == "vfat":
+                self._logger.debug(f"Skipping {partition}: EFI partition (vfat)")
+                continue
+
+            # Try to mount the partition
+            try:
+                self._logger.info(f"Testing partition {partition} ({fs_type})")
+                self.gfs.mount(partition, self.ROOT)
+                # If we got here, mounting succeeded - unmount and return this partition
+                self.gfs.umount(self.ROOT)
+                self._logger.info(f"Found mountable partition: {partition}")
+                return partition
+
+            except RuntimeError as e:
+                self._logger.debug(f"Cannot mount {partition}: {e}")
+                continue
+
+        self._logger.warning("No mountable partition found")
+        return None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._ex.__exit__(exc_type, exc_val, exc_tb)
