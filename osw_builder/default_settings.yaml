@@ -414,6 +414,12 @@ branches:
         varfiles: [*win11_varfile]
         vars:
           answerfile_path: "./answer_files/11/Autounattend.xml"
+          # win11 needs UEFI boot
+          efi_boot: true
+          boot_wait: "2s"
+          # add multiple enter keys to make sure we hit "Press any key to boot from CD or DVD"
+          boot_command: ["<Enter><wait1><Enter><wait1><Enter><wait1><Enter><wait1><Enter>"]
+          vtpm: false
         key: *key_pro
         image_name: *win11_pro
         # win11 build needs internet access
@@ -426,10 +432,7 @@ branches:
     - name: *win11_24h2_26100_1742
       build_config:
         vars:
-          # vagrant needs efi_boot var to set loader and nvram
-          efi_boot: true
           vtpm: true
-          boot_wait: "1s"
           machine_type: "q35"
           cpu_model: "host"
 
