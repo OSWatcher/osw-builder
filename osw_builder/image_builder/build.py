@@ -47,10 +47,10 @@ def validate_source_and_compute_sha1(config_entry: dict) -> str:
         logging.debug("Computing SHA1")
         sha1digest = compute_sha1sum(source_path)
     else:
-        sha1digest = config_entry.get("sha1", None)
+        sha1digest = config_entry.get("checksum", None)
         if not sha1digest:
             raise RuntimeError("Invalid configuration: need to specify a SHA1 for URL sources")
-    logging.debug("SHA1: %s", sha1digest)
+    logging.debug("Checksum: %s", sha1digest)
     return sha1digest
 
 
@@ -283,7 +283,7 @@ def build_image_with_inheritance(
 
         # Build Packer command and Docker configuration using BuildConfig methods
         cmdline = build_config.to_packer_cmdline(
-            iso_url=config_entry["source"], sha1=sha1digest, packer_args=packer_args or []
+            iso_url=config_entry["source"], checksum=sha1digest, packer_args=packer_args or []
         )
 
         volumes = build_config.to_docker_volumes(
@@ -309,7 +309,7 @@ def build_image_with_inheritance(
 
 
 def fake_run_packer_with_inheritance(
-    build_config: BuildConfig, response_file: ResponseFile, iso_url: str, sha1: str, network: bool
+    build_config: BuildConfig, response_file: ResponseFile, iso_url: str, checksum: str, network: bool
 ):
     """Fake run packer to force cache - inheritance version."""
     logging.info("Fake Packer run (Force image download)")
@@ -320,7 +320,7 @@ def fake_run_packer_with_inheritance(
             build_config=build_config,
             response_file=response_file,
             iso_url=iso_url,
-            sha1=sha1,
+            checksum=checksum,
             packer_args=["cpus=999999"],  # Impossible CPU count to force build failure
             network=network,
         )
@@ -330,7 +330,7 @@ def run_packer_with_inheritance(
     build_config: BuildConfig,
     response_file: ResponseFile,
     iso_url: str,
-    sha1: str,
+    checksum: str,
     packer_args: list[str],
     network: bool,
 ) -> Path:
@@ -339,7 +339,7 @@ def run_packer_with_inheritance(
         packer_home_cache = get_packer_home_cache()
 
         # Build Packer command using BuildConfig with real values
-        cmdline = build_config.to_packer_cmdline(iso_url=iso_url, sha1=sha1, packer_args=packer_args)
+        cmdline = build_config.to_packer_cmdline(iso_url=iso_url, checksum=checksum, packer_args=packer_args)
 
         # Build Docker volumes using BuildConfig
         volumes = build_config.to_docker_volumes(
