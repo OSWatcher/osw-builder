@@ -572,10 +572,19 @@ branches:
         search_updates: true
       # 20.10-21.10 are buggy, Subiquity is crashing
       # boot_command_type = "grub" should start from 20.10
-    # - *ubuntu_20_10
+    # - name: *ubuntu_20_10
+    #   build_config:
+    #     vars:
+    #       boot_command_type: "grub"
     # - *ubuntu_21_04
     # - *ubuntu_21_10
     - name: *ubuntu_22_04
       build_config:
         vars:
           boot_command_type: "grub"
+    - *ubuntu_22_10
+    # - *ubuntu_23_04
+    # - *ubuntu_23_10
+    - *ubuntu_24_04
+    - *ubuntu_24_10
+    - *ubuntu_25_04
