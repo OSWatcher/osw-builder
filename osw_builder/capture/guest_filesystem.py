@@ -23,6 +23,23 @@ class LibguestFSMnt:
         self._local_mnt = None
 
     @contextmanager
+    def ctx_mount(self, mountable: str, mount_point: str):
+        """Context manager for mounting/unmounting partitions."""
+        self._logger.info(f"Mounting partition {mountable} to {mount_point}")
+        try:
+            self.gfs.mount(mountable, mount_point)
+            yield
+        except Exception as e:
+            self._logger.debug(f"Failed to mount {mountable}: {e}")
+            raise
+        finally:
+            try:
+                self._logger.info(f"Unmounting {mount_point}")
+                self.gfs.umount(mount_point)
+            except Exception as e:
+                self._logger.warning(f"Failed to unmount {mount_point}: {e}")
+
+    @contextmanager
     def _cleanup_on_error(self):
         with ExitStack() as stack:
             stack.push(self)
@@ -46,16 +63,6 @@ class LibguestFSMnt:
                     self.gfs.shutdown()
 
             self._ex.enter_context(ctx_launch())
-
-            @contextmanager
-            def ctx_mount(mountable: str, mount_point: str):
-                self._logger.info(f"Mounting partition {mountable} to {mount_point}")
-                self.gfs.mount(mountable, mount_point)
-                try:
-                    yield
-                finally:
-                    self._logger.info(f"Unmounting {mount_point}")
-                    self.gfs.umount(mount_point)
 
             @contextmanager
             def ctx_mount_local(local_mntpnt: str):
@@ -92,7 +99,7 @@ class LibguestFSMnt:
                         "Unable to detect main OS partition - both inspect_os and custom detection failed"
                     )
             self._logger.info("Mounting filesystem")
-            self._ex.enter_context(ctx_mount(main_partition, self.ROOT))
+            self._ex.enter_context(self.ctx_mount(main_partition, self.ROOT))
             if self._local:
                 self._local_mntpnt = self._ex.enter_context(TemporaryDirectory())
                 self._ex.enter_context(ctx_mount_local(self._local_mntpnt))
@@ -110,26 +117,49 @@ class LibguestFSMnt:
         self._logger.info(f"Available filesystems: {filesystems}")
 
         for partition, fs_type in filesystems.items():
-            # Skip EFI partitions (vfat)
+            # Handle vfat partitions - could be EFI or legacy Windows
             if fs_type == "vfat":
-                self._logger.debug(f"Skipping {partition}: EFI partition (vfat)")
-                continue
+                if self._is_efi_system_partition(partition):
+                    self._logger.debug(f"Skipping {partition}: EFI System Partition")
+                    continue
+                else:
+                    self._logger.info(f"Found vfat partition {partition}, appears to be legacy Windows OS")
 
             # Try to mount the partition
             try:
                 self._logger.info(f"Testing partition {partition} ({fs_type})")
-                self.gfs.mount(partition, self.ROOT)
-                # If we got here, mounting succeeded - unmount and return this partition
-                self.gfs.umount(self.ROOT)
-                self._logger.info(f"Found mountable partition: {partition}")
-                return partition
+                with self.ctx_mount(partition, self.ROOT):
+                    # If we got here, mounting succeeded
+                    self._logger.info(f"Found mountable partition: {partition}")
+                    return partition
 
-            except RuntimeError as e:
+            except Exception as e:
                 self._logger.debug(f"Cannot mount {partition}: {e}")
                 continue
 
         self._logger.warning("No mountable partition found")
         return None
+
+    def _is_efi_system_partition(self, partition: str) -> bool:
+        """
+        Determine if a vfat partition is an EFI System Partition by checking for EFI directory.
+        """
+        try:
+            with self.ctx_mount(partition, self.ROOT):
+                files = self.gfs.ls(self.ROOT)
+                self._logger.debug(f"Contents of {partition}: {files}")
+
+                has_efi_dir = "EFI" in files
+
+                if has_efi_dir:
+                    self._logger.debug(f"{partition} appears to be EFI System Partition")
+
+                return has_efi_dir
+
+        except Exception as e:
+            self._logger.warning(f"Error inspecting vfat partition {partition}: {e}")
+            # If we can't inspect, assume it's not EFI (safer for legacy systems)
+            return False
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._ex.__exit__(exc_type, exc_val, exc_tb)
