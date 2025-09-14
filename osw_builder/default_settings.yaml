@@ -421,13 +421,16 @@ branches:
           boot_command: ["<Enter><wait1><Enter><wait1><Enter><wait1><Enter><wait1><Enter>"]
           vtpm: false
         key: *key_pro
-        image_name: *win11_pro
+        # /!\ 194 and 384 MUST have image_name field left UNDEFINED
+        image_name:
         # win11 build needs internet access
         network: true
 
     # Windows 11 images inherit everything from win11_21h2_22000_194
     - *win11_21h2_22000_318
-    - *win11_22h2_22621_384
+    - name: *win11_22h2_22621_384
+      build_config:
+        image_name: *win11_pro
     - *win11_23h2_22631_2861
     - name: *win11_24h2_26100_1742
       build_config:
