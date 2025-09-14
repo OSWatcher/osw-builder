@@ -157,10 +157,14 @@ class WindowsAutounattend(ResponseFile):
 
     def tostring(self, pretty_print=True):
         """Returns a string representation of the XML tree"""
+        # Always format XML with proper indentation - Windows Setup fails to parse compressed XML
+        ET.indent(self.tree.getroot(), space="    ", level=0)
         return ET.tostring(self.tree.getroot(), encoding="utf-8", xml_declaration=True)
 
     def write(self):
         """Writes the new Autounattend.xml"""
+        # Always format XML with proper indentation - Windows Setup fails to parse compressed XML
+        ET.indent(self.tree.getroot(), space="    ", level=0)
         self.tree.write(self.tmp_autounattend_f, encoding="utf-8", xml_declaration=True)
 
     def configure(self, build_config: "BuildConfig"):
