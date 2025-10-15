@@ -514,10 +514,13 @@ branches:
     - *ubuntu_18_10
     - *ubuntu_19_04
     # Modern autoinstall era (20.04+) - Switches to autoinstall
-    # - name: *ubuntu_20_04
-    #   build_config:
-    #     varfiles:
-    #       - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
-    #     vars:
-    #       answerfile_path: "./answer_files/ubuntu/"
-    #       boot_command_prefix: "<ESC><ESC><F6><ESC>"
+    - name: *ubuntu_20_04
+      build_config:
+        varfiles:
+          - "ubuntu.pkrvars/autoinstall.pkrvars.hcl"
+        vars:
+          answerfile_path: "./answer_files/ubuntu/"
+          boot_command_prefix: "<ESC><ESC><F6><ESC>"
+      runtime_config:
+        idle: true
+        search_updates: true
