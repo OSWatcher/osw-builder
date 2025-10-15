@@ -1,12 +1,12 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from .autounattend import WindowsAutounattend
-from .build import build_docker_config, build_docker_volumes, build_packer_cmdline, docker_packer_runner
+from .build import build_docker_config, build_packer_cmdline, docker_packer_runner
 from .utils import compute_sha1sum
 
 
@@ -48,24 +48,6 @@ def test_build_packer_cmdline():
         "ubuntu.pkr.hcl",
     ]
     assert result == expected
-
-
-def test_build_docker_volumes():
-    """Test pure function for building Docker volumes."""
-    # Create mock response file
-    mock_response_file = Mock()
-    mock_response_file.tmp_path = Path("/tmp/test_response")
-    mock_response_file.docker_path = "/packer/preseed.cfg"
-
-    tmp_varfile_path = "/tmp/test.pkrvars.hcl"
-    packer_cache = Path("/home/user/.cache/packer")
-
-    result = build_docker_volumes(mock_response_file, tmp_varfile_path, packer_cache)
-
-    assert "/tmp/test_response" in result
-    assert result["/tmp/test_response"]["bind"] == "/packer/preseed.cfg"
-    assert tmp_varfile_path in result
-    assert str(packer_cache) in result
 
 
 def test_build_docker_config():
@@ -226,25 +208,6 @@ def test_docker_packer_runner_cleanup_on_exception(mock_docker_from_env):
 
     # Verify cleanup still happens
     mock_container.remove.assert_called_once_with(force=True)
-
-
-def test_build_docker_volumes_multiple_response_files():
-    """Test Docker volumes with different response file types."""
-    # Test Windows response file
-    mock_response_file = Mock()
-    mock_response_file.tmp_path = Path("/tmp/autounattend.xml")
-    mock_response_file.docker_path = "/packer/Autounattend.xml"
-
-    result = build_docker_volumes(mock_response_file, "/tmp/vars.hcl", Path("/cache"))
-
-    assert str(mock_response_file.tmp_path) in result
-    assert result[str(mock_response_file.tmp_path)]["bind"] == "/packer/Autounattend.xml"
-
-    # Test Ubuntu response file
-    mock_response_file.docker_path = "/packer/preseed.cfg"
-    result = build_docker_volumes(mock_response_file, "/tmp/vars.hcl", Path("/cache"))
-
-    assert result[str(mock_response_file.tmp_path)]["bind"] == "/packer/preseed.cfg"
 
 
 @patch("osw_builder.image_builder.build.docker.from_env")

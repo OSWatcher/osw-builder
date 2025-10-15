@@ -74,7 +74,7 @@ class BuildConfig:
         """Export BuildConfig as Docker volume configuration."""
         volumes = {
             str(packer_home_cache): {"bind": "/cache", "mode": "rw"},
-            str(packer_templates_dir): {"bind": "/output_parent", "mode": "rw"},
+            str(packer_templates_dir): {"bind": "/packer", "mode": "rw"},
         }
 
         # Mount response file only if docker_path indicates mounting is needed

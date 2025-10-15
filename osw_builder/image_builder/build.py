@@ -32,7 +32,6 @@ OUTPUT_QEMU_DIR = PACKER_TEMPLATES_DIR / "output"
 PACKER_DOCKER_AUTOUNATTEND_PATH = "/packer/Autounattend.xml"
 PACKER_DOCKER_AUTOUNATTEND_PATH_XP = "/packer/WINNT.SIF"
 PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
-WINDOWS_TEMPLATE = "windows.pkr.hcl"
 
 
 def validate_source_and_compute_sha1(config_entry: dict) -> str:
@@ -119,22 +118,6 @@ def build_packer_cmdline(template: str, packer_args: list[str]) -> list[str]:
     return cmdline
 
 
-def build_docker_volumes(response_file: ResponseFile, tmp_varfile_path: str, packer_home_cache: Path) -> dict:
-    """Build Docker volume configuration - pure function."""
-    volumes = {
-        str(packer_home_cache): {"bind": "/cache", "mode": "rw"},
-        str(PACKER_TEMPLATES_DIR): {"bind": "/output_parent", "mode": "rw"},
-        tmp_varfile_path: {"bind": "/packer/vars.pkrvars.hcl", "mode": "ro"},
-    }
-
-    # Add response file volume only if mounting is needed
-    docker_path = response_file.docker_path
-    if docker_path:
-        volumes[str(response_file.tmp_path)] = {"bind": docker_path, "mode": "ro"}
-
-    return volumes
-
-
 def build_docker_config(volumes: dict, cmdline: list[str], network: bool) -> dict:
     """Build Docker container run configuration - pure function."""
     # Get the group IDs for 'kvm' and 'sudo'
@@ -210,10 +193,6 @@ def get_packer_home_cache() -> Path:
     packer_home_cache = Path.home() / ".cache" / "packer"
     packer_home_cache.mkdir(parents=True, exist_ok=True)
     return packer_home_cache
-
-
-# Note: build_packer_cmdline_from_build_config and build_docker_volumes_from_build_config
-# functions have been replaced by BuildConfig.to_packer_cmdline() and BuildConfig.to_docker_volumes() methods
 
 
 def create_response_file_from_answerfile_path(answerfile_path: str, packer_templates_dir: Path) -> ResponseFile:
