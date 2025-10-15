@@ -428,13 +428,9 @@ branches:
 
     # Windows 11 images inherit everything from win11_21h2_22000_194
     - *win11_21h2_22000_318
-    # disabled
-    # since 384, the installer requires an internet connection
-    # even though we allow it, the installer seems to not recognize it properly
-    # it used to work though !
-    # - name: *win11_22h2_22621_384
-    #   build_config:
-    #     image_name: *win11_pro
+    - name: *win11_22h2_22621_384
+      build_config:
+        image_name: *win11_pro
     # - *win11_23h2_22631_2861
     # - name: *win11_24h2_26100_1742
     #   build_config:
