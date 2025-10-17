@@ -325,6 +325,11 @@ images:
     source: "https://old-releases.ubuntu.com/releases/disco/ubuntu-19.04-server-amd64.iso"
     checksum: "sha1:e637251f52ebb165d4234f157cd5ce3d2449b62a"
 
+  - name: &ubuntu_19_10 "ubuntu-19.10"
+    description: "Ubuntu 19.10 (Eoan Ermine)"
+    source: "https://old-releases.ubuntu.com/releases/19.10/ubuntu-19.10-server-amd64.iso"
+    checksum: "sha256:921fd8b271c04aa86a321cc35b40e677f9b85f7903bf2204efb2389b0f0a64c1"
+
   - name: &ubuntu_20_04 "ubuntu-20.04"
     description: "Ubuntu 20.04 LTS (Focal Fossa)"
     source: "https://releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
@@ -559,6 +564,7 @@ branches:
           boot_wait: 2s
     - *ubuntu_18_10
     - *ubuntu_19_04
+    - *ubuntu_19_10
     # Modern autoinstall era (20.04+) - Switches to autoinstall
     - name: *ubuntu_20_04
       build_config:
