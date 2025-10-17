@@ -432,12 +432,12 @@ branches:
       build_config:
         image_name: *win11_pro
     - *win11_23h2_22631_2861
-    # - name: *win11_24h2_26100_1742
-    #   build_config:
-    #     vars:
-    #       vtpm: true
-    #       machine_type: "q35"
-    #       cpu_model: "host"
+    - name: *win11_24h2_26100_1742
+      build_config:
+        vars:
+          vtpm: true
+          machine_type: "q35"
+          cpu_model: "host"
 
 
   ubuntu-server:
