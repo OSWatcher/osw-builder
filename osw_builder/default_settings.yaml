@@ -576,21 +576,29 @@ branches:
       runtime_config:
         idle: true
         search_updates: true
-      # 20.10-21.10 are buggy, Subiquity is crashing
-      # boot_command_type = "grub" should start from 20.10
     - name: *ubuntu_20_10
       build_config:
         vars:
           boot_command_type: "grub"
+          old_release_mirrors: true
     - *ubuntu_21_04
     - *ubuntu_21_10
-    - name: *ubuntu_22_04
-      build_config:
-        vars:
-          boot_command_type: "grub"
+    - *ubuntu_22_04
     - *ubuntu_22_10
     - *ubuntu_23_04
     - *ubuntu_23_10
-    - *ubuntu_24_04
-    - *ubuntu_24_10
-    - *ubuntu_25_04
+    # EOL: Apr 2036
+    - name: *ubuntu_24_04
+      build_config:
+        vars:
+          old_release_mirrors: false
+    - name: *ubuntu_24_10
+      build_config:
+        vars:
+          # EOL: Jul 2025
+          old_release_mirrors: true
+    - name: *ubuntu_25_04
+      build_config:
+        vars:
+          # current EOL: Jan 2026
+          old_release_mirrors: false
