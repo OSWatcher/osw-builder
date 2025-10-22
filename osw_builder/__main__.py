@@ -13,9 +13,9 @@ Options:
     -d --debug                          Enable debug output
     -c --connection=<URI>               Specify a libvirt URI [Default: qemu:///session]
     --destroy                           Destroy the VM after build
-    --updates=<UP_ANSWER>               Apply branch updates [Default: yes]
-    --search-updates=<SEARCH_ANSWER>    Search for updates [Default: yes]
-    --idle=<IDLE_ANSWER>                Capture IDLE state [Default: yes]
+    --updates=<UP_ANSWER>               Apply branch updates
+    --search-updates=<SEARCH_ANSWER>    Search for updates
+    --idle=<IDLE_ANSWER>                Capture IDLE state
     --network                           Enable network access during build
     --skip-neogit                       Skip neogit capture operations
     --branch=<BRANCH_NAME>              Neogit branch to commit to
@@ -73,9 +73,6 @@ def capture_os(os_name, args):
 
     packer_args = args["--var"]
     destroy = args["--destroy"]
-    apply_updates = str2bool(args["--updates"])
-    search_updates_flag = str2bool(args["--search-updates"])
-    idle = str2bool(args["--idle"])
     network_flag = args["--network"]
     skip_neogit = args["--skip-neogit"]
     neogit_branch = args.get("--branch")
@@ -95,14 +92,16 @@ def capture_os(os_name, args):
     config = resolve_image_config(os_name)
     logging.debug("Resolved config for %s:\n%s", os_name, pformat(attrs.asdict(config), width=80, depth=2))
 
+    # Apply CLI overrides to config (CLI takes precedence over config inheritance)
+    if args["--updates"] is not None:
+        config.runtime_config.apply_updates = str2bool(args["--updates"])
+    if args["--search-updates"] is not None:
+        config.runtime_config.search_updates = str2bool(args["--search-updates"])
+    if args["--idle"] is not None:
+        config.runtime_config.idle = str2bool(args["--idle"])
+
     # Set BuildConfig in global settings for automatic vagrant environment variables
     vagrant.set_build_config(config.build_config)
-    runtime_search_updates = config.runtime_config.search_updates
-    if runtime_search_updates is not None:
-        search_updates_flag = runtime_search_updates
-    idle_config = config.runtime_config.idle
-    if idle_config is not None:
-        idle = idle_config
 
     # Apply command line network override if provided
     if network_flag:
@@ -179,12 +178,12 @@ def capture_os(os_name, args):
                 build_commit,
             )
 
-        apply_updates = entry.get("apply_updates", apply_updates)
+        apply_updates = entry.get("apply_updates", config.runtime_config.apply_updates)
         if not apply_updates:
             return
 
         # should we capture IDLE state ?
-        if idle:
+        if config.runtime_config.idle:
             if not snap_list:
                 logging.info("No IDLE snapshot found. Creating one...")
                 with vagrant.up_down_ctxt(vagrant_dir, no_destroy=True):
@@ -203,7 +202,7 @@ def capture_os(os_name, args):
             snap = Snapshot.from_raw_tag(raw_snap.Tag)
             capture_neogit(qcow_path, snap.name, branch_name=branch_name, unique=True, desc=snap.description)
 
-        if not search_updates_flag:
+        if not config.runtime_config.search_updates:
             return
 
         # OS-agnostic update management
@@ -215,7 +214,7 @@ def capture_os(os_name, args):
         # Take the most recent snapshot before updates
         if snap_list:
             previous_raw_snap = snap_list[-1].Tag
-        elif idle:
+        elif config.runtime_config.idle:
             previous_raw_snap = IDLE_SNAPSHOT.to_raw_tag()
         else:
             previous_raw_snap = BUILD_SNAPSHOT.to_raw_tag()
