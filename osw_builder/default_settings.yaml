@@ -325,10 +325,65 @@ images:
     source: "https://old-releases.ubuntu.com/releases/disco/ubuntu-19.04-server-amd64.iso"
     checksum: "sha1:e637251f52ebb165d4234f157cd5ce3d2449b62a"
 
+  - name: &ubuntu_19_10 "ubuntu-19.10"
+    description: "Ubuntu 19.10 (Eoan Ermine)"
+    source: "https://old-releases.ubuntu.com/releases/19.10/ubuntu-19.10-server-amd64.iso"
+    checksum: "sha256:921fd8b271c04aa86a321cc35b40e677f9b85f7903bf2204efb2389b0f0a64c1"
+
   - name: &ubuntu_20_04 "ubuntu-20.04"
     description: "Ubuntu 20.04 LTS (Focal Fossa)"
     source: "https://releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
     checksum: "sha1:8fb2fc63a10bff266a3ee2d2cc236dbb5feb7965"
+
+  - name: &ubuntu_20_10 "ubuntu-20.10"
+    description: "Ubuntu 20.10 (Groovy Gorilla)"
+    source: "https://old-releases.ubuntu.com/releases/groovy/ubuntu-20.10-live-server-amd64.iso"
+    checksum: "sha1:a7186b62bac9ce0006a3c93777ce0131df1e972b"
+
+  - name: &ubuntu_21_04 "ubuntu-21.04"
+    description: "Ubuntu 21.04 (Hirsute Hippo)"
+    source: "https://old-releases.ubuntu.com/releases/hirsute/ubuntu-21.04-live-server-amd64.iso"
+    checksum: "sha1:b8271df9d1a9fde8699e9a8385f235c51f6d0041"
+
+  - name: &ubuntu_21_10 "ubuntu-21.10"
+    description: "Ubuntu 21.10 (Impish Indri)"
+    source: "https://old-releases.ubuntu.com/releases/impish/ubuntu-21.10-live-server-amd64.iso"
+    checksum: "sha1:60deea0270d4f78a28242278f065fa5d43ec4f79"
+
+  - name: &ubuntu_22_04 "ubuntu-22.04"
+    description: "Ubuntu 22.04 LTS (Jammy Jellyfish)"
+    source: "https://old-releases.ubuntu.com/releases/jammy/ubuntu-22.04.4-live-server-amd64.iso"
+    checksum: "sha1:fdf1d0d47b5cdfd2feacafe2714b4f045cf7fdb2"
+
+  - name: &ubuntu_22_10 "ubuntu-22.10"
+    description: "Ubuntu 22.10 (Kinetic Kudu)"
+    source: "https://old-releases.ubuntu.com/releases/kinetic/ubuntu-22.10-live-server-amd64.iso"
+    checksum: "sha256:874452797430a94ca240c95d8503035aa145bd03ef7d84f9b23b78f3c5099aed"
+
+  - name: &ubuntu_23_04 "ubuntu-23.04"
+    description: "Ubuntu 23.04 (Lunar Lobster)"
+    source: "https://old-releases.ubuntu.com/releases/lunar/ubuntu-23.04-live-server-amd64.iso"
+    checksum: "sha256:c7cda48494a6d7d9665964388a3fc9c824b3bef0c9ea3818a1be982bc80d346b"
+
+  - name: &ubuntu_23_10 "ubuntu-23.10"
+    description: "Ubuntu 23.10 (Mantic Minotaur)"
+    source: "https://old-releases.ubuntu.com/releases/mantic/ubuntu-23.10-live-server-amd64.iso"
+    checksum: "sha256:d2fb80d9ce77511ed500bcc1f813e6f676d4a3577009dfebce24269ca23346a5"
+
+  - name: &ubuntu_24_04 "ubuntu-24.04"
+    description: "Ubuntu 24.04 LTS (Noble Numbat)"
+    source: "https://old-releases.ubuntu.com/releases/noble/ubuntu-24.04.2-live-server-amd64.iso"
+    checksum: "sha256:8b44046211118639c673335a80359f4b3f0d9e52c33fe61c59072b1b61bdecc5"
+
+  - name: &ubuntu_24_10 "ubuntu-24.10"
+    description: "Ubuntu 24.10 (Ominous Ocelot)"
+    source: "https://old-releases.ubuntu.com/releases/oracular/ubuntu-24.10-live-server-amd64.iso"
+    checksum: "sha256:4fce7c02a5e5dbe3426da4aa0f8b7845e9a36aff29c5884d206a08e51b2c4c47"
+
+  - name: &ubuntu_25_04 "ubuntu-25.04"
+    description: "Ubuntu 25.04 (Quirky Quokka)"
+    source: "https://releases.ubuntu.com/plucky/ubuntu-25.04-live-server-amd64.iso"
+    checksum: "sha256:8b44046211118639c673335a80359f4b3f0d9e52c33fe61c59072b1b61bdecc5"
 
 branches:
   master:
@@ -509,6 +564,7 @@ branches:
           boot_wait: 2s
     - *ubuntu_18_10
     - *ubuntu_19_04
+    - *ubuntu_19_10
     # Modern autoinstall era (20.04+) - Switches to autoinstall
     - name: *ubuntu_20_04
       build_config:
@@ -520,3 +576,29 @@ branches:
       runtime_config:
         idle: true
         search_updates: true
+    - name: *ubuntu_20_10
+      build_config:
+        vars:
+          boot_command_type: "grub"
+          old_release_mirrors: true
+    - *ubuntu_21_04
+    - *ubuntu_21_10
+    - *ubuntu_22_04
+    - *ubuntu_22_10
+    - *ubuntu_23_04
+    - *ubuntu_23_10
+    # EOL: Apr 2036
+    - name: *ubuntu_24_04
+      build_config:
+        vars:
+          old_release_mirrors: false
+    - name: *ubuntu_24_10
+      build_config:
+        vars:
+          # EOL: Jul 2025
+          old_release_mirrors: true
+    - name: *ubuntu_25_04
+      build_config:
+        vars:
+          # current EOL: Jan 2026
+          old_release_mirrors: false
