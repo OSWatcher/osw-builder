@@ -584,8 +584,15 @@ branches:
         network: true
     - *ubuntu_21_04
     - *ubuntu_21_10
-    - *ubuntu_22_04
-    - *ubuntu_22_10
+    # LTS: EOL Apr 2027
+    - name: *ubuntu_22_04
+      build_config:
+        vars:
+          old_release_mirrors: false
+    - name: *ubuntu_22_10
+      build_config:
+        vars:
+          old_release_mirrors: true
     - *ubuntu_23_04
     - *ubuntu_23_10
     # EOL: Apr 2036
