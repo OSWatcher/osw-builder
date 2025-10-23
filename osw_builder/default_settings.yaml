@@ -581,6 +581,7 @@ branches:
         vars:
           boot_command_type: "grub"
           old_release_mirrors: true
+        network: true
     - *ubuntu_21_04
     - *ubuntu_21_10
     - *ubuntu_22_04
@@ -597,6 +598,7 @@ branches:
         vars:
           # EOL: Jul 2025
           old_release_mirrors: true
+        network: true
     - name: *ubuntu_25_04
       build_config:
         vars:
