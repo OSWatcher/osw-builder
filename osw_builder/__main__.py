@@ -178,10 +178,6 @@ def capture_os(os_name, args):
                 build_commit,
             )
 
-        apply_updates = entry.get("apply_updates", config.runtime_config.apply_updates)
-        if not apply_updates:
-            return
-
         # should we capture IDLE state ?
         if config.runtime_config.idle:
             if not snap_list:
@@ -233,6 +229,10 @@ def capture_os(os_name, args):
             except Exception as e:
                 logging.error("Failed to search for updates: %s", e, exc_info=True)
                 return
+
+        apply_updates = entry.get("apply_updates", config.runtime_config.apply_updates)
+        if not apply_updates:
+            return
 
         # Install each update with full vagrant cycle
         for index, update in enumerate(available_updates):
