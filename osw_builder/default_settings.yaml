@@ -499,7 +499,7 @@ branches:
     # Legacy preseed era (6.10-15.10) - Sets initial defaults
     - name: *ubuntu_6_10
       build_config:
-        template: "ubuntu.pkr.hcl"
+        template: *ubuntu_template
         varfiles:
           - "ubuntu.pkrvars/preseed.pkrvars.hcl"
         vars:
