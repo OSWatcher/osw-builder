@@ -92,13 +92,23 @@ def capture_os(os_name, args):
     config = resolve_image_config(os_name)
     logging.debug("Resolved config for %s:\n%s", os_name, pformat(attrs.asdict(config), width=80, depth=2))
 
-    # Apply CLI overrides to config (CLI takes precedence over config inheritance)
+    # Apply CLI overrides to config with conditional logic
+    # Rule: CLI cannot override if config explicitly disables (False)
+
     if args["--updates"] is not None:
-        config.runtime_config.apply_updates = str2bool(args["--updates"])
+        cli_value = str2bool(args["--updates"])
+        if config.runtime_config.apply_updates is not False:
+            config.runtime_config.apply_updates = cli_value
+
     if args["--search-updates"] is not None:
-        config.runtime_config.search_updates = str2bool(args["--search-updates"])
+        cli_value = str2bool(args["--search-updates"])
+        if config.runtime_config.search_updates is not False:
+            config.runtime_config.search_updates = cli_value
+
     if args["--idle"] is not None:
-        config.runtime_config.idle = str2bool(args["--idle"])
+        cli_value = str2bool(args["--idle"])
+        if config.runtime_config.idle is not False:
+            config.runtime_config.idle = cli_value
 
     # Set BuildConfig in global settings for automatic vagrant environment variables
     vagrant.set_build_config(config.build_config)
