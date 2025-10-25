@@ -566,6 +566,7 @@ branches:
     - *ubuntu_19_04
     - *ubuntu_19_10
     # Modern autoinstall era (20.04+) - Switches to autoinstall
+    # EOL: May 2025
     - name: *ubuntu_20_04
       build_config:
         varfiles:
@@ -582,6 +583,8 @@ branches:
           boot_command_type: "grub"
           old_release_mirrors: true
         network: true
+      runtime_config:
+        search_updates: false
     - *ubuntu_21_04
     - *ubuntu_21_10
     # LTS: EOL Apr 2027
@@ -589,10 +592,14 @@ branches:
       build_config:
         vars:
           old_release_mirrors: false
+      runtime_config:
+        search_updates: true
     - name: *ubuntu_22_10
       build_config:
         vars:
           old_release_mirrors: true
+      runtime_config:
+        search_updates: false
     - *ubuntu_23_04
     - *ubuntu_23_10
     # EOL: Apr 2036
@@ -600,14 +607,20 @@ branches:
       build_config:
         vars:
           old_release_mirrors: false
+      runtime_config:
+        search_updates: true
     - name: *ubuntu_24_10
       build_config:
         vars:
           # EOL: Jul 2025
           old_release_mirrors: true
         network: true
+      runtime_config:
+        search_updates: false
     - name: *ubuntu_25_04
       build_config:
         vars:
           # current EOL: Jan 2026
           old_release_mirrors: false
+      runtime_config:
+        search_updates: true
