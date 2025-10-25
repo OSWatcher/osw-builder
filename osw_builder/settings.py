@@ -94,9 +94,9 @@ class BuildConfig:
 class RuntimeConfig:
     """Runtime behavior configuration resolved through inheritance."""
 
-    search_updates: Optional[bool] = None
-    idle: Optional[bool] = None
-    apply_updates: Optional[bool] = None
+    search_updates: bool = True
+    idle: bool = True
+    apply_updates: bool = True
 
 
 @define
