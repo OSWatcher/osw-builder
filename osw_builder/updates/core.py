@@ -108,6 +108,25 @@ UBUNTU_COUNT_TASK = "check_upgradable_packages"
 UBUNTU_LIST_TASK = "get_upgradable_packages"
 UBUNTU_INSTALL_TASK = "install_ubuntu_updates"
 
+# Windows pre_tasks configuration
+# We disable automatic fact gathering and manually gather facts after waiting
+# to prevent WinRM/WMI deadlocks that can occur when Windows is still
+# initializing services after boot. The 90-second delay gives Windows time
+# to complete boot-time initialization before Ansible attempts WMI queries.
+WINDOWS_PRE_TASKS = [
+    {
+        "name": "Wait for WinRM connection to be ready",
+        "wait_for_connection": {
+            "timeout": 300,
+            "delay": 90,
+        },
+    },
+    {
+        "name": "Gather facts after connection is stable",
+        "setup": {},
+    },
+]
+
 
 def validate_windows_install_result(ansible_facts: Dict[str, Any]) -> bool:
     """Validate that Windows update installation was successful.
@@ -142,6 +161,8 @@ def create_search_playbook(os_type: OSType) -> PlaybookConfig:
             content = [
                 {
                     "hosts": "all",
+                    "gather_facts": False,
+                    "pre_tasks": WINDOWS_PRE_TASKS,
                     "tasks": [
                         {
                             "name": WINDOWS_SEARCH_TASK,
@@ -212,6 +233,8 @@ def create_install_playbook(os_type: OSType, update: Update) -> PlaybookConfig:
             content = [
                 {
                     "hosts": "all",
+                    "gather_facts": False,
+                    "pre_tasks": WINDOWS_PRE_TASKS,
                     "tasks": [
                         {
                             "name": WINDOWS_INSTALL_TASK,
