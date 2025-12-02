@@ -386,7 +386,7 @@ images:
     checksum: "sha256:8b44046211118639c673335a80359f4b3f0d9e52c33fe61c59072b1b61bdecc5"
 
 branches:
-  master:
+  windows:
     # Box images (pre-built, no build_config needed)
     - name: *win95
       runtime_config:
