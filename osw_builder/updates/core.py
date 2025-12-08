@@ -104,6 +104,7 @@ def build_ansible_inventory(connection_info: ConnectionInfo, os_type: OSType) ->
 # Task name constants for consistent parsing
 WINDOWS_SEARCH_TASK = "search_windows_updates"
 WINDOWS_INSTALL_TASK = "apply_windows_update"
+WINDOWS_REBOOT_TASK = "reboot_windows_system"
 UBUNTU_COUNT_TASK = "check_upgradable_packages"
 UBUNTU_LIST_TASK = "get_upgradable_packages"
 UBUNTU_INSTALL_TASK = "install_ubuntu_updates"
@@ -127,6 +128,34 @@ WINDOWS_PRE_TASKS = [
     },
 ]
 
+# OSWatcher Update Orchestration Flow
+# ====================================
+#
+# The update management system separates installation from reboot to give
+# OSWatcher explicit control over the update sequence and snapshot timing.
+#
+# Windows Update Flow:
+# 1. search_updates() - Find available updates (win_updates state=searched)
+# 2. For each update:
+#    a. install_update() - Install with reboot=False
+#    b. validate_windows_install_result() - Check installation success
+#    c. windows_reboot_required() - Check if reboot needed
+#    d. If reboot needed: reboot_system() - Explicit reboot (win_reboot)
+#    e. OSWatcher captures system state after reboot
+#    f. Create snapshot with KB number tag
+#
+# Ubuntu Update Flow:
+# 1. search_updates() - Find available updates (apt list --upgradable)
+# 2. install_update() - Install all updates (apt upgrade=dist)
+# 3. OSWatcher captures system state
+# 4. Create snapshot with date tag
+#
+# Why separate install from reboot?
+# - win_updates with reboot=True performs fragile multi-round logic
+# - Can fail with WSMan "InvalidSelectors" fault after automatic reboot
+# - OSWatcher needs to inspect reboot_required before deciding when to reboot
+# - Allows snapshot capture at precise moments in update lifecycle
+
 
 def validate_windows_install_result(ansible_facts: Dict[str, Any]) -> bool:
     """Validate that Windows update installation was successful.
@@ -142,6 +171,18 @@ def validate_windows_install_result(ansible_facts: Dict[str, Any]) -> bool:
 
     # Consider successful if at least one update was installed and no failures
     return installed_count >= 1 and failed_count == 0
+
+
+def windows_reboot_required(ansible_facts: Dict[str, Any]) -> bool:
+    """Check if Windows update installation requires a reboot.
+
+    Args:
+        ansible_facts: Results from win_updates Ansible module
+
+    Returns:
+        True if a reboot is required, False otherwise
+    """
+    return bool(ansible_facts.get("reboot_required", False))
 
 
 def create_search_playbook(os_type: OSType) -> PlaybookConfig:
@@ -240,8 +281,7 @@ def create_install_playbook(os_type: OSType, update: Update) -> PlaybookConfig:
                             "name": WINDOWS_INSTALL_TASK,
                             "win_updates": {
                                 "state": "installed",
-                                "reboot": True,
-                                "reboot_timeout": 3600,
+                                "reboot": False,  # Let OSWatcher control reboot explicitly
                                 "category_names": [
                                     # default categories
                                     "CriticalUpdates",
@@ -282,6 +322,51 @@ def create_install_playbook(os_type: OSType, update: Update) -> PlaybookConfig:
             raise ValueError("Cannot create install playbook for unknown OS type")
         case _:
             raise ValueError(f"Unsupported OS type: {os_type}")
+
+
+def create_reboot_playbook(os_type: OSType) -> PlaybookConfig:
+    """Create Ansible playbook for rebooting the system.
+
+    Args:
+        os_type: Operating system type
+
+    Returns:
+        PlaybookConfig with OS-specific reboot playbook
+
+    Raises:
+        ValueError: If OS type is not supported for reboot operations
+    """
+    match os_type:
+        case OSType.WINDOWS:
+            content = [
+                {
+                    "hosts": "all",
+                    "gather_facts": False,
+                    "pre_tasks": WINDOWS_PRE_TASKS,
+                    "tasks": [
+                        {
+                            "name": WINDOWS_REBOOT_TASK,
+                            "win_reboot": {
+                                "reboot_timeout": 3600,
+                                "msg": "OSWatcher triggered reboot after update",
+                            },
+                        }
+                    ],
+                }
+            ]
+            return PlaybookConfig(name="windows_reboot.yml", content=content)
+
+        case OSType.UBUNTU:
+            raise ValueError(
+                "Ubuntu reboot playbook not yet implemented. "
+                "Use 'sudo reboot' via shell module or win_reboot equivalent."
+            )
+
+        case OSType.UNKNOWN:
+            raise ValueError("Cannot create reboot playbook for unknown OS type")
+
+        case _:
+            raise ValueError(f"Reboot playbook not supported for OS type: {os_type}")
 
 
 def parse_windows_updates(ansible_facts: Dict[str, Any]) -> List[Update]:
