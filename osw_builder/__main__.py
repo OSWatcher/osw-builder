@@ -88,6 +88,21 @@ def capture_os(os_name, args):
         raise RuntimeError("Could not find OS name")
 
     description = entry["description"]
+
+    # Extract and parse release_date (year-month format)
+    release_date = None
+    if "release_date" in entry:
+        from datetime import datetime
+
+        try:
+            # Parse "YYYY-MM" format, default to first day of month
+            release_date = datetime.strptime(entry["release_date"], "%Y-%m")
+            logging.debug("Using release date: %s", release_date)
+        except ValueError as e:
+            logging.warning(
+                "Invalid release_date format for %s: %s. Expected 'YYYY-MM'. Using current date.", os_name, e
+            )
+
     # Get runtime configuration
     config = resolve_image_config(os_name)
     logging.debug("Resolved config for %s:\n%s", os_name, pformat(attrs.asdict(config), width=80, depth=2))
@@ -176,7 +191,13 @@ def capture_os(os_name, args):
         vagrant.snapshot_restore(vagrant_dir, BUILD_SNAPSHOT.to_raw_tag())
         # use description from default_settings.yaml just for build snapshot
         build_commit = capture_neogit(
-            qcow_path, box_name, branch_name=neogit_branch, unique=True, desc=description, before=before
+            qcow_path,
+            box_name,
+            branch_name=neogit_branch,
+            unique=True,
+            desc=description,
+            before=before,
+            date=release_date,
         )
         snap_list.pop(0)  # remove build snapshot from the list
 
@@ -200,13 +221,18 @@ def capture_os(os_name, args):
 
             vagrant.snapshot_restore(vagrant_dir, IDLE_SNAPSHOT.to_raw_tag())
             capture_neogit(
-                qcow_path, IDLE_SNAPSHOT.name, branch_name=branch_name, unique=True, desc=IDLE_SNAPSHOT.description
+                qcow_path,
+                IDLE_SNAPSHOT.name,
+                branch_name=branch_name,
+                unique=True,
+                desc=IDLE_SNAPSHOT.description,
+                date=None,
             )
 
         for raw_snap in snap_list:
             vagrant.snapshot_restore(vagrant_dir, raw_snap.Tag)
             snap = Snapshot.from_raw_tag(raw_snap.Tag)
-            capture_neogit(qcow_path, snap.name, branch_name=branch_name, unique=True, desc=snap.description)
+            capture_neogit(qcow_path, snap.name, branch_name=branch_name, unique=True, desc=snap.description, date=None)
 
         if not config.runtime_config.search_updates:
             return
@@ -282,7 +308,9 @@ def capture_os(os_name, args):
                 logging.info("📸 Snapshot created: %s", snapshot_name)
 
                 # Capture git commit
-                capture_neogit(qcow_path, snapshot_name, branch_name=branch_name, unique=True, desc=update.description)
+                capture_neogit(
+                    qcow_path, snapshot_name, branch_name=branch_name, unique=True, desc=update.description, date=None
+                )
 
                 # Update previous snapshot reference for next iteration
                 previous_raw_snap = snap.to_raw_tag()

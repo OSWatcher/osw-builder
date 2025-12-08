@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -16,6 +17,7 @@ def capture_neogit(
     debug: bool = False,
     desc: Optional[str] = None,
     before: Optional[str] = None,
+    date: Optional[datetime] = None,
 ):
     if settings.skip_neogit:
         logging.info("Skipping Neogit capture on %s (skip_neogit flag is enabled)", vm_name)
@@ -27,7 +29,9 @@ def capture_neogit(
         neo = Neogit(debug=debug)
         neo.init()
         logging.info("Running Neogit capture on %s", vm_name)
-        return neo.commit(vm_name, Path(local_mnt), branch_name=branch_name, unique=unique, desc=desc, before=before)
+        return neo.commit(
+            vm_name, Path(local_mnt), branch_name=branch_name, unique=unique, desc=desc, before=before, date=date
+        )
 
 
 def create_branch(branch_name: str, commit_hash: str):
