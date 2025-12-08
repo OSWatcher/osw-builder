@@ -241,6 +241,7 @@ def create_install_playbook(os_type: OSType, update: Update) -> PlaybookConfig:
                             "win_updates": {
                                 "state": "installed",
                                 "reboot": True,
+                                "reboot_timeout": 3600,
                                 "category_names": [
                                     # default categories
                                     "CriticalUpdates",
