@@ -1,8 +1,7 @@
 import logging
 import os
 import subprocess
-from contextlib import ExitStack, closing, contextmanager, redirect_stderr
-from io import StringIO
+from contextlib import ExitStack, closing, contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Thread
@@ -12,20 +11,53 @@ import guestfs
 
 
 @contextmanager
-def capture_stderr():
+def capture_output_fd():
     """
-    Capture stderr during libguestfs operations and report summary.
+    Capture stdout and stderr at file descriptor level during libguestfs operations.
 
-    libguestfs emits many non-fatal diagnostic messages (especially for
-    unsupported NTFS reparse points) that pollute logs. This captures
-    all stderr and logs a summary count instead.
+    libguestfs is a C library that writes directly to file descriptors,
+    bypassing Python's sys.stdout/sys.stderr. This uses OS-level redirection
+    to capture the output and report a summary instead of polluting logs.
 
     Yields:
-        StringIO buffer containing captured stderr
+        Tuple of temporary file paths (stdout_file, stderr_file)
     """
-    stderr_buffer = StringIO()
-    with redirect_stderr(stderr_buffer):
-        yield stderr_buffer
+    import sys
+    import tempfile
+
+    # Save original file descriptors
+    stdout_fd = sys.stdout.fileno()
+    stderr_fd = sys.stderr.fileno()
+    saved_stdout = os.dup(stdout_fd)
+    saved_stderr = os.dup(stderr_fd)
+
+    # Create temporary files to capture output
+    stdout_temp = tempfile.NamedTemporaryFile(mode="w+", delete=False)
+    stderr_temp = tempfile.NamedTemporaryFile(mode="w+", delete=False)
+
+    try:
+        # Redirect file descriptors to temp files
+        os.dup2(stdout_temp.fileno(), stdout_fd)
+        os.dup2(stderr_temp.fileno(), stderr_fd)
+
+        yield stdout_temp.name, stderr_temp.name
+
+    finally:
+        # Flush before restoring
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+        # Restore original file descriptors
+        os.dup2(saved_stdout, stdout_fd)
+        os.dup2(saved_stderr, stderr_fd)
+
+        # Close saved descriptors
+        os.close(saved_stdout)
+        os.close(saved_stderr)
+
+        # Close temp files
+        stdout_temp.close()
+        stderr_temp.close()
 
 
 class LibguestFSMnt:
@@ -69,8 +101,8 @@ class LibguestFSMnt:
 
     def __enter__(self):
         with self._cleanup_on_error():
-            # Capture stderr from libguestfs operations
-            with capture_stderr() as stderr_buf:
+            # Capture stdout and stderr from libguestfs operations at FD level
+            with capture_output_fd() as (stdout_file, stderr_file):
                 self._logger.info("Initializing libguestfs mount")
                 self._ex.enter_context(closing(self.gfs))
 
@@ -127,11 +159,28 @@ class LibguestFSMnt:
                     self._thread_mnt_local = Thread(target=self.gfs.mount_local_run)
                     self._thread_mnt_local.start()
 
-            # Report how many messages were suppressed
-            stderr_content = stderr_buf.getvalue()
-            if stderr_content:
-                num_lines = len(stderr_content.strip().split("\n"))
-                self._logger.info(f"Suppressed {num_lines} libguestfs diagnostic messages")
+            # Read captured output and report summary
+            total_suppressed = 0
+            try:
+                with open(stdout_file, "r") as f:
+                    stdout_content = f.read().strip()
+                    if stdout_content:
+                        total_suppressed += len(stdout_content.split("\n"))
+
+                with open(stderr_file, "r") as f:
+                    stderr_content = f.read().strip()
+                    if stderr_content:
+                        total_suppressed += len(stderr_content.split("\n"))
+
+                if total_suppressed > 0:
+                    self._logger.info(f"Suppressed {total_suppressed} libguestfs diagnostic messages")
+            finally:
+                # Clean up temp files
+                try:
+                    os.unlink(stdout_file)
+                    os.unlink(stderr_file)
+                except Exception:
+                    pass
 
             return self._local_mntpnt if self._local else None
 
