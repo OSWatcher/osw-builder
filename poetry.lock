@@ -1572,7 +1572,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "plugins"
-version = "0.7.0"
+version = "0.10.0"
 description = ""
 optional = false
 python-versions = "^3.11"
@@ -1587,7 +1587,7 @@ dynaconf = "^3.2.5"
 ipdb = "^0.13.13"
 jsonschema = "^4.21.1"
 lief = "0.14.0"
-neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.11"}
+neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.11.1"}
 poethepoet = "^0.26.1"
 pypeln = "^0.4.9"
 python-magic = "^0.4.27"
@@ -1598,8 +1598,8 @@ volatility3 = "^2.5.2"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
-reference = "v0.9"
-resolved_reference = "3617b700cde18ddbc473b421fafc911877b94740"
+reference = "v0.10"
+resolved_reference = "51dc49decfa37a71c4533a09e6284a88331c97d3"
 
 [[package]]
 name = "poethepoet"
@@ -2669,4 +2669,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "06d9e03f67c0e910e2b31862552e7f067c6d6c6e2dad098ef475cec4f8c88259"
+content-hash = "e742f2e0b0ed11541dc1dbb7f352269b6edb74f6310b9ffaaa7185c9c0064992"
