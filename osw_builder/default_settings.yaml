@@ -194,6 +194,11 @@ images:
     source: "https://storage.grapheos.cc/images/win11/Win11_24H2_English_x64_26100_1742.iso"
     checksum: "sha1:a81079ba4b9a9ce29a7a2a20cd34266ac21becce"
 
+  - name: &win11_25h2_26100_265 "win11-25h2-26100.265"
+    description: "win11 25H2 (2025 Update, 26100)"
+    source: "https://storage.grapheos.cc/images/win11/Win11_25H2_English_x64.iso"
+    checksum: "sha256:d141f6030fed50f75e2b03e1eb2e53646c4b21e5386047cb860af5223f102a32"
+
   # Ubuntu
   - name: &ubuntu_6_10 "ubuntu-6.10"
     description: "Ubuntu 6.10 (Edgy Eft)"
@@ -493,6 +498,7 @@ branches:
           vtpm: true
           machine_type: "q35"
           cpu_model: "host"
+    - *win11_25h2_26100_265
 
 
   ubuntu-server:

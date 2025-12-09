@@ -65,9 +65,12 @@ def run_ansible_playbook(
         verbosity=2,
         envvars={
             "ANSIBLE_STDOUT_CALLBACK": "yaml",
-            "ANSIBLE_WINRM_CONNECTION_TIMEOUT": "120",
-            "ANSIBLE_WINRM_READ_TIMEOUT": "600",
-            "ANSIBLE_WINRM_OPERATION_TIMEOUT": "300",
+        },
+        extravars={
+            # These are the *actual* WinRM knobs
+            "ansible_winrm_connection_timeout": 600,  # 10 minutes
+            "ansible_winrm_operation_timeout_sec": 240,  # 4min per WSMan heartbeat
+            "ansible_winrm_read_timeout_sec": 1800,  # 30 minutes waiting for input
         },
     )
 
