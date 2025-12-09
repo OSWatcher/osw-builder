@@ -1405,7 +1405,7 @@ pyarrow = ["pyarrow (>=1.0.0)"]
 
 [[package]]
 name = "neogit"
-version = "0.12"
+version = "0.13"
 description = "Git-like tool backed by Neo4j"
 optional = false
 python-versions = "^3.11"
@@ -1434,8 +1434,8 @@ types-PyYAML = "^6.0.0"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/neogit.git"
-reference = "v0.12"
-resolved_reference = "28e110f47c0ac77bb900728ac0aaf6d432ce1ec3"
+reference = "v0.13"
+resolved_reference = "e5496206fd1b87891f987f800bbab8f41226fece"
 
 [[package]]
 name = "neomodel"
@@ -1572,7 +1572,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "plugins"
-version = "0.11.0"
+version = "0.12.0"
 description = ""
 optional = false
 python-versions = "^3.11"
@@ -1587,7 +1587,7 @@ dynaconf = "^3.2.5"
 ipdb = "^0.13.13"
 jsonschema = "^4.21.1"
 lief = "0.14.0"
-neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.12"}
+neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.13"}
 poethepoet = "^0.26.1"
 pypeln = "^0.4.9"
 python-magic = "^0.4.27"
@@ -1598,8 +1598,8 @@ volatility3 = "^2.5.2"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
-reference = "v0.11"
-resolved_reference = "d1bdbfecc27c8ca982ee86cf342283ea09435ffb"
+reference = "v0.12.0"
+resolved_reference = "a4041f3f104e95cc7a97367b37d015c36f204ac0"
 
 [[package]]
 name = "poethepoet"
@@ -2669,4 +2669,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "96084985977ece5ca60da993ab10063e68692b9b0cb0cf9103fd324a010aa75e"
+content-hash = "64a537f1a0dfb76b2573848837227577ee2fe1aa70ca2df29a0b0c2c27c1a62f"

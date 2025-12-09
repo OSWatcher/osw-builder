@@ -92,11 +92,11 @@ def capture_os(os_name, args):
     # Extract and parse release_date (year-month format)
     release_date = None
     if "release_date" in entry:
-        from datetime import datetime
+        from datetime import datetime, timezone
 
         try:
-            # Parse "YYYY-MM" format, default to first day of month
-            release_date = datetime.strptime(entry["release_date"], "%Y-%m")
+            # Parse "YYYY-MM" format, default to first day of month, use UTC timezone
+            release_date = datetime.strptime(entry["release_date"], "%Y-%m").replace(tzinfo=timezone.utc)
             logging.debug("Using release date: %s", release_date)
         except ValueError as e:
             logging.warning(

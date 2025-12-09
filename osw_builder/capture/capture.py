@@ -18,7 +18,23 @@ def capture_neogit(
     desc: Optional[str] = None,
     before: Optional[str] = None,
     date: Optional[datetime] = None,
-):
+) -> Optional[str]:
+    """Capture a VM filesystem state to Neogit.
+
+    Args:
+        qcow_path: Path to the QCOW2 image file
+        vm_name: Name of the VM (used as commit name)
+        branch_name: Optional branch name for the commit
+        unique: If True, prevent duplicate commits with same name
+        debug: Enable debug logging
+        desc: Optional commit description
+        before: Optional commit name to insert this commit before
+        date: Optional timezone-aware datetime for the commit. Must have tzinfo set.
+              If None, neogit will use datetime.now(timezone.utc).
+
+    Returns:
+        Commit hash if successful, None if skipped
+    """
     if settings.skip_neogit:
         logging.info("Skipping Neogit capture on %s (skip_neogit flag is enabled)", vm_name)
         return None
