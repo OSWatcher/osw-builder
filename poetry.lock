@@ -1633,8 +1633,8 @@ types-PyYAML = "^6.0.0"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/neogit.git"
-reference = "v0.13.2"
-resolved_reference = "ceff545d561e87f7e65bb1ae922244df12da4b51"
+reference = "v0.13.3"
+resolved_reference = "f67bf2c9dffdf1047a9c9c1e0009ae6ed030b7a7"
 
 [[package]]
 name = "neomodel"
@@ -1771,7 +1771,7 @@ testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
 name = "plugins"
-version = "0.12.2"
+version = "0.12.3"
 description = ""
 optional = false
 python-versions = "^3.11"
@@ -1786,7 +1786,7 @@ dynaconf = "^3.2.5"
 ipdb = "^0.13.13"
 jsonschema = "^4.21.1"
 lief = "0.14.0"
-neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.13.2"}
+neogit = {git = "https://github.com/OSWatcher/neogit.git", tag = "v0.13.3"}
 poethepoet = "^0.26.1"
 pypeln = "^0.4.9"
 python-magic = "^0.4.27"
@@ -1797,8 +1797,8 @@ volatility3 = "^2.5.2"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
-reference = "v0.12.2"
-resolved_reference = "4317493446bdb5964f24d9bfff775d4a138f74a6"
+reference = "v0.12.3"
+resolved_reference = "7f79a6b884317e952a11f48cf286b53fe5dd7bc2"
 
 [[package]]
 name = "poethepoet"
@@ -2956,4 +2956,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "dd785c8b0c4090aba2b636d678ea8759647a1610260fbc1634c482e46284b941"
+content-hash = "29aa4c6468890f70e9267ff8e27dd2d9d40e87218f485ef3a2a1f39166f2e157"
