@@ -1771,7 +1771,7 @@ testing = ["coverage", "pytest", "pytest-benchmark"]
 
 [[package]]
 name = "plugins"
-version = "0.12.3"
+version = "0.12.4"
 description = ""
 optional = false
 python-versions = "^3.11"
@@ -1797,8 +1797,8 @@ volatility3 = "^2.5.2"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
-reference = "v0.12.3"
-resolved_reference = "7f79a6b884317e952a11f48cf286b53fe5dd7bc2"
+reference = "v0.12.4"
+resolved_reference = "8dd4a76ad0b1532f4555fe1385bb0f88ee6d65b3"
 
 [[package]]
 name = "poethepoet"
@@ -2956,4 +2956,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "29aa4c6468890f70e9267ff8e27dd2d9d40e87218f485ef3a2a1f39166f2e157"
+content-hash = "ea274998fa19188752f203ffd0edd2d15c213df06b55205e78411c59aa603eee"
