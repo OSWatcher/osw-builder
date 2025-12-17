@@ -1832,8 +1832,8 @@ volatility3 = "^2.26.2"
 [package.source]
 type = "git"
 url = "https://github.com/OSWatcher/grapheos-plugins.git"
-reference = "v0.12.5"
-resolved_reference = "e4730ca66d9f5c9062596276c9b90bd0ddbc02eb"
+reference = "v0.12.6"
+resolved_reference = "dec6943c2c9f9f709e032c02da31c8b63d9d0feb"
 
 [[package]]
 name = "poethepoet"
@@ -3003,4 +3003,4 @@ test = ["pytest", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "a80b945180f2905b00be16ea6c23e87759a8a2987dcde9cec1a938436ba9da73"
+content-hash = "d46944723e93421765af2a2c991b3de5ea483b03ddf3043a3af5c27e59d1b969"
