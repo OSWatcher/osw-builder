@@ -18,6 +18,11 @@ on:
         required: false
         description: "Search for updates"
         default: "true"
+      force_plugins:
+        type: string
+        required: false
+        default: ""
+        description: 'Comma-separated list of plugins to force rerun (e.g., "symbols" or "symbols,winreg")'
 
 jobs:
   build_matrix:
@@ -92,6 +97,7 @@ jobs:
     uses: ./.github/workflows/plugins.yml
     with:
       branch_name: ${{ inputs.branch }}
+      force_plugins: ${{ inputs.force_plugins }}
     secrets: inherit
 
   plugins_os_branch:
@@ -102,4 +108,5 @@ jobs:
       max-parallel: 1
     with:
       branch_name: ${{ matrix.os_name }}
+      force_plugins: ${{ inputs.force_plugins }}
     secrets: inherit

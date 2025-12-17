@@ -46,9 +46,10 @@ def validate_source_and_compute_sha1(config_entry: dict) -> str:
         logging.debug("Computing SHA1")
         sha1digest = compute_sha1sum(source_path)
     else:
-        sha1digest = config_entry.get("checksum", None)
-        if not sha1digest:
+        sha1digest_value = config_entry.get("checksum", None)
+        if not sha1digest_value:
             raise RuntimeError("Invalid configuration: need to specify a SHA1 for URL sources")
+        sha1digest = sha1digest_value
     logging.debug("Checksum: %s", sha1digest)
     return sha1digest
 
