@@ -16,7 +16,7 @@ pyyaml = "^6.0.1"
 libvirt-python = "^11.6.0"
 guestfs = { url = "https://download.libguestfs.org/python/guestfs-1.40.2.tar.gz" }
 neogit = { git = "https://github.com/OSWatcher/neogit.git", tag = "v0.13.3" }
-plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git", rev = "v0.12.6" }
+plugins = { git = "https://github.com/OSWatcher/grapheos-plugins.git", rev = "v0.12.7" }
 dynaconf = "^3.2.5"
 python-hcl2 = "^4.3.4"
 docker = "^7.1.0"
