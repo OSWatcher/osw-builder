@@ -78,7 +78,6 @@ jobs:
     strategy:
       matrix:
         commit: ${{ fromJson(needs.build_matrix.outputs.matrix).commit }}
-        plugin: [filetype, winreg, symbols]
       max-parallel: 20
     steps:
       - name: Checkout Code
@@ -93,10 +92,27 @@ jobs:
           pat_token: ${{ secrets.PAT_TOKEN }}
           minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
-      - name: Run ${{ matrix.plugin }} plugin
+      # Plugins must run sequentially: symbols depends on filetype (MIME type filtering)
+      - name: Run filetype plugin
         run: |
           FORCE_FLAG=""
-          if [[ ",${{ inputs.force_plugins }}," == *",${{ matrix.plugin }},"* ]]; then
+          if [[ ",${{ inputs.force_plugins }}," == *",filetype,"* ]]; then
             FORCE_FLAG="--force"
           fi
-          poetry run runner $FORCE_FLAG ${{ matrix.commit.hash }} ${{ matrix.plugin }}
+          poetry run runner $FORCE_FLAG ${{ matrix.commit.hash }} filetype
+
+      - name: Run winreg plugin
+        run: |
+          FORCE_FLAG=""
+          if [[ ",${{ inputs.force_plugins }}," == *",winreg,"* ]]; then
+            FORCE_FLAG="--force"
+          fi
+          poetry run runner $FORCE_FLAG ${{ matrix.commit.hash }} winreg
+
+      - name: Run symbols plugin
+        run: |
+          FORCE_FLAG=""
+          if [[ ",${{ inputs.force_plugins }}," == *",symbols,"* ]]; then
+            FORCE_FLAG="--force"
+          fi
+          poetry run runner $FORCE_FLAG ${{ matrix.commit.hash }} symbols
