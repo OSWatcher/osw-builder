@@ -1,0 +1,31 @@
+name: "Setup dwarf2json"
+description: "Installs dwarf2json binary for Linux kernel DWARF symbol extraction"
+
+inputs:
+  version:
+    description: "dwarf2json version to install"
+    required: false
+    default: "v0.9.0"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install dwarf2json
+      run: |
+        if command -v dwarf2json &> /dev/null; then
+          echo "dwarf2json already installed: $(which dwarf2json)"
+        else
+          echo "Installing dwarf2json ${{ inputs.version }}..."
+          mkdir -p "$HOME/.local/bin"
+          wget -q "https://github.com/volatilityfoundation/dwarf2json/releases/download/${{ inputs.version }}/dwarf2json-linux-amd64" -O "$HOME/.local/bin/dwarf2json"
+          chmod +x "$HOME/.local/bin/dwarf2json"
+        fi
+      shell: bash
+
+    - name: Add to PATH
+      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Verify installation
+      run: dwarf2json --help > /dev/null 2>&1 || (echo "dwarf2json sanity check failed" && exit 1)
+      shell: bash

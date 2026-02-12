@@ -55,6 +55,9 @@ jobs:
           pat_token: ${{ secrets.PAT_TOKEN }}
           minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
+      - name: Setup dwarf2json
+        uses: ./.github/actions/setup-dwarf2json
+
       - name: Ensure SSHPass
         run: sudo apt-get update && sudo apt-get install -y sshpass
 

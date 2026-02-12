@@ -116,3 +116,11 @@ jobs:
             FORCE_FLAG="--force"
           fi
           poetry run runner $FORCE_FLAG ${{ matrix.commit.hash }} symbols
+
+      - name: Run linux_symbols plugin
+        run: |
+          FORCE_FLAG=""
+          if [[ ",${{ inputs.force_plugins }}," == *",linux_symbols,"* ]]; then
+            FORCE_FLAG="--force"
+          fi
+          poetry run runner $FORCE_FLAG ${{ matrix.commit.hash }} linux_symbols
