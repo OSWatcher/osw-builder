@@ -30,17 +30,7 @@ RUN poetry config virtualenvs.in-project true
 # Copy dependency files
 COPY pyproject.toml poetry.lock* ./
 
-# Configure poetry to use github token and install dependencies
-RUN --mount=type=secret,id=GIT_AUTH_TOKEN,env=GIT_AUTH_TOKEN <<EOF
-# ensure not empty
-if [ -z "$GIT_AUTH_TOKEN" ]; then
-    echo "GIT_AUTH_TOKEN is not set"
-    exit 1
-fi
-poetry config repositories.plugins "https://github.com/OSWatcher/grapheos-plugins.git"
-poetry config http-basic.plugins "$GIT_USERNAME" $GIT_AUTH_TOKEN
-poetry install --only main --no-root
-EOF
+RUN poetry install --only main --no-root
 
 # Copy application code and install
 COPY . .
