@@ -37,9 +37,7 @@ if [ -z "$GIT_AUTH_TOKEN" ]; then
     echo "GIT_AUTH_TOKEN is not set"
     exit 1
 fi
-poetry config repositories.neogit "https://github.com/OSWatcher/neogit.git"
 poetry config repositories.plugins "https://github.com/OSWatcher/grapheos-plugins.git"
-poetry config http-basic.neogit "$GIT_USERNAME" $GIT_AUTH_TOKEN
 poetry config http-basic.plugins "$GIT_USERNAME" $GIT_AUTH_TOKEN
 poetry install --only main --no-root
 EOF
