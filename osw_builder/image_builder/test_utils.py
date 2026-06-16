@@ -107,7 +107,6 @@ def test_build_packer_cmdline_parametrized(template, packer_args, expected_vars)
     assert result[-1] == template
 
 
-@patch.dict("os.environ", {"GHCR_TOKEN": "test_token"})
 @patch("osw_builder.image_builder.build.docker.from_env")
 @patch("builtins.open")
 def test_docker_packer_runner_success(mock_open, mock_docker_from_env):
@@ -130,14 +129,12 @@ def test_docker_packer_runner_success(mock_open, mock_docker_from_env):
         pass
 
     # Verify interactions
-    mock_client.login.assert_called_once_with(username="oswatcher", password="test_token", registry="ghcr.io")
     mock_client.images.pull.assert_called_once()
     mock_client.containers.run.assert_called_once_with(**docker_config)
     mock_container.wait.assert_called_once()
     mock_container.remove.assert_called_once_with(force=True)
 
 
-@patch.dict("os.environ", {"GHCR_TOKEN": "test_token"})
 @patch("osw_builder.image_builder.build.docker.from_env")
 @patch("builtins.open")
 def test_docker_packer_runner_failure(mock_open, mock_docker_from_env):
@@ -164,7 +161,6 @@ def test_docker_packer_runner_failure(mock_open, mock_docker_from_env):
     mock_container.remove.assert_called_once_with(force=True)
 
 
-@patch.dict("os.environ", {"GHCR_TOKEN": "test_token"})
 @patch("osw_builder.image_builder.build.docker.from_env")
 @patch("builtins.open")
 def test_docker_packer_runner_no_network(mock_open, mock_docker_from_env):
@@ -186,10 +182,8 @@ def test_docker_packer_runner_no_network(mock_open, mock_docker_from_env):
 
     # Verify no image pull when network is disabled
     mock_client.images.pull.assert_not_called()
-    mock_client.login.assert_called_once()
 
 
-@patch.dict("os.environ", {"GHCR_TOKEN": "test_token"})
 @patch("osw_builder.image_builder.build.docker.from_env")
 def test_docker_packer_runner_cleanup_on_exception(mock_docker_from_env):
     """Test that container cleanup happens even when exceptions occur."""
@@ -210,23 +204,6 @@ def test_docker_packer_runner_cleanup_on_exception(mock_docker_from_env):
     mock_container.remove.assert_called_once_with(force=True)
 
 
-@patch("osw_builder.image_builder.build.docker.from_env")
-def test_docker_packer_runner_missing_token(mock_docker_from_env):
-    """Test that missing GHCR_TOKEN raises helpful error."""
-    mock_client = MagicMock()
-    mock_docker_from_env.return_value = mock_client
-
-    docker_config = {"image": "test:latest"}
-
-    # Test without GHCR_TOKEN in environment
-    with patch.dict("os.environ", {}, clear=True):
-        with pytest.raises(RuntimeError, match="GHCR_TOKEN environment variable is required"):
-            with docker_packer_runner(docker_config, network=True):
-                pass
-
-    # Verify no Docker operations were attempted
-    mock_client.login.assert_not_called()
-    mock_client.containers.run.assert_not_called()
 
 
 @pytest.fixture

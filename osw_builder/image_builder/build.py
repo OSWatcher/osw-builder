@@ -145,18 +145,7 @@ def docker_packer_runner(docker_config: dict, network: bool) -> Generator[None, 
     dk_client = docker.from_env()
     container = None
 
-    # Check for required environment variable
-    ghcr_token = os.environ.get("GHCR_TOKEN")
-    if not ghcr_token:
-        raise RuntimeError(
-            "GHCR_TOKEN environment variable is required for Docker registry authentication. "
-            "Please set GHCR_TOKEN to your GitHub Container Registry token."
-        )
-
     try:
-        # Login to registry
-        dk_client.login(username="oswatcher", password=ghcr_token, registry="ghcr.io")
-
         # Pull the latest image if network is enabled
         if network:
             logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
