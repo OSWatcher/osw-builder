@@ -1,4 +1,4 @@
 [submodule "packer-templates"]
 	path = osw_builder/packer-templates
 	url = https://github.com/OSWatcher/packer-templates
-	branch = win10_pro
+	branch = master
