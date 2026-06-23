@@ -35,7 +35,7 @@ jobs:
         run: poetry install --only docs --no-root
 
       - name: Build documentation
-        run: poetry run poe docs
+        run: poetry run sphinx-build docs/source docs/build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
