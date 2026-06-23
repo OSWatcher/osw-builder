@@ -204,8 +204,6 @@ def test_docker_packer_runner_cleanup_on_exception(mock_docker_from_env):
     mock_container.remove.assert_called_once_with(force=True)
 
 
-
-
 @pytest.fixture
 def autounattend_files():
     """Get all Autounattend.xml files in the project."""
