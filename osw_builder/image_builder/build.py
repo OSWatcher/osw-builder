@@ -37,6 +37,8 @@ PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 def validate_source_and_compute_sha1(config_entry: dict) -> str:
     """validate the source URL and compute the SHA1 digest if needed"""
     source_url = config_entry["source"]
+    if source_url is None:
+        raise RuntimeError("No source configured for this image — set source: in your config.yaml")
     parse_res = urlparse(source_url)
     if parse_res.scheme == "file":
         source_path = Path(parse_res.path)
@@ -322,5 +324,7 @@ def run_packer_with_inheritance(
 
         # Use Docker context manager for container lifecycle
         with docker_packer_runner(docker_config, network):
-            # return the first file ending with .box in the output directory
-            return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
+            box_files = [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")]
+            if not box_files:
+                raise RuntimeError(f"Packer produced no .box file in {OUTPUT_QEMU_DIR}")
+            return OUTPUT_QEMU_DIR / box_files[0]
