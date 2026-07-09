@@ -8,7 +8,6 @@ FROM python:3.11-slim AS builder
 
 ARG PACKER_VERSION=1.8.6
 ARG POETRY_VERSION=1.8.2
-ARG GIT_USERNAME=wenzel
 
 SHELL ["/bin/bash", "-o", "pipefail", "-o", "errexit", "-c"]
 
@@ -49,9 +48,7 @@ RUN PACKER_SHA256="57d0411e578aea62918d36ed186951139d5d49d44b76e5666d1fbf2427b38
 FROM builder AS dev
 
 # Install development dependencies including test tools
-RUN --mount=type=secret,id=GIT_AUTH_TOKEN,env=GIT_AUTH_TOKEN <<EOF
-poetry install --with dev
-EOF
+RUN poetry install --with dev
 
 # Install git for CI workflows that might need it
 RUN apt-get update && apt-get install -y \

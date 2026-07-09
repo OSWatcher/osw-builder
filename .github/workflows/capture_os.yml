@@ -34,16 +34,9 @@ jobs:
       - name: Cleanup
         run: rm -rf *
 
-      - run: |
-          if [ -z "${{ secrets.GHCR_TOKEN }}" ]; then
-            echo "Missing GHCR token"
-            exit 1
-          fi
-
       - uses: actions/checkout@v4
         with:
           submodules: "recursive"
-          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Setup environment for Packer and Vagrant
         if: ${{ !env.ACT }}
@@ -52,7 +45,6 @@ jobs:
       - name: Setup Python and Poetry
         uses: ./.github/actions/setup-python-poetry
         with:
-          pat_token: ${{ secrets.PAT_TOKEN }}
           minio_secret: ${{ secrets.MINIO_ADMIN_PASSWD }}
 
       - name: Setup dwarf2json
@@ -66,7 +58,6 @@ jobs:
         env:
           PACKER_LOG: 1
           PACKER_CACHE_DIR: $HOME/.cache/packer
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
       - name: Upload packer-build.log
         uses: actions/upload-artifact@v4

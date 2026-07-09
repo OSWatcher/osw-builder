@@ -16,7 +16,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: 'recursive'
-          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Set lowercased owner
         id: lowercase_owner
@@ -35,5 +34,3 @@ jobs:
           # only push if push on master
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
           tags: ghcr.io/${{ env.LOWER_OWNER }}/builder:latest
-          secrets: |
-            GIT_AUTH_TOKEN=${{ secrets.PAT_TOKEN }}

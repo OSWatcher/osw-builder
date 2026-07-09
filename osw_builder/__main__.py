@@ -136,7 +136,7 @@ def capture_os(os_name, args):
         if not vagrant.box_exists(box_name):
             # TODO: win11 hack
             # Network is now handled by build_config
-            if entry["source"].endswith(".box"):
+            if entry["source"] is not None and entry["source"].endswith(".box"):
                 image = entry["source"]
             else:
                 image = ex.enter_context(build_image_with_inheritance(os_name, entry, config, packer_args))
@@ -162,7 +162,7 @@ def capture_os(os_name, args):
                 qcow_path = vagrant.get_qcow_path(box_name, uri=LIBVIRT_URI)
                 # WORKAROUND: if source is box, we must copy the box qcow origninal source
                 # and redefine all the internal snapshots in libvirt metadata
-                if entry["source"].endswith(".box"):
+                if entry["source"] is not None and entry["source"].endswith(".box"):
                     logging.info("Copying box qcow to %s", qcow_path)
                     source_qcow = Path.home() / ".vagrant.d" / "boxes" / box_name / "0" / "libvirt" / "box_0.img"
                     shutil.copy(source_qcow, qcow_path)

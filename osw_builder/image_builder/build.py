@@ -37,6 +37,8 @@ PACKER_TEMPLATES_IMAGE = "ghcr.io/oswatcher/packer-templates:latest"
 def validate_source_and_compute_sha1(config_entry: dict) -> str:
     """validate the source URL and compute the SHA1 digest if needed"""
     source_url = config_entry["source"]
+    if source_url is None:
+        raise RuntimeError("No source configured for this image — set source: in your config.yaml")
     parse_res = urlparse(source_url)
     if parse_res.scheme == "file":
         source_path = Path(parse_res.path)
@@ -145,18 +147,7 @@ def docker_packer_runner(docker_config: dict, network: bool) -> Generator[None, 
     dk_client = docker.from_env()
     container = None
 
-    # Check for required environment variable
-    ghcr_token = os.environ.get("GHCR_TOKEN")
-    if not ghcr_token:
-        raise RuntimeError(
-            "GHCR_TOKEN environment variable is required for Docker registry authentication. "
-            "Please set GHCR_TOKEN to your GitHub Container Registry token."
-        )
-
     try:
-        # Login to registry
-        dk_client.login(username="oswatcher", password=ghcr_token, registry="ghcr.io")
-
         # Pull the latest image if network is enabled
         if network:
             logging.info(f"Pulling the latest {PACKER_TEMPLATES_IMAGE} image")
@@ -333,5 +324,7 @@ def run_packer_with_inheritance(
 
         # Use Docker context manager for container lifecycle
         with docker_packer_runner(docker_config, network):
-            # return the first file ending with .box in the output directory
-            return OUTPUT_QEMU_DIR / [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")][0]
+            box_files = [f for f in os.listdir(OUTPUT_QEMU_DIR) if f.endswith(".box")]
+            if not box_files:
+                raise RuntimeError(f"Packer produced no .box file in {OUTPUT_QEMU_DIR}")
+            return OUTPUT_QEMU_DIR / box_files[0]

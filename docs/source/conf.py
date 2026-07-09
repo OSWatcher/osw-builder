@@ -6,27 +6,38 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'osw-builder'
-copyright = '2025, Mathieu Tarral'
-author = 'Mathieu Tarral'
-release = '0.1'
+project = "osw-builder"
+copyright = "2025, Mathieu Tarral"
+author = "Mathieu Tarral"
+release = "0.2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
     # markdown
-    'myst_parser',
+    "myst_parser",
+    # grid cards, dropdowns, tabs
+    "sphinx_design",
 ]
-myst_enable_extensions = ["colon_fence"]
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "linkify",
+]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns: list[str] = []
-
-
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'furo'
+html_theme = "furo"
+html_title = "osw-builder"
 # html_static_path = ['_static']
+
+html_theme_options = {
+    "source_repository": "https://github.com/OSWatcher/osw-builder",
+    "source_branch": "master",
+    "source_directory": "docs/source/",
+}
