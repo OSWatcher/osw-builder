@@ -1,6 +1,6 @@
 # osw-builder
 
-A pipeline tool that builds VM images from ISOs and captures their filesystems into a Neo4j graph database. It is the data-ingestion engine behind [Grapheos](https://grapheos.cc) — a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
+A pipeline tool that builds VM images from ISOs and captures their filesystems into a Neo4j graph database — a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
 
 **What it does, end to end:**
 

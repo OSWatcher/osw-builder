@@ -1,6 +1,6 @@
 # osw-builder
 
-**osw-builder** builds VM images from ISOs and captures their filesystems into a Neo4j graph database. It is the data-ingestion engine behind [Grapheos](https://grapheos.cc) — a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
+**osw-builder** builds VM images from ISOs and captures their filesystems into a Neo4j graph database — a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
 
 This documentation is organised according to the [Divio documentation system](https://docs.divio.com/documentation-system/) — four distinct kinds of documentation that serve different needs:
 

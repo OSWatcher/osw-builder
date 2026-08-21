@@ -20,7 +20,7 @@ Submodule : `github.com/OSWatcher/packer-templates`
 
 ## ✅ #6 Purger les URLs ISO privées de default_settings.yaml
 
-32 entrées `source:` pointent vers `storage.grapheos.cc` (MinIO privé) :
+32 entrées `source:` pointent vers un hôte MinIO privé :
 
 - Remplacer toutes les URLs par un placeholder explicite, ex: `source: null  # provide your own ISO path`
 - Les vieilles boxes (win95, win98, winME, win2000) méritent une note séparée — non récupérables facilement
@@ -81,7 +81,7 @@ Rendre le projet accessible à quelqu'un qui découvre :
 - Documenter les dépendances système : libguestfs, qemu, vagrant, packer, docker
 - Clarifier ce qui est nécessaire côté infra (Neo4j, MinIO) vs optionnel
 - Exemples de `config.yaml` pour les cas d'usage courants
-- Potentiellement un docker-compose de dev minimal pour lancer sans toute l'infra Grapheos
+- Potentiellement un docker-compose de dev minimal pour lancer sans toute l'infra OSWatcher
 
 ---
 

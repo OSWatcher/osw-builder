@@ -48,4 +48,4 @@ A single `capture_os` run can produce several commits: the build, an idle captur
 
 - The configuration model that decides *how* each image is built: {doc}`image-inheritance`
 - How unattended installs are driven per-OS: {doc}`response-files`
-- The downstream graph and queries: the [neogit](https://github.com/OSWatcher/neogit) and [Grapheos](https://grapheos.cc) projects.
+- The downstream graph and queries: the [neogit](https://github.com/OSWatcher/neogit) project.
