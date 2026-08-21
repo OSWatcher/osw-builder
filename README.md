@@ -167,3 +167,10 @@ See `osw_builder/default_settings.yaml` for the full catalogue. Highlights:
 - **Ubuntu**: 6.10 (Edgy Eft) → 25.04 (Quirky Quokka)
 
 Legacy Windows 95/98/ME/2000 entries require pre-built Vagrant boxes (build your own).
+
+---
+
+## Related projects
+
+- [neogit](https://github.com/OSWatcher/neogit) — the content-addressed Merkle-tree library that backs capture
+- [pywinupdate](https://github.com/OSWatcher/pywinupdate) — standalone WinRM/Ansible Windows Update CLI; independent from the OS-agnostic update orchestration in `osw_builder/updates/`, but scratches a similar itch
