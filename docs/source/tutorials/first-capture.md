@@ -20,22 +20,32 @@ poetry install
 
 The `--recurse-submodules` flag matters: the Packer templates live in a git submodule. If you forgot it, run `git submodule update --init` now.
 
-## Step 2 — Start Neo4j and MinIO
+## Step 2 — Start Neo4j
 
-osw-builder writes captured filesystems into Neo4j (the graph) and MinIO (the file contents). The quickest way to get both is the docker-compose stack shipped with [neogit](https://github.com/OSWatcher/neogit). Start it, then confirm you can reach the Neo4j browser at <http://localhost:7474>.
+osw-builder writes the captured filesystem into Neo4j (the graph) and the file contents into object storage. [neogit](https://github.com/OSWatcher/neogit) — the library that does the writing — defaults to **local filesystem** object storage, so for this tutorial you only need a Neo4j container. One `docker run` is enough:
 
-## Step 3 — Tell neogit where the databases are
+```bash
+docker run --rm --name osw-neo4j \
+    -p 7474:7474 -p 7687:7687 \
+    -e NEO4J_AUTH=neo4j/your-password \
+    neo4j:5.26
+```
 
-Create `~/.secrets.toml` so osw-builder can authenticate against Neo4j and MinIO:
+Leave it running and confirm you can reach the Neo4j browser at <http://localhost:7474> (log in with `neo4j` / `your-password`).
+
+```{note}
+For a full OSWatcher stack with MinIO object storage, an API, and a frontend, use [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy) instead. You do not need it for a first capture.
+```
+
+## Step 3 — Tell neogit where Neo4j is
+
+Create `~/.secrets.toml` so osw-builder can authenticate against Neo4j. Because neogit uses local object storage by default, the MinIO keys are optional here:
 
 ```toml
 [default]
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "your-password"
-MINIO_URL = "http://localhost:9000"
-MINIO_ACCESS_KEY = "minioadmin"
-MINIO_SECRET_KEY = "minioadmin"
 ```
 
 ## Step 4 — Point an image at an ISO
@@ -85,7 +95,7 @@ LIMIT 25
 
 ## What you have learned
 
-You ran the four phases of osw-builder — build, register, capture — and produced a real OS snapshot in a graph database. You also met the two configuration files you will use constantly: `config.yaml` for your local overrides and `default_settings.yaml` for the shared catalogue.
+You ran the first three phases of osw-builder — build, register, capture — and produced a real OS snapshot in a graph database. (The fourth phase, update search, you deliberately skipped with `--search-updates=false`.) You also met the two configuration files you will use constantly: `config.yaml` for your local overrides and `default_settings.yaml` for the shared catalogue.
 
 ## Where to go next
 

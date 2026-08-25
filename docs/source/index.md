@@ -1,6 +1,16 @@
 # osw-builder
 
-**osw-builder** builds VM images from ISOs and captures their filesystems into a Neo4j graph database — a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
+**osw-builder** turns an OS installer ISO into a queryable graph snapshot. It builds a VM image with Packer, captures the resulting filesystem and registry into a Neo4j graph as content-addressed Merkle trees, and — optionally — installs OS updates one by one, capturing the state after each. The whole pipeline runs unattended.
+
+It feeds a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04. Because every snapshot lives in the same graph, you can ask questions an ordinary disk image never answers — *which files changed between two Windows builds, which registry keys a given update touched, on which OS versions a symbol first appeared.*
+
+```
+ISO ─▶ image_builder ─▶ vagrant ─▶ capture ─▶ updates ─▶ Neo4j graph
+       (Packer/Docker)  (libvirt)  (libguestfs)  (apt /
+                                                  Windows Update)
+```
+
+**New here?** Jump straight to the {doc}`first-capture tutorial <tutorials/first-capture>` — it takes you from an empty machine to a captured Ubuntu image with one Neo4j container and no product keys.
 
 This documentation is organised according to the [Divio documentation system](https://docs.divio.com/documentation-system/) — four distinct kinds of documentation that serve different needs:
 
