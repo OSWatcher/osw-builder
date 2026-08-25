@@ -33,17 +33,15 @@ Submodule : `github.com/OSWatcher/packer-templates`
 
 ---
 
-## #4 Cleanup : API keys, branches mortes, refs privées
+## 🔄 #4 Cleanup : API keys, branches mortes, refs privées
 
-- `build.py:158` : `username="oswatcher"` hardcodé → rendre configurable
-- Vérifier les workflows CI (`.github/workflows/`) pour refs à infra privée
-- Supprimer les branches locales et remote obsolètes (50+ branches stale sur origin)
-  - Branches locales à évaluer : `feature/branch-cascade-inheritance`, `feature/os-entry-inheritance`, `feature/vagrant-realtime-logging`
-- Fichiers parasites à la racine à supprimer :
-  - `capture.log`, `packer-build.log`, `vagrant.log`, `domain.xml`
-  - `REPORT.md`, `debug_guestfs.py`
-  - `rewrite_commits_nonbusiness.py`, `extract_business_hours_commits.py`
-  - `update_windows_release_dates.cypher`
+- ✅ `debug_guestfs.py`, `domain.xml` supprimés du repo
+- ✅ `PAT_TOKEN` retiré de tous les workflows CI (packer-templates public, deps sur PyPI)
+- ✅ `GIT_AUTH_TOKEN` secret retiré du Dockerfile
+- ✅ `ARG GIT_USERNAME=wenzel` retiré du Dockerfile
+- ✅ `GHCR_TOKEN` auth retiré (image packer-templates publique sur GHCR)
+- ✅ Branches stale supprimées (déjà nettoyées)
+- ⬜ Merger `feat/use-oswatcher-plugins-from-pypi` → master et pousser sur GitHub
 
 ---
 

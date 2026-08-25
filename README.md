@@ -1,13 +1,28 @@
 # osw-builder
 
-A pipeline tool that builds VM images from ISOs and captures their filesystems into a Neo4j graph database — a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python versions](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![CI](https://github.com/OSWatcher/osw-builder/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/OSWatcher/osw-builder/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://oswatcher.github.io/osw-builder/)
+
+> Turn an OS ISO into a queryable graph snapshot. osw-builder builds a VM image from an installer ISO, then captures its filesystem and registry into a Neo4j graph — fully unattended — so you can diff and query operating systems the way you query a git history.
+
+It feeds a queryable graph of operating system evolution covering Windows 95 → 11 and Ubuntu 6.10 → 25.04.
 
 **What it does, end to end:**
 
 1. Build a VM image from an ISO using Packer (runs inside Docker, no local Packer install needed)
 2. Register the image with Vagrant/libvirt
-3. Capture the filesystem and registry into Neo4j via [neogit](https://github.com/OSWatcher/neogit)
+3. Capture the filesystem and registry into Neo4j via [neogit](https://github.com/OSWatcher/neogit) as content-addressed Merkle trees
 4. Optionally search for and install OS updates, snapshotting and capturing after each one
+
+```
+ISO ─▶ image_builder ─▶ vagrant ─▶ capture ─▶ updates ─▶ Neo4j graph
+       (Packer/Docker)  (libvirt)  (libguestfs)  (apt /
+                                                  Windows Update)
+```
+
+📖 **Full documentation:** <https://oswatcher.github.io/osw-builder/> — tutorials, how-to guides, configuration reference, and architecture explanations.
 
 ---
 
@@ -25,10 +40,18 @@ A pipeline tool that builds VM images from ISOs and captures their filesystems i
 | Python 3.11+ | Runtime |
 | Poetry | Dependency management |
 
-**Infrastructure** (see [neogit](https://github.com/OSWatcher/neogit) for setup)
+**Infrastructure** (only needed for capture — see [neogit](https://github.com/OSWatcher/neogit) for setup)
 
 - Neo4j 5.x — graph database where OS snapshots are stored
-- MinIO (or any S3-compatible store) — object storage for blob data
+- Object storage for file contents — neogit defaults to the **local filesystem**, so MinIO (or any S3-compatible store) is optional and only needed for a distributed/production setup like [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy)
+
+---
+
+## Two ways in
+
+**🎓 I just want to try it.** Follow the [first-capture tutorial](https://oswatcher.github.io/osw-builder/tutorials/first-capture.html): it walks you from zero to a captured Ubuntu image with a single Neo4j container and no product keys. Budget one to two hours, mostly unattended.
+
+**🏗️ I want to run this for real.** Read the rest of this README, then the [how-to guides](https://oswatcher.github.io/osw-builder/how-to/index.html) for providing ISOs, adding images, and building without capture. For the full OSWatcher infrastructure (Neo4j + MinIO + API + frontend), see [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy).
 
 ---
 
@@ -39,6 +62,10 @@ git clone --recurse-submodules https://github.com/OSWatcher/osw-builder.git
 cd osw-builder
 poetry install
 ```
+
+`--recurse-submodules` matters: the Packer templates live in a git submodule. If you forgot it, run `git submodule update --init`.
+
+System dependencies (QEMU, libvirt, Vagrant, Docker, libguestfs) are not Python packages — install them first. See [Install system dependencies](https://oswatcher.github.io/osw-builder/how-to/install-system-deps.html).
 
 ---
 
@@ -74,13 +101,15 @@ Defines all supported images with their build configuration (Packer template, an
 
 ### neogit credentials
 
-osw-builder uses neogit to write to Neo4j and MinIO. Create `~/.secrets.toml` with:
+osw-builder uses neogit to write the graph to Neo4j and the file contents to object storage. Create `~/.secrets.toml` with at least the Neo4j connection:
 
 ```toml
 [default]
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "your-password"
+# Object storage. neogit defaults to local filesystem storage, so MinIO is
+# optional. Add these only if you point neogit at a MinIO/S3 backend.
 MINIO_URL = "http://localhost:9000"
 MINIO_ACCESS_KEY = "minioadmin"
 MINIO_SECRET_KEY = "minioadmin"
@@ -170,7 +199,24 @@ Legacy Windows 95/98/ME/2000 entries require pre-built Vagrant boxes (build your
 
 ---
 
+## Documentation
+
+The full documentation is organised with the [Divio system](https://docs.divio.com/documentation-system/) and published at <https://oswatcher.github.io/osw-builder/>:
+
+| Section | What it covers |
+|---------|----------------|
+| [Tutorials](https://oswatcher.github.io/osw-builder/tutorials/index.html) | Hands-on: your first Ubuntu capture, end to end |
+| [How-to guides](https://oswatcher.github.io/osw-builder/how-to/index.html) | Install system deps, provide ISOs, add a new image, build without capture |
+| [Reference](https://oswatcher.github.io/osw-builder/reference/index.html) | CLI options, configuration schema, module API |
+| [Explanation](https://oswatcher.github.io/osw-builder/explanation/index.html) | Pipeline design, image inheritance, response files |
+
 ## Related projects
 
 - [neogit](https://github.com/OSWatcher/neogit) — the content-addressed Merkle-tree library that backs capture
+- [packer-templates](https://github.com/OSWatcher/packer-templates) — the Packer build templates (a submodule of this repo)
+- [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy) — full production stack (Neo4j, MinIO, API, frontend)
 - [pywinupdate](https://github.com/OSWatcher/pywinupdate) — standalone WinRM/Ansible Windows Update CLI; independent from the OS-agnostic update orchestration in `osw_builder/updates/`, but scratches a similar itch
+
+## License
+
+Licensed under the Apache License 2.0.

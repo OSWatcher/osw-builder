@@ -20,10 +20,19 @@ sudo apt update
 sudo apt install -y \
     qemu-kvm libvirt-daemon-system libvirt-clients \
     vagrant libguestfs-tools sshpass \
-    docker.io python3 python3-pip
+    docker.io python3 python3-pip \
+    libguestfs-dev libvirt-dev python3-dev pkg-config gcc
 
 # Vagrant libvirt provider
 vagrant plugin install vagrant-libvirt
+```
+
+```{note}
+The last line installs build headers, not runtime tools. `guestfs` and
+`libvirt-python` are C extensions that Poetry compiles from source, so without
+`libguestfs-dev` and `libvirt-dev` the install fails at
+`fatal error: guestfs.h: No such file or directory` long before you reach a
+capture.
 ```
 
 ## Post-install checks
@@ -51,4 +60,4 @@ sudo libguestfs-test-tool   # ends with "libguestfs-test-tool: PASS"
 
 ## Infrastructure (separate from system packages)
 
-Capturing to a graph requires Neo4j and MinIO running somewhere reachable. These are not installed here — use the docker-compose stack from [neogit](https://github.com/OSWatcher/neogit). If you only want to *build* images and not capture, you can skip this; see {doc}`build-without-capture`.
+Capturing to a graph requires a reachable Neo4j instance; object storage defaults to the local filesystem, so MinIO is optional. The quickest way to get Neo4j is a single container — `docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/your-password neo4j:5.26` (see [neogit](https://github.com/OSWatcher/neogit) for details, or [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy) for the full stack with MinIO). If you only want to *build* images and not capture, you can skip this entirely; see {doc}`build-without-capture`.
