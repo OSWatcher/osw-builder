@@ -43,7 +43,7 @@ ISO ─▶ image_builder ─▶ vagrant ─▶ capture ─▶ updates ─▶ Neo
 **Infrastructure** (only needed for capture — see [neogit](https://github.com/OSWatcher/neogit) for setup)
 
 - Neo4j 5.x — graph database where OS snapshots are stored
-- Object storage for file contents — neogit defaults to the **local filesystem**, so MinIO (or any S3-compatible store) is optional and only needed for a distributed/production setup like [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy)
+- Object storage for file contents — neogit defaults to the **local filesystem**, so MinIO (or any S3-compatible store) is optional and only needed for a distributed/production setup like [oswatcher](https://github.com/OSWatcher/oswatcher)
 
 ---
 
@@ -51,7 +51,7 @@ ISO ─▶ image_builder ─▶ vagrant ─▶ capture ─▶ updates ─▶ Neo
 
 **🎓 I just want to try it.** Follow the [first-capture tutorial](https://oswatcher.github.io/osw-builder/tutorials/first-capture.html): it walks you from zero to a captured Ubuntu image with a single Neo4j container and no product keys. Budget one to two hours, mostly unattended.
 
-**🏗️ I want to run this for real.** Read the rest of this README, then the [how-to guides](https://oswatcher.github.io/osw-builder/how-to/index.html) for providing ISOs, adding images, and building without capture. For the full OSWatcher infrastructure (Neo4j + MinIO + API + frontend), see [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy).
+**🏗️ I want to run this for real.** Read the rest of this README, then the [how-to guides](https://oswatcher.github.io/osw-builder/how-to/index.html) for providing ISOs, adding images, and building without capture. For the full OSWatcher infrastructure (Neo4j + MinIO + API + frontend), see [oswatcher](https://github.com/OSWatcher/oswatcher).
 
 ---
 
@@ -214,7 +214,7 @@ The full documentation is organised with the [Divio system](https://docs.divio.c
 
 - [neogit](https://github.com/OSWatcher/neogit) — the content-addressed Merkle-tree library that backs capture
 - [packer-templates](https://github.com/OSWatcher/packer-templates) — the Packer build templates (a submodule of this repo)
-- [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy) — full production stack (Neo4j, MinIO, API, frontend)
+- [oswatcher](https://github.com/OSWatcher/oswatcher) — full production stack (Neo4j, MinIO, API, frontend)
 - [pywinupdate](https://github.com/OSWatcher/pywinupdate) — standalone WinRM/Ansible Windows Update CLI; independent from the OS-agnostic update orchestration in `osw_builder/updates/`, but scratches a similar itch
 
 ## License
