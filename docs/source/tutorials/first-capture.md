@@ -34,7 +34,7 @@ docker run --rm --name osw-neo4j \
 Leave it running and confirm you can reach the Neo4j browser at <http://localhost:7474> (log in with `neo4j` / `your-password`).
 
 ```{note}
-For a full OSWatcher stack with MinIO object storage, an API, and a frontend, use [oswatcher-deploy](https://github.com/OSWatcher/oswatcher-deploy) instead. You do not need it for a first capture.
+For a full OSWatcher stack with MinIO object storage, an API, and a frontend, use [oswatcher](https://github.com/OSWatcher/oswatcher) instead. You do not need it for a first capture.
 ```
 
 ## Step 3 — Tell neogit where Neo4j is
